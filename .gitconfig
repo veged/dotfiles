@@ -1,0 +1,13 @@
+[user]
+	name = Sergey veged Berezhnoy
+	email = veged@mail.ru
+[alias]
+	co = checkout
+	st = status
+	di = diff
+	ci = commit
+[color]
+	branch = auto
+	diff = auto
+	interactive = auto
+	status = auto
