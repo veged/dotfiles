@@ -110,3 +110,15 @@ set t_Co=256
 "colo vibrantink
 colo xoria256
 
+"FuzzyFinder
+nnoremap <silent> ffb :FuzzyFinderBuffer<CR>
+nnoremap <silent> fff :FuzzyFinderFile<CR>
+nnoremap <silent> ffh :FuzzyFinderMruFile<CR>
+nnoremap <silent> ffc :FuzzyFinderMruCmd<CR>
+nnoremap <silent> ffd :FuzzyFinderDir<CR>
+nnoremap <silent> ffbb :FuzzyFinderBookmark<CR>
+nnoremap <silent> fft :FuzzyFinderTag!<CR>
+nnoremap <silent> fftf :FuzzyFinderTaggedFile<CR>
+noremap <silent> fftt  :FuzzyFinderTag! <C-r>=expand('<cword>')<CR><CR>
+nnoremap <silent> ffo :FuzzyFinderEditInfo<CR>
+
