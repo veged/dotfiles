@@ -292,9 +292,6 @@ for details.
 ------------------------------------------------------------------------------
                                                         *xml-plugin-callbacks*
 
-------------------------------------------------------------------------------
-                                                        *xml-plugin-callbacks*
-
 Callback Functions {{{2 ~
 
 A callback function is a function used to customize features on a per tag
