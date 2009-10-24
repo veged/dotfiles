@@ -1,8 +1,14 @@
 
+snippet in
+	<xsl:include href="${1}"/>
+snippet im
+	<xsl:import href="${1}"/>
 snippet ai
 	<xsl:apply-imports/>
 snippet an
 	<xsl:attribute name="${1}">${2}</xsl:attribute>
+snippet at
+	<xsl:apply-templates/>
 snippet ats
 	<xsl:apply-templates select="${1}"/>
 snippet atsm
