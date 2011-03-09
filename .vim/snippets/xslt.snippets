@@ -19,7 +19,7 @@ snippet ctn
 	<xsl:call-template name="${1}"/>
 snippet ctnwp
 	<xsl:call-template name="${1}">
-		  <xsl:with-param name="${2}" select="${3}"/>
+		<xsl:with-param name="${2}" select="${3}"/>
 	</xsl:call-template>
 snippet cwt
 	<xsl:choose>
@@ -36,6 +36,8 @@ snippet cwto
 			${3}
 		</xsl:otherwise>
 	</xsl:choose>
+snippet en
+	<xsl:element name="${1}">${2}</xsl:element>
 snippet fe
 	<xsl:for-each select="${1}">
 		${2}
