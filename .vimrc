@@ -90,7 +90,7 @@ set expandtab
 set smartindent
 set nowrap
 
-set list listchars=tab:>-,trail:~
+set list listchars=tab:>·,trail:·
 
 set ignorecase
 set smartcase
