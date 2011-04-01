@@ -108,7 +108,24 @@ set t_Co=256
 "colo xterm16
 "colo ps_color
 "colo vibrantink
-colo xoria256
+"colo xoria256
+
+function! ToggleBackground()
+    if (g:solarized_style=="dark")
+    let g:solarized_style="light"
+    colorscheme solarized
+else
+    let g:solarized_style="dark"
+    colorscheme solarized
+endif
+endfunction
+command! Togbg call ToggleBackground()
+nnoremap sss :call ToggleBackground()<CR>
+inoremap sss <ESC>:call ToggleBackground()<CR>a
+vnoremap sss <ESC>:call ToggleBackground()<CR>
+let g:solarized_style="light"
+let g:solarized_contrast="high"
+colorscheme solarized
 
 "FuzzyFinder
 nnoremap <silent> ffb :FuzzyFinderBuffer<CR>
