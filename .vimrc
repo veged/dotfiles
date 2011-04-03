@@ -101,8 +101,6 @@ command! -range=% Decode64 :w | <line1>,<line2>delete | let foo = @" | perl my $
 
 let python_highlight_all = 1
 
-set t_Co=256
-
 "let xterm16_brightness = 'med'     " Change if needed
 "let xterm16_colormap = 'soft'       " Change if needed
 "colo xterm16
@@ -110,6 +108,7 @@ set t_Co=256
 "colo vibrantink
 "colo xoria256
 
+"Solarized
 function! ToggleBackground()
     if (g:solarized_style=="dark")
     let g:solarized_style="light"
@@ -123,6 +122,13 @@ command! Togbg call ToggleBackground()
 nnoremap sss :call ToggleBackground()<CR>
 inoremap sss <ESC>:call ToggleBackground()<CR>a
 vnoremap sss <ESC>:call ToggleBackground()<CR>
+
+set t_Co=16
+if has("gui_running")
+    set t_Co=256
+    let g:solarized_termcolors=256
+endif
+
 let g:solarized_style="light"
 let g:solarized_contrast="high"
 colorscheme solarized
