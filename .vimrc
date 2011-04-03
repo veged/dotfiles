@@ -119,9 +119,6 @@ else
 endif
 endfunction
 command! Togbg call ToggleBackground()
-nnoremap sss :call ToggleBackground()<CR>
-inoremap sss <ESC>:call ToggleBackground()<CR>a
-vnoremap sss <ESC>:call ToggleBackground()<CR>
 
 set t_Co=16
 if has("gui_running")
