@@ -1,145 +1,101 @@
-" An example for a vimrc file.
-"
-" Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last change:	2006 Nov 16
-"
-" To use it, copy it to
-"     for Unix and OS/2:  ~/.vimrc
-"	      for Amiga:  s:.vimrc
-"  for MS-DOS and Win32:  $VIM\_vimrc
-"	    for OpenVMS:  sys$login:.vimrc
-
-" When started as "evim", evim.vim will already have done these settings.
-if v:progname =~? "evim"
-  finish
-endif
-
-" Use Vim settings, rather then Vi settings (much better!).
-" This must be first, because it changes other options as a side effect.
 set nocompatible
 
-" allow backspacing over everything in insert mode
+call pathogen#runtime_append_all_bundles()
+call pathogen#helptags()
+
+filetype plugin indent on
+
+function! ToggleMouse()
+  if &mouse == 'a'
+    set mouse=
+    echo "Mouse usage disabled"
+  else
+    set mouse=a
+    echo "Mouse usage enabled"
+  endif
+endfunction
+nnoremap <leader>m :call ToggleMouse()<CR>
+
+
+" Remember last location in file
+if has("autocmd")
+  au BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$")
+    \| exe "normal g'\"" | endif
+endif
+
+
 set backspace=indent,eol,start
 
 set enc=utf-8
 
-set nobackup		" do not keep a backup file, use versions instead
-set history=50		" keep 50 lines of command line history
-set ruler		" show the cursor position all the time
-set showcmd		" display incomplete commands
-set incsearch		" do incremental searching
+set nobackup
 
-" For Win32 GUI: remove 't' flag from 'guioptions': no tearoff menu entries
-" let &guioptions = substitute(&guioptions, "t", "", "g")
+set wildmenu
 
-" Don't use Ex mode, use Q for formatting
-map Q gq
+set title
+set ruler
+set showcmd
+set rulerformat=%30(%=\:b%n%y%m%r%w\ %l,%c%V\ %P%)
 
-" In many terminal emulators the mouse works just fine, thus enable it.
-" set mouse=a
+set scrolljump=5
+set scrolloff=3
 
-" Switch syntax highlighting on, when the terminal has colors
-" Also switch on highlighting the last used search pattern.
-if &t_Co > 2 || has("gui_running")
-  syntax on
-  set hlsearch
-endif
+set incsearch
+set showmatch
+set hlsearch
+set ignorecase
+set smartcase
+"Clear the search highlight by pressing ENTER when in Normal mode (Typing commands)
+:nnoremap <CR> :nohlsearch<CR>/<BS><CR>
 
-" Only do this part when compiled with support for autocommands.
-if has("autocmd")
-
-  " Enable file type detection.
-  " Use the default filetype settings, so that mail gets 'tw' set to 72,
-  " 'cindent' is on in C files, etc.
-  " Also load indent files, to automatically do language-dependent indenting.
-  filetype plugin indent on
-
-  " Put these in an autocmd group, so that we can delete them easily.
-  augroup vimrcEx
-  au!
-
-  " For all text files set 'textwidth' to 78 characters.
-  autocmd FileType text setlocal textwidth=78
-
-  " When editing a file, always jump to the last known cursor position.
-  " Don't do it when the position is invalid or when inside an event handler
-  " (happens when dropping a file on gvim).
-  autocmd BufReadPost *
-    \ if line("'\"") > 0 && line("'\"") <= line("$") |
-    \   exe "normal! g`\"" |
-    \ endif
-
-  augroup END
-
-else
-
-  set autoindent		" always set autoindenting on
-
-endif " has("autocmd")
-
-" Convenient command to see the difference between the current buffer and the
-" file it was loaded from, thus the changes you made.
-command DiffOrig vert new | set bt=nofile | r # | 0d_ | diffthis
-	 	\ | wincmd p | diffthis
-
-set et
-set ts=4
-set sts=4
-set sw=4
-set expandtab
-set smartindent
-set nowrap
+set gdefault
 
 set list listchars=tab:>·,trail:·
 
-set ignorecase
-set smartcase
+set nowrap
+set autoindent
+set smartindent
+set expandtab
+set shiftwidth=4
+set tabstop=4
+set softtabstop=4
 
-set title
+vnoremap < <gv
+vnoremap > >gv
 
-command! -range=% Decode64 :w | <line1>,<line2>delete | let foo = @" | perl my $foo=VIM::Eval(foo); my ($r, $c)=$curwin->Cursor(); $curbuf->Append($r-1, split '\n', MIME::Base64::decode($foo));
+set pastetoggle=<leader>v
 
-let python_highlight_all = 1
 
-"let xterm16_brightness = 'med'     " Change if needed
-"let xterm16_colormap = 'soft'       " Change if needed
-"colo xterm16
-"colo ps_color
-"colo vibrantink
-"colo xoria256
 
 "Solarized
-function! ToggleBackground()
-    if (g:solarized_style=="dark")
-    let g:solarized_style="light"
-    colorscheme solarized
-else
-    let g:solarized_style="dark"
-    colorscheme solarized
-endif
-endfunction
-command! Togbg call ToggleBackground()
-
 set t_Co=16
 if has("gui_running")
     set t_Co=256
     let g:solarized_termcolors=256
 endif
 
+syntax enable
 set background=light
-let g:solarized_style="light"
-let g:solarized_contrast="high"
 colorscheme solarized
 
-"FuzzyFinder
-nnoremap <silent> ffb :FuzzyFinderBuffer<CR>
-nnoremap <silent> fff :FuzzyFinderFile<CR>
-nnoremap <silent> ffh :FuzzyFinderMruFile<CR>
-nnoremap <silent> ffc :FuzzyFinderMruCmd<CR>
-nnoremap <silent> ffd :FuzzyFinderDir<CR>
-nnoremap <silent> ffbb :FuzzyFinderBookmark<CR>
-nnoremap <silent> fft :FuzzyFinderTag!<CR>
-nnoremap <silent> fftf :FuzzyFinderTaggedFile<CR>
-noremap <silent> fftt  :FuzzyFinderTag! <C-r>=expand('<cword>')<CR><CR>
-nnoremap <silent> ffo :FuzzyFinderEditInfo<CR>
+call togglebg#map("<leader>b")
 
+"FuzzyFinder
+nnoremap <silent> ffb :FufBuffer<CR>
+nnoremap <silent> fff :FufFile<CR>
+nnoremap <silent> ffd :FufDir<CR>
+nnoremap <silent> ffj :FufJumpList<CR>
+
+" NERDTree
+nmap <leader>nt :NERDTreeFind<CR>
+let NERDTreeShowBookmarks=1
+let NERDTreeChDirMode=0
+let NERDTreeQuitOnOpen=1
+let NERDTreeShowHidden=1
+let NERDTreeKeepTreeInNewTab=1
+
+
+cmap W w
+cmap WQ wq
+cmap wQ wq
+cmap Q q
