@@ -94,8 +94,7 @@ let NERDTreeQuitOnOpen=1
 let NERDTreeShowHidden=1
 let NERDTreeKeepTreeInNewTab=1
 
-
-cmap W w
-cmap WQ wq
-cmap wQ wq
-cmap Q q
+command W w
+command WQ wq
+command Wq wq
+command Q q
