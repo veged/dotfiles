@@ -1,0 +1,57 @@
+[user]
+	name = Sergey Berezhnoy
+	email = veged@yandex-team.ru
+[alias]
+	co = checkout
+	st = status
+	di = diff
+	ci = commit
+	undo-commit = reset --soft HEAD^
+	hi = log --pretty=format:\"%h %ad | %s%d [%an]\" --graph --date=short
+	# git reauthor $START..$END
+	reauthor = !sh -c 'eval `git log --reverse --topo-order --pretty=format:\"git cherry-pick %H &&  git commit --amend -C %H --author=\\\"%aN <%aE>\\\" && \" $0 ` "echo success" '
+	dt = difftool
+[color]
+	branch = auto
+	diff = auto
+	interactive = auto
+	status = auto
+[core]
+	editor = /usr/local/bin/vim
+	autocrlf = input
+	excludesfile = ~/.gitignore
+[diff]
+	noprefix = true
+	tool = nvimdiff
+[difftool "nvimdiff"]
+	cmd = nvim -d $BASE $LOCAL
+[merge]
+	tool = nvimdiff
+[mergetool "nvimdiff"]
+	cmd = nvim -d $BASE $LOCAL
+[push]
+	default = current
+
+[url "git@github.com:"]
+	pushInsteadOf = "gh:"
+	pushInsteadOf = "git://github.com/"
+
+[url "git://github.com/"]
+	insteadOf = "gh:"
+
+[url "git@github.yandex-team.ru:"]
+	pushInsteadOf = "ghyt:"
+	pushInsteadOf = "git://github.yandex-team.ru/"
+[url "git://github.yandex-team.ru/"]
+	insteadOf = "ghyt:"
+[filter "lfs"]
+	smudge = git-lfs smudge --skip %f
+	process = git-lfs filter-process --skip
+	required = true
+	clean = git-lfs clean %f
+[lfs]
+	batch = true
+	concurrenttransfers = 15
+[difftool]
+	prompt = false
+	prompt = false
