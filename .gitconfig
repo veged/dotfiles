@@ -17,7 +17,7 @@
 	interactive = auto
 	status = auto
 [core]
-	editor = /usr/local/bin/vim
+	editor = nvim
 	autocrlf = input
 	excludesfile = ~/.gitignore
 [diff]
@@ -45,13 +45,12 @@
 [url "git://github.yandex-team.ru/"]
 	insteadOf = "ghyt:"
 [filter "lfs"]
-	smudge = git-lfs smudge --skip %f
-	process = git-lfs filter-process --skip
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
 	required = true
-	clean = git-lfs clean %f
 [lfs]
 	batch = true
 	concurrenttransfers = 15
 [difftool]
-	prompt = false
 	prompt = false
