@@ -1,82 +1,56 @@
 set nocompatible
 
-"let g:python2_host_prog = '/usr/bin/python'
 let g:python3_host_prog = '/opt/homebrew/bin/python3'
 
 call plug#begin('~/.vim/plugged')
 
-Plug 'nvim-lua/plenary.nvim'
-Plug 'nvim-telescope/telescope.nvim'
+Plug 'nvim-lua/plenary.nvim' " All the lua functions I don't want to write twice.
+Plug 'nvim-telescope/telescope.nvim' " Find, Filter, Preview, Pick.
 
-Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline' " lean & mean status/tabline
 Plug 'vim-airline/vim-airline-themes'
-Plug 'troydm/zoomwintab.vim'
-Plug 'raimondi/delimitmate'
-Plug 'editorconfig/editorconfig-vim'
-Plug 'nishigori/increment-activator'
-Plug 'scrooloose/nerdcommenter'
-Plug 'scrooloose/nerdtree'
-Plug 'kyazdani42/nvim-web-devicons'
-Plug 'kyazdani42/nvim-tree.lua'
-Plug 'rickhowe/diffchar.vim'
+Plug 'troydm/zoomwintab.vim' " zoom current window
+Plug 'raimondi/delimitmate' " provides insert mode auto-completion for quotes, parens, brackets, etc
+Plug 'editorconfig/editorconfig-vim' " EditorConfig plugin
+Plug 'nishigori/increment-activator' " enhance to increment candidates U have defined
+Plug 'scrooloose/nerdcommenter' " intensely nerdy commenting powers
+Plug 'kyazdani42/nvim-web-devicons' " Adds file type icons to Vim plugins
+Plug 'kyazdani42/nvim-tree.lua' " A file explorer tree for neovim written in lua
+Plug 'rickhowe/diffchar.vim' " Highlight the exact differences, based on characters and words
 
-Plug 'ntpeters/vim-better-whitespace'
-Plug 'MarcWeber/vim-addon-mw-utils'
-Plug 'SirVer/ultisnips'
-Plug 'honza/vim-snippets'
-Plug 'quangnguyen30192/cmp-nvim-ultisnips'
+Plug 'ntpeters/vim-better-whitespace' " Better whitespace highlighting
+Plug 'MarcWeber/vim-addon-mw-utils' " various utils such as caching interpreted contents of files or advanced glob like things
+Plug 'SirVer/ultisnips' " The ultimate snippet solution
+Plug 'honza/vim-snippets' " default snippets
+Plug 'quangnguyen30192/cmp-nvim-ultisnips' " nvim-cmp source for ultisnips
 
-"Plug 'airblade/vim-gitgutter'
-Plug 'nvim-lua/plenary.nvim'
-Plug 'lewis6991/gitsigns.nvim'
+Plug 'lewis6991/gitsigns.nvim' " Git integration for buffers
 
+Plug 'neovim/nvim-lspconfig' " Quickstart configurations for the Nvim LSP client
 
-"if has('nvim')
-  "Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-"else
-  "Plug 'Shougo/deoplete.nvim'
-  "Plug 'roxma/nvim-yarp'
-  "Plug 'roxma/vim-hug-neovim-rpc'
-"endif
-"let g:deoplete#enable_at_startup = 1
-"Plug 'carlitux/deoplete-ternjs', { 'do': 'npm install -g tern' }
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'} " Nvim Treesitter configurations and abstraction layer
 
-Plug 'neovim/nvim-lspconfig'
+Plug 'hrsh7th/nvim-cmp' " A completion plugin for neovim coded in Lua
+Plug 'hrsh7th/cmp-nvim-lsp' " source for neovim builtin LSP client
+Plug 'ray-x/cmp-treesitter' " source for treesitter
+Plug 'hrsh7th/cmp-nvim-lua' " source for lua
+Plug 'hrsh7th/cmp-buffer' " source for buffer words
+Plug 'octaltree/cmp-look' " source for Linux look
+Plug 'hrsh7th/cmp-path' " source for filesystem paths
 
-Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
-
-Plug 'nvim-lua/plenary.nvim'
-
-"Plug 'jose-elias-alvarez/null-ls.nvim'
-"lua <<EOF
-    "require("null-ls").config {}
-    "require("lspconfig")["null-ls"].setup {}
-"EOF
-
-
-Plug 'hrsh7th/nvim-cmp'
-Plug 'hrsh7th/cmp-nvim-lsp'
-Plug 'ray-x/cmp-treesitter'
-Plug 'hrsh7th/cmp-nvim-lua'
-Plug 'hrsh7th/cmp-buffer'
-Plug 'octaltree/cmp-look'
-Plug 'hrsh7th/cmp-path'
-
-
-Plug 'w0rp/ale'
-"Plug 'scrooloose/syntastic'
-Plug 'marijnh/tern_for_vim'
-Plug 'pangloss/vim-javascript'
-Plug 'leafgarland/typescript-vim'
-Plug 'moll/vim-node'
-Plug 'jose-elias-alvarez/nvim-lsp-ts-utils'
-Plug 'JoosepAlviste/nvim-ts-context-commentstring'
-Plug 'windwp/nvim-ts-autotag'
-Plug 'RRethy/nvim-treesitter-textsubjects'
-Plug 'maxmellon/vim-jsx-pretty'
-Plug 'jparise/vim-graphql'
-Plug 'zirrostig/vim-schlepp'
-Plug 'tpope/vim-surround'
+Plug 'w0rp/ale' " Check syntax in Vim asynchronously and fix files
+Plug 'marijnh/tern_for_vim' " Tern plugin
+Plug 'pangloss/vim-javascript' " Vastly improved Javascript indentation and syntax support
+Plug 'leafgarland/typescript-vim' " Typescript syntax files
+Plug 'moll/vim-node' " Tools and environment to make Vim superb for developing with Node.js
+Plug 'jose-elias-alvarez/nvim-lsp-ts-utils' " Utilities to improve the TypeScript development experience
+Plug 'JoosepAlviste/nvim-ts-context-commentstring' " setting the commentstring based on the cursor location in a file
+Plug 'windwp/nvim-ts-autotag' " Use treesitter to auto close and auto rename html tag
+Plug 'RRethy/nvim-treesitter-textsubjects' " Location and syntax aware text objects
+Plug 'maxmellon/vim-jsx-pretty' " JSX and TSX syntax pretty highlighting
+Plug 'jparise/vim-graphql' " GraphQL file detection, syntax highlighting, and indentation
+Plug 'zirrostig/vim-schlepp' " easily moving text selections around
+Plug 'tpope/vim-surround' " Delete/change/add parentheses/quotes/XML-tags/much more with ease
 
 call plug#end()
 
@@ -103,6 +77,7 @@ endif
 set backspace=indent,eol,start
 
 set enc=utf-8
+lang ru_RU.UTF-8
 
 set nobackup
 
@@ -179,19 +154,80 @@ let g:ultisnips_javascript = {
       \ }
 
 " NERDTree
-nmap <leader>nt :NERDTreeFind<CR>
-let NERDTreeShowBookmarks=1
-let NERDTreeChDirMode=0
-let NERDTreeQuitOnOpen=1
-let NERDTreeShowHidden=1
-let NERDTreeKeepTreeInNewTab=1
+"nmap <leader>nt :NERDTreeFind<CR>
+"let NERDTreeShowBookmarks=1
+"let NERDTreeChDirMode=0
+"let NERDTreeQuitOnOpen=1
+"let NERDTreeShowHidden=1
+"let NERDTreeKeepTreeInNewTab=1
+
+" nvim-tree
+lua <<EOF
+require'nvim-tree'.setup {
+  disable_netrw       = true,
+  hijack_netrw        = true,
+  open_on_setup       = false,
+  ignore_ft_on_setup  = {},
+  auto_close          = false,
+  open_on_tab         = false,
+  hijack_cursor       = false,
+  update_cwd          = false,
+  update_to_buf_dir   = {
+    enable = true,
+    auto_open = true,
+  },
+  diagnostics = {
+    enable = false,
+    icons = {
+      hint = "",
+      info = "",
+      warning = "",
+      error = "",
+    }
+  },
+  update_focused_file = {
+    enable      = false,
+    update_cwd  = false,
+    ignore_list = {}
+  },
+  system_open = {
+    cmd  = nil,
+    args = {}
+  },
+  filters = {
+    dotfiles = false,
+    custom = {}
+  },
+  git = {
+    enable = true,
+    ignore = true,
+    timeout = 500,
+  },
+  view = {
+    width = 30,
+    height = 30,
+    hide_root_folder = false,
+    side = 'left',
+    auto_resize = false,
+    mappings = {
+      custom_only = false,
+      list = {}
+    },
+    number = false,
+    relativenumber = false,
+    signcolumn = "yes"
+  },
+  trash = {
+    cmd = "trash",
+    require_confirm = true
+  }
+}
+EOF
+
 
 command W w
 command WQ wq
-command Wq wq
 command Q q
-
-"let g:syntastic_javascript_checkers = ['jscs']
 
 " Telescope
 nnoremap <leader>ff <cmd>Telescope find_files<cr>
@@ -235,20 +271,6 @@ EOF
 " Tern
 let g:tern#command = ["tern"]
 let g:tern#arguments = ["--persistent"]
-
-" Deoplete
-"let g:deoplete#enable_at_startup = 1
-"let g:deoplete#disable_auto_complete = 1
-"inoremap <silent><expr> <S-Down>
-    "\ pumvisible() ? "\<C-n>" :
-    "\ <SID>check_back_space() ? "\<TAB>" :
-    "\ deoplete#manual_complete()
-"function! s:check_back_space() abort "{{{
-  "let col = col('.') - 1
-  "return !col || getline('.')[col - 1]  =~ '\s'
-"endfunction"}}}
-"let g:deoplete#sources#ternjs#include_keywords = 1
-"let g:deoplete#sources#jedi#python_path = 'python3'
 
 lua <<EOF
 local cmp = require'cmp'
@@ -300,10 +322,21 @@ cmp.setup({
     },
     snippet = {expand = function(args) vim.fn["UltiSnips#Anon"](args.body) end},
     sources = {
-        {name = 'buffer'}, {name = 'nvim_lsp'}, {name = "ultisnips"},
-        {name = "nvim_lua"}, {name = "look"}, {name = "path"}
+        {name = 'buffer', max_item_count = 5},
+        {name = 'nvim_lsp', max_item_count = 5},
+        {name = "nvim_lua", max_item_count = 5},
+        {name = "look", max_item_count = 5},
+        {name = "path", max_item_count = 5}
     },
-    completion = {completeopt = 'menu,menuone,noinsert'}
+    completion = {completeopt = 'menu,menuone,noinsert'},
+    confirmation = {
+        get_commit_characters = function(commit_characters)
+            return vim.tbl_filter(function(char)
+                return char ~= ',' and char ~= '.'
+            end, commit_characters)
+        end
+    }
+
 })
 EOF
 
@@ -366,7 +399,6 @@ lua <<EOF
         end
     }
 EOF
-
 
 " Schlepp
 vmap <unique> <S-up> <Plug>SchleppUp
