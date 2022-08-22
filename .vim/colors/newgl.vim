@@ -71,7 +71,7 @@ hi! SpecialKey ctermfg=14 ctermbg=NONE cterm=NONE
 hi! NonText ctermfg=15 ctermbg=NONE cterm=NONE
 hi! Directory ctermfg=6 ctermbg=NONE cterm=NONE
 hi! ErrorMsg ctermfg=1 ctermbg=15 cterm=NONE
-hi! IncSearch ctermfg=8 ctermbg=11 cterm=NONE
+hi! IncSearch ctermfg=8 ctermbg=3 cterm=NONE
 hi! Search ctermfg=0 ctermbg=11 cterm=NONE
 hi! MoreMsg ctermfg=NONE ctermbg=NONE cterm=NONE
 hi! ModeMsg ctermfg=1 ctermbg=NONE cterm=NONE
