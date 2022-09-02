@@ -1,0 +1,142 @@
+# If you come from bash you might have to change your $PATH.
+export PATH=$HOME/Documents/arcadia:$PATH
+
+ZSH_DISABLE_COMPFIX="true"
+# Path to your oh-my-zsh installation.
+export ZSH=$HOME/.oh-my-zsh
+
+# Set name of the theme to load --- if set to "random", it will
+# load a random theme each time oh-my-zsh is loaded, in which case,
+# to know which specific one was loaded, run: echo $RANDOM_THEME
+# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
+ZSH_THEME="arrow"
+
+# Would you like to use another custom folder than $ZSH/custom?
+# ZSH_CUSTOM=/path/to/new-custom-folder
+
+# Which plugins would you like to load?
+# Standard plugins can be found in $ZSH/plugins/
+# Custom plugins may be added to $ZSH_CUSTOM/plugins/
+# Example format: plugins=(rails git textmate ruby lighthouse)
+# Add wisely, as too many plugins slow down shell startup.
+plugins=(
+    git
+    arc-prompt
+)
+
+source $ZSH/oh-my-zsh.sh
+source ~/.iterm2_shell_integration.zsh
+unsetopt share_history
+
+export LANG=en_US.UTF-8
+
+export EDITOR='nvim'
+
+# Set personal aliases, overriding those provided by oh-my-zsh libs,
+# plugins, and themes. Aliases can be placed here, though oh-my-zsh
+# users are encouraged to define aliases within the ZSH_CUSTOM folder.
+# For a full list of active aliases, run `alias`.
+
+alias v="nvim -o"
+alias l="exa --icons"
+alias l1="l -1"
+alias ll="l -lah"
+alias t="exa -T"
+
+# Usage: prompt-length TEXT [COLUMNS]
+#
+# If you run `print -P TEXT`, how many characters will be printed
+# on the last line?
+#
+# Or, equivalently, if you set PROMPT=TEXT with prompt_subst
+# option unset, on which column will the cursor be?
+#
+# The second argument specifies terminal width. Defaults to the
+# real terminal width.
+#
+# Assumes that `%{%}` and `%G` don't lie.
+#
+# Examples:
+#
+#   prompt-length ''            => 0
+#   prompt-length 'abc'         => 3
+#   prompt-length $'abc\nxy'    => 2
+#   prompt-length '❎'          => 2
+#   prompt-length $'\t'         => 8
+#   prompt-length $'\u274E'     => 2
+#   prompt-length '%F{red}abc'  => 3
+#   prompt-length $'%{a\b%Gb%}' => 1
+#   prompt-length '%D'          => 8
+#   prompt-length '%1(l..ab)'   => 2
+#   prompt-length '%(!.a.)'     => 1 if root, 0 if not
+function prompt-length() {
+  emulate -L zsh
+  local -i COLUMNS=${2:-COLUMNS}
+  local -i x y=${#1} m
+  if (( y )); then
+    while (( ${${(%):-$1%$y(l.1.0)}[-1]} )); do
+      x=y
+      (( y *= 2 ))
+    done
+    while (( y > x + 1 )); do
+      (( m = x + (y - x) / 2 ))
+      (( ${${(%):-$1%$m(l.x.y)}[-1]} = m ))
+    done
+  fi
+  echo $x
+}
+
+# Sets PROMPT and RPROMPT.
+#
+# Requires: prompt_percent and no_prompt_subst.
+function set-prompt() {
+  emulate -L zsh
+
+  top_left=$(ZSH_PROMPT_TOP_LEFT)
+  top_right=$(ZSH_PROMPT_TOP_RIGHT)
+  bottom_left=$(ZSH_PROMPT_BOTTOM_LEFT)
+  bottom_right=$(ZSH_PROMPT_BOTTOM_RIGHT)
+
+  local -i left_len=$(prompt-length ${top_left})
+  local -i right_len=$(prompt-length ${top_right} 9999)
+  local -i pad_len=$((COLUMNS - left_len - right_len - ${ZLE_RPROMPT_INDENT:-1}))
+  if (( pad_len > $((left_len + right_len)))); then
+    PROMPT=${top_left}' '${bottom_left}
+    RPROMPT=${bottom_right}${top_right}
+  else
+    if (( pad_len < 1 )); then
+      PROMPT=${top_left}$'\n'${bottom_left}
+      RPROMPT=${bottom_right}${top_right}
+    else
+      local pad=${(pl.$pad_len.. .)}
+      PROMPT=${top_left}${pad}${top_right}$'\n'${bottom_left}
+      RPROMPT=${bottom_right}
+    fi
+  fi
+}
+
+setopt no_prompt_{bang,subst} prompt_{cr,percent,sp}
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd set-prompt
+
+ZSH_PROMPT_TOP_LEFT() { echo "%{$(iterm2_prompt_mark)%}%F{yellow}%~%f" }
+ZSH_PROMPT_TOP_RIGHT() { echo "$(git_prompt_info)$(arc_prompt_info)" }
+ZSH_PROMPT_BOTTOM_LEFT() { echo "%F{%(?.green.red)}%(!. .➤)%f " }
+ZSH_PROMPT_BOTTOM_RIGHT() { echo '' }
+export ZSH_THEME_GIT_PROMPT_PREFIX=' '
+export ZSH_THEME_GIT_PROMPT_SUFFIX='%f'
+export ZSH_THEME_GIT_PROMPT_DIRTY='%F{red}'
+export ZSH_THEME_GIT_PROMPT_CLEAN='%F{green}'
+
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+fpath+=~/.zfunc
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+eval "$(zoxide init zsh)"
+
+source $HOME/.config/broot/launcher/bash/br
