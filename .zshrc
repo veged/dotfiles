@@ -123,8 +123,8 @@ ZSH_PROMPT_TOP_LEFT() { echo "%{$(iterm2_prompt_mark)%}%F{yellow}%~%f" }
 ZSH_PROMPT_TOP_RIGHT() { echo "$(git_prompt_info)$(arc_prompt_info)" }
 ZSH_PROMPT_BOTTOM_LEFT() { echo "%F{%(?.green.red)}%(!. .➤)%f " }
 ZSH_PROMPT_BOTTOM_RIGHT() { echo '' }
-export ZSH_THEME_GIT_PROMPT_PREFIX=' '
-export ZSH_THEME_GIT_PROMPT_SUFFIX='%f'
+export ZSH_THEME_GIT_PROMPT_PREFIX='%B '
+export ZSH_THEME_GIT_PROMPT_SUFFIX='%b%f'
 export ZSH_THEME_GIT_PROMPT_DIRTY='%F{red}'
 export ZSH_THEME_GIT_PROMPT_CLEAN='%F{green}'
 
