@@ -133,7 +133,8 @@ vim.api.nvim_create_user_command('Q', 'q', { desc = 'Quit' })
 vim.api.nvim_create_user_command('Qa', 'qa', { desc = 'Quit all' })
 
 vim.o.termguicolors = true
-vim.cmd('colorscheme yacolors_light')
+vim.o.background = 'light'
+vim.cmd('colorscheme yacolors')
 
 -- Completion
 
@@ -174,8 +175,9 @@ luasnip.add_snippets('typescriptreact', snippets.javascriptreact)
 local cmp = require('cmp')
 local types = require('cmp.types')
 local str = require('cmp.utils.str')
+local lspkind = require('lspkind')
 
-vim.opt.completeopt = { 'menu', 'menuone', 'noselect' }
+vim.opt.completeopt = { 'menu', 'noselect' }
 
 cmp.setup({
   mapping = {
@@ -184,30 +186,39 @@ cmp.setup({
     ['<S-Up>'] = cmp.mapping.scroll_docs(-4),
     ['<S-Down>'] = cmp.mapping.scroll_docs(4),
     ['<C-Space>'] = cmp.mapping.complete(),
-    ['<C-e>'] = cmp.mapping.close(),
+    ['<Esc>'] = function(fallback)
+      if cmp.visible() then
+        cmp.abort()
+      else
+        fallback()
+      end
+    end,
     ['<CR>'] = cmp.mapping.confirm({
       behavior = cmp.ConfirmBehavior.Insert,
       select = false
     })
   },
   window = {
-    completion = cmp.config.window.bordered(),
+    completion = cmp.config.window.bordered({ winhighlight = 'Normal:NormalFloat,FloatBorder:Normal,CursorLine:CmpCursorLine,Search:Search' }),
     documentation = cmp.config.window.bordered()
   },
   formatting = {
     fields = { 'menu', 'abbr', 'kind' },
-    format = function(entry, item)
-      local menu_icon = {
-        nvim_lsp = '',
-        treesitter = '',
-        buffer = 'פֿ',
-        ultisnips = '',
-        path = '',
-        look = ''
-      }
-      item.menu = menu_icon[entry.source.name]
-      return item
-    end
+    format = lspkind.cmp_format({
+      mode = 'symbol_text',
+      before = function(entry, item)
+        local menu_icon = {
+          nvim_lsp = '',
+          treesitter = '',
+          buffer = 'פֿ',
+          ultisnips = '',
+          path = '',
+          look = ''
+        }
+        item.menu = menu_icon[entry.source.name]
+        return item
+      end
+    })
   },
   snippet = { expand = function(args) luasnip.lsp_expand(args.body) end },
   sources = {
@@ -231,7 +242,7 @@ cmp.setup({
     },
     { name = 'path', max_item_count = 3 }
   },
-  completion = { completeopt = 'menu,menuone,noselect' },
+  completion = { completeopt = 'menu,noselect' },
   confirmation = {
     get_commit_characters = function(commit_characters)
       return vim.tbl_filter(function(char) return char ~= ',' and char ~= '.' end, commit_characters)
@@ -261,7 +272,7 @@ require('typescript').setup({})
 require('lualine').setup({
   options = {
     icons_enabled = true,
-    theme = 'powerline',
+    theme = 'yacolors',
     component_separators = { left = '', right = '' },
     section_separators = { left = '', right = '' },
     always_divide_middle = true,
@@ -305,20 +316,20 @@ require('lualine').setup({
     lualine_z = { 'progress', 'location' }
   },
   inactive_sections = {
-    lualine_a = {},
-    lualine_b = {},
+    lualine_a = { function() return ' ' end },
+    lualine_b = { 'branch', 'diff' },
     lualine_c = { 'filename' },
-    lualine_x = { 'location' },
-    lualine_y = {},
-    lualine_z = {}
+    lualine_x = {},
+    lualine_y = { 'filetype' },
+    lualine_z = { 'progress', 'location' }
   },
   tabline = {
-    lualine_a = {'buffers'},
+    lualine_a = { 'buffers' },
     lualine_b = {},
     lualine_c = {},
     lualine_x = {},
     lualine_y = {},
-    lualine_z = {'tabs'}
+    lualine_z = { 'tabs' }
   },
   winbar = {},
   inactive_winbar = {},
