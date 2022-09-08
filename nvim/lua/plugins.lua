@@ -42,6 +42,7 @@ return require('packer').startup(function(use)
     { 'saadparwaiz1/cmp_luasnip', requires = {'hrsh7th/nvim-cmp', 'L3MON4D3/LuaSnip'} }, -- A collection of luasnip snippets
     'neovim/nvim-lspconfig', -- Quickstart configurations for the Nvim LSP client
 
+    'onsails/lspkind.nvim', -- vscode-like pictograms for neovim lsp completion items
     'hrsh7th/nvim-cmp', -- A completion plugin for neovim coded in Lua
     { 'hrsh7th/cmp-nvim-lsp', requires = {'hrsh7th/nvim-cmp'} }, -- source for neovim builtin LSP client  use 'hrsh7th/cmp-nvim-lsp'
     { 'ray-x/cmp-treesitter', requires = {'hrsh7th/nvim-cmp'} }, -- source for treesitter
@@ -59,7 +60,7 @@ return require('packer').startup(function(use)
     },
 
     'rktjmp/lush.nvim', -- Create Neovim themes with real-time feedback, export anywhere
-    '~/Documents/yacolors.nvim',
+    'veged/yacolors.nvim',
     'rickhowe/diffchar.vim', -- Highlight the exact differences, based on characters and words
     'norcalli/nvim-colorizer.lua', -- A high-performance color highlighter
     'moll/vim-node', -- Tools and environment to make Vim superb for developing with Node.js
@@ -72,7 +73,7 @@ return require('packer').startup(function(use)
     'nvim-treesitter/nvim-treesitter-textobjects', -- Syntax aware text-objects, select, move, swap, and peek support
     'maxmellon/vim-jsx-pretty', -- JSX and TSX syntax pretty highlighting
     'euclidianAce/BetterLua.vim', -- Better Lua syntax highlighting
-    'andrejlevkovitch/vim-lua-format' -- Lua vim formatter supported by LuaFormatter
+    'andrejlevkovitch/vim-lua-format', -- Lua vim formatter supported by LuaFormatter
   }
 
 
