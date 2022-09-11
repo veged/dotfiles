@@ -84,6 +84,12 @@ vim.keymap.set('x', '<M-S-Down>', '<Plug>GoVSDDown')
 vim.keymap.set('x', '<M-S-Up>', '<Plug>GoVSDUp')
 vim.keymap.set('x', '<M-S-Right>', '<Plug>GoVSDRight')
 
+-- System clipboard
+vim.keymap.set('v', '<C-c>', '"+y')
+vim.keymap.set('n', '<C-c>', '"+yy')
+vim.keymap.set('v', '<C-x>', '"+d')
+vim.keymap.set('n', '<C-x>', '"+dd')
+
 -- Toggle mouse
 vim.keymap.set('n', '<Leader>m', function()
   if vim.o.mouse == 'a' then
