@@ -24,6 +24,7 @@ zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 plugins=(
     git
     arc-prompt
+    zsh-shift-select
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -31,6 +32,27 @@ source ~/.iterm2_shell_integration.zsh
 unsetopt share_history
 
 export LANG=en_US.UTF-8
+
+bindkey "\e[1;3D" backward-word     # ⌥←
+bindkey "\e[1;3C" forward-word      # ⌥→
+bindkey "^[[1;9D" beginning-of-line # ⌘←
+bindkey "^[[1;9C" end-of-line       # ⌘→
+
+
+pb-copy-region-as-kill () {
+  zle copy-region-as-kill
+  echo -n $CUTBUFFER | pbcopy
+}
+zle -N pb-copy-region-as-kill
+
+pb-kill-region () {
+  zle kill-region
+  echo -n $CUTBUFFER | pbcopy
+}
+zle -N pb-kill-region
+
+bindkey "^[[99;9u" pb-copy-region-as-kill # ⌘c
+bindkey "^[[120;9u" pb-kill-region # ⌘x
 
 export EDITOR='nvim'
 
