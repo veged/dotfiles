@@ -39,7 +39,6 @@ bindkey "\e[1;3C" forward-word      # ⌥→
 bindkey "^[[1;9D" beginning-of-line # ⌘←
 bindkey "^[[1;9C" end-of-line       # ⌘→
 
-
 pb-copy-region-as-kill () {
   zle copy-region-as-kill
   echo -n $CUTBUFFER | pbcopy
@@ -54,6 +53,10 @@ zle -N pb-kill-region
 
 bindkey "^[[99;9u" pb-copy-region-as-kill # ⌘c
 bindkey "^[[120;9u" pb-kill-region # ⌘x
+
+resume-last-job () { fg % }
+zle -N resume-last-job
+bindkey "^[[102;9u" resume-last-job
 
 export EDITOR='nvim'
 
