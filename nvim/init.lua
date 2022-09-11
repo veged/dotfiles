@@ -117,6 +117,9 @@ vim.keymap.set('n', '<Leader>n', function()
   end
 end)
 
+vim.keymap.set('n', '<C-End>', '<Cmd>bn<CR>')
+vim.keymap.set('n', '<C-Home>', '<Cmd>bp<CR>')
+
 vim.keymap.set('n', 'U', '<C-r>')
 
 -- Write and quit
