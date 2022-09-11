@@ -25,6 +25,7 @@ plugins=(
     git
     arc-prompt
     zsh-shift-select
+    zsh-better-npm-completion
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -62,6 +63,8 @@ export EDITOR='nvim'
 # For a full list of active aliases, run `alias`.
 
 alias v="nvim -o"
+alias vc="nvim ~/.config/nvim/init.lua"
+alias vd="nvim -d"
 alias l="exa --icons"
 alias l1="l -1"
 alias ll="l -lah"
