@@ -54,3 +54,5 @@
 	concurrenttransfers = 15
 [difftool]
 	prompt = false
+[include]
+	path = gitalias.txt
