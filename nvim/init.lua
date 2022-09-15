@@ -195,13 +195,13 @@ cmp.setup({
     ['<S-Up>'] = cmp.mapping.scroll_docs(-4),
     ['<S-Down>'] = cmp.mapping.scroll_docs(4),
     ['<C-Space>'] = cmp.mapping.complete(),
-    ['<Esc>'] = function(fallback)
-      if cmp.visible() then
-        cmp.abort()
-      else
-        fallback()
-      end
-    end,
+    -- ['<Esc>'] = function(fallback)
+    --   if cmp.visible() then
+    --     cmp.abort()
+    --   else
+    --     fallback()
+    --   end
+    -- end,
     ['<CR>'] = cmp.mapping.confirm({
       behavior = cmp.ConfirmBehavior.Insert,
       select = false
@@ -267,16 +267,34 @@ vim.o.signcolumn = 'yes'
 
 require('lspconfig').eslint.setup({ capabilities = capabilities })
 require('lspconfig').html.setup({ capabilities = capabilities })
-require('lspconfig').tsserver.setup({
+
+local typescriptSetup = {
   capabilities = capabilities,
   on_attach = function(client, bufnr)
-      local bufopts = { noremap=true, silent=true, buffer=bufnr }
-      vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, bufopts)
-      vim.keymap.set('n', 'gd', vim.lsp.buf.definition, bufopts)
-      vim.keymap.set('n', 'K', vim.lsp.buf.hover, bufopts)
+    print('tsserver attached')
+    local bufopts = { noremap=true, silent=true, buffer=bufnr }
+    vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, bufopts)
+    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, bufopts)
+    vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, bufopts)
+    vim.keymap.set('n', 'gt', vim.lsp.buf.type_definition, bufopts)
+    vim.keymap.set('n', 'gr', vim.lsp.buf.references, bufopts)
+
+    vim.keymap.set('n', '<Leader>h', vim.lsp.buf.hover, bufopts)
+    vim.keymap.set('n', '<Leader>H', vim.lsp.buf.signature_help, bufopts)
+
+    vim.keymap.set('n', '<Leader>=', vim.lsp.buf.formatting, bufopts)
+    vim.keymap.set('n', '<Leader>r', vim.lsp.buf.rename, bufopts)
+    vim.keymap.set('n', '<Leader>@', vim.lsp.buf.code_action, bufopts)
+
+    vim.keymap.set('n', '<Leader>~a', vim.lsp.buf.add_workspace_folder, bufopts)
+    vim.keymap.set('n', '<Leader>~r', vim.lsp.buf.remove_workspace_folder, bufopts)
+    vim.keymap.set('n', '<Leader>~l', function()
+      print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+    end, bufopts)
   end
-})
-require('typescript').setup({})
+}
+-- require('lspconfig').tsserver.setup(typescriptSetup)
+require('typescript').setup({ server = typescriptSetup })
 
 require('lualine').setup({
   options = {
@@ -318,7 +336,8 @@ require('lualine').setup({
           'nvim_diagnostic',
           'nvim_workspace_diagnostic'
         },
-        symbols = { error = ' ', warn = ' ', info = ' ', hint = ' ' }
+        symbols = { error = ' ', warn = ' ', info = ' ', hint = ' ' },
+        -- on_click = function() vim.cmd('TroubleToggle') end
       }
     },
     lualine_y = { 'filetype' },
@@ -359,6 +378,15 @@ local treesitter_custom_captures = {
   ['keyword.continue'] = 'TSKeywordContinue',
   ['punctuation.bracket.array'] = 'TSPunctArray',
   ['punctuation.delimiter.array'] = 'TSPunctArray',
+  ['punctuation.bracket.object'] = 'TSPunctObject',
+  ['punctuation.delimiter.object'] = 'TSPunctObject',
+  ['punctuation.quote.string'] = 'TSPunctString',
+  ['punctuation.bracket.string'] = 'TSStringSubst',
+  ['punctuation.delimiter.member'] = 'TSPunctDelimiter',
+  ['punctuation.bracket.function'] = 'TSPunctFunction',
+  ['punctuation.delimiter.function'] = 'TSPunctFunction',
+  ['punctuation.arrow.function'] = 'TSPunctArrowFunction',
+  ['punctuation.bracket.conditional'] = 'TSPunctConditional',
 }
 
 require('nvim-treesitter.highlight').set_custom_captures(treesitter_custom_captures)
