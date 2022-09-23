@@ -1,6 +1,10 @@
 require('impatient')
 require('plugins')
 
+vim.g.loaded_ruby_provider = 0
+vim.g.loaded_node_provider = 0
+vim.g.loaded_perl_provider = 0
+
 -- Remember last location in file
 vim.api.nvim_create_autocmd('BufRead', { pattern = '*', command = [[call setpos(".", getpos("'\""))]] })
 
@@ -91,6 +95,7 @@ vim.keymap.set('v', '<C-x>', '"+d')
 vim.keymap.set('n', '<C-x>', '"+dd')
 
 -- Toggle mouse
+vim.opt.mouse = ''
 vim.keymap.set('n', '<Leader>m', function()
   if vim.o.mouse == 'a' then
     vim.o.mouse = ''
@@ -131,10 +136,10 @@ vim.keymap.set('n', '<Leader>aw', '<Cmd>wa<CR>')
 vim.keymap.set('n', '<Leader>aW', '<Cmd>wa!<CR>')
 vim.keymap.set('n', '<Leader>ax', '<Cmd>qa<CR>')
 vim.keymap.set('n', '<Leader>aX', '<Cmd>qa!<CR>')
-vim.keymap.set('n', '<Leader>s', '<Cmd>wq<CR>')
-vim.keymap.set('n', '<Leader>S', '<Cmd>wq!<CR>')
-vim.keymap.set('n', '<Leader>as', '<Cmd>wqa<CR>')
-vim.keymap.set('n', '<Leader>aS', '<Cmd>wqa!<CR>')
+vim.keymap.set('n', '<Leader>q', '<Cmd>qa<CR>')
+vim.keymap.set('n', '<Leader>Q', '<Cmd>qa!<CR>')
+vim.keymap.set('n', '<Leader>s', '<Cmd>wqa<CR>')
+vim.keymap.set('n', '<Leader>S', '<Cmd>wqa!<CR>')
 vim.api.nvim_create_user_command('W', 'w', { desc = 'Write' })
 vim.api.nvim_create_user_command('WQ', 'wq', { desc = 'Write and quit' })
 vim.api.nvim_create_user_command('Wqa', 'wqa', { desc = 'Write and quit all' })
@@ -369,34 +374,15 @@ require('trouble').setup({
 })
 vim.keymap.set('n', '<Leader>!', '<Cmd>TroubleToggle<CR>')
 
-local treesitter_custom_captures = {
-  ['keyword.var'] = 'TSKeywordVarLetConst',
-  ['keyword.let'] = 'TSKeywordVarLetConst',
-  ['keyword.const'] = 'TSKeywordVarLetConst',
-  ['keyword.switch'] = 'TSKeywordSwitch',
-  ['keyword.break'] = 'TSKeywordBreak',
-  ['keyword.continue'] = 'TSKeywordContinue',
-  ['punctuation.bracket.array'] = 'TSPunctArray',
-  ['punctuation.delimiter.array'] = 'TSPunctArray',
-  ['punctuation.bracket.object'] = 'TSPunctObject',
-  ['punctuation.delimiter.object'] = 'TSPunctObject',
-  ['punctuation.quote.string'] = 'TSPunctString',
-  ['punctuation.bracket.string'] = 'TSStringSubst',
-  ['punctuation.delimiter.member'] = 'TSPunctDelimiter',
-  ['punctuation.bracket.function'] = 'TSPunctFunction',
-  ['punctuation.delimiter.function'] = 'TSPunctFunction',
-  ['punctuation.arrow.function'] = 'TSPunctArrowFunction',
-  ['punctuation.bracket.conditional'] = 'TSPunctConditional',
-}
-
-require('nvim-treesitter.highlight').set_custom_captures(treesitter_custom_captures)
+-- vim.g.skip_ts_default_groups = true
+-- require('nvim-treesitter.highlight').set_custom_captures(treesitter_custom_captures)
 
 require'nvim-treesitter.configs'.setup {
   ensure_installed = { 'html', 'css', 'javascript', 'typescript', 'json', 'lua' },
   auto_install = true,
   highlight = {
     enable = true,
-    custom_captures = treesitter_custom_captures
+    additional_vim_regex_highlighting = false
   },
   -- indent = { enable = true },
   context_commentstring = { enable = true },
@@ -448,7 +434,6 @@ require('nvim-tree').setup({
   view = {
     centralize_selection = false,
     width = '20%',
-    height = '100%',
     signcolumn = 'yes'
   },
   renderer = {
