@@ -163,8 +163,9 @@ local luasnip = require('luasnip')
 local types = require('luasnip.util.types')
 
 luasnip.config.set_config({
-  history = true,
-  updateevents = 'TextChanged,TextChangedI',
+  history = false,
+  update_events = 'InsertLeave,TextChanged,TextChangedI',
+  delete_check_events = 'InsertLeave,TextChanged,TextChangedI',
   ext_opts = {
     [types.choiceNode] = {
       active = {
@@ -174,7 +175,7 @@ luasnip.config.set_config({
   }
 })
 
-vim.keymap.set('i', '<Tab>', 'luasnip#expand_or_jumpable() ? "<Plug>luasnip-expand-or-jump" : "<Tab>"', { expr = true })
+vim.keymap.set('i', '<Tab>', function() return luasnip.expand_or_locally_jumpable() and '<Plug>luasnip-expand-or-jump' or '<Tab>' end, { expr = true })
 vim.keymap.set('i', '<S-Tab>', function() luasnip.jump(-1) end)
 vim.keymap.set('i', '<M-Tab>', function() if luasnip.choice_active() then require('luasnip.extras.select_choice')() end end)
 
