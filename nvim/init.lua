@@ -13,6 +13,8 @@ vim.o.scrolloff = 3
 
 vim.g.mapleader = ' '
 vim.o.langmap = 'ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯ;ABCDEFGHIJKLMNOPQRSTUVWXYZ,фисвуапршолдьтщзйкыегмцчня;abcdefghijklmnopqrstuvwxyz'
+vim.api.nvim_create_autocmd( 'InsertLeave', { pattern = '*', command = 'silent !macism com.apple.keylayout.US' }) -- require https://github.com/laishulu/macism
+
 
 vim.o.wrap = false
 vim.o.autoindent = true
@@ -372,10 +374,10 @@ require('lualine').setup({
     lualine_z = {
       {
         function()
-          local h = io.popen('macism') -- require https://github.com/laishulu/macism
-          local r = ({ us = 'ENG', ru = 'РУС' })[string.match(h:read('*l'), '%.(%w%w)%w*$'):lower()]
+          local h = io.popen('defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources')
+          local r = h:read('*a'):match('"KeyboardLayout Name" = (.+);'):gsub('%W', ''):sub(1, 2):lower()
           h:close()
-          return r
+          return ({ us = 'ENG', ru = 'РУС' })[r]
         end,
         icon = ''
       }
