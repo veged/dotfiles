@@ -26,6 +26,12 @@ vim.o.list = true
 vim.opt.listchars = { tab = '⋗⋅', trail = '·', nbsp = '∷', extends = '※' }
 vim.api.nvim_create_autocmd('BufEnter', { pattern = '*', command = 'EnableStripWhitespaceOnSave' })
 
+-- Spell
+vim.o.spell = false
+vim.o.spelllang = 'ru_yo,en_us'
+vim.o.spelloptions = 'camel,noplainbuffer'
+vim.keymap.set('n', '<Leader>?', function() vim.o.spell = not vim.o.spell end)
+
 -- Search and replace
 vim.o.ignorecase = true
 vim.o.smartcase = true
@@ -130,14 +136,14 @@ vim.keymap.set('n', 'U', '<C-r>')
 -- Write and quit
 vim.keymap.set('n', '<Leader>w', '<Cmd>w<CR>')
 vim.keymap.set('n', '<Leader>W', '<Cmd>w!<CR>')
-vim.keymap.set('n', '<Leader>x', '<Cmd>q<CR>')
-vim.keymap.set('n', '<Leader>X', '<Cmd>q!<CR>')
+vim.keymap.set('n', '<Leader>q', '<Cmd>q<CR>')
+vim.keymap.set('n', '<Leader>Q', '<Cmd>q!<CR>')
 vim.keymap.set('n', '<Leader>aw', '<Cmd>wa<CR>')
 vim.keymap.set('n', '<Leader>aW', '<Cmd>wa!<CR>')
-vim.keymap.set('n', '<Leader>ax', '<Cmd>qa<CR>')
-vim.keymap.set('n', '<Leader>aX', '<Cmd>qa!<CR>')
-vim.keymap.set('n', '<Leader>q', '<Cmd>qa<CR>')
-vim.keymap.set('n', '<Leader>Q', '<Cmd>qa!<CR>')
+vim.keymap.set('n', '<Leader>aq', '<Cmd>qa<CR>')
+vim.keymap.set('n', '<Leader>aQ', '<Cmd>qa!<CR>')
+vim.keymap.set('n', '<Leader>x', '<Cmd>qa<CR>')
+vim.keymap.set('n', '<Leader>X', '<Cmd>qa!<CR>')
 vim.keymap.set('n', '<Leader>s', '<Cmd>wqa<CR>')
 vim.keymap.set('n', '<Leader>S', '<Cmd>wqa!<CR>')
 vim.api.nvim_create_user_command('W', 'w', { desc = 'Write' })
@@ -252,7 +258,7 @@ cmp.setup({
       option = {
         convert_case = true,
         loud = true,
-        dict = '/Users/veged/.vim/english-popular-word-list.txt'
+        dict = '/Users/veged/.config/nvim/english-popular-word-list.txt'
       }
     },
     { name = 'path', max_item_count = 3 }
@@ -362,8 +368,18 @@ require('lualine').setup({
     lualine_b = {},
     lualine_c = {},
     lualine_x = {},
-    lualine_y = {},
-    lualine_z = { 'tabs' }
+    lualine_y = { 'tabs' },
+    lualine_z = {
+      {
+        function()
+          local h = io.popen('macism') -- require https://github.com/laishulu/macism
+          local r = ({ us = 'ENG', ru = 'РУС' })[string.match(h:read('*l'), '%.(%w%w)%w*$'):lower()]
+          h:close()
+          return r
+        end,
+        icon = ''
+      }
+  }
   },
   winbar = {},
   inactive_winbar = {},
