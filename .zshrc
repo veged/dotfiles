@@ -1,5 +1,7 @@
+# Fig pre block. Keep at the top of this file.
+[[ -f "$HOME/.fig/shell/zshrc.pre.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.pre.zsh"
 # If you come from bash you might have to change your $PATH.
-export PATH=$HOME/Documents/arcadia:$PATH
+export PATH=./node_modules/.bin:$HOME/Documents/arcadia:$PATH
 
 ZSH_DISABLE_COMPFIX="true"
 # Path to your oh-my-zsh installation.
@@ -22,7 +24,6 @@ zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
-    git
     arc-prompt
     zsh-shift-select
     zsh-better-npm-completion
@@ -170,3 +171,6 @@ fpath+=~/.zfunc
 eval "$(zoxide init zsh)"
 
 source $HOME/.config/broot/launcher/bash/br
+
+# Fig post block. Keep at the bottom of this file.
+[[ -f "$HOME/.fig/shell/zshrc.post.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.post.zsh"

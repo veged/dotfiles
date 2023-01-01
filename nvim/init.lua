@@ -37,7 +37,9 @@ vim.keymap.set('n', '<Leader>?', function() vim.o.spell = not vim.o.spell end)
 -- Search and replace
 vim.o.ignorecase = true
 vim.o.smartcase = true
+vim.api.nvim_create_autocmd('BufReadPost', { pattern = 'quickfix', command = 'nnoremap <buffer> <CR> <CR>' })
 vim.keymap.set('n', '<CR>', '<Cmd>nohlsearch<CR>', { desc = 'Clear the search highlight by Enter' })
+
 vim.keymap.set('n', 'n', '<Plug>(highlight-current-n-n)')
 vim.keymap.set('n', 'N', '<Plug>(highlight-current-n-N)')
 vim.o.gdefault = true
@@ -136,18 +138,18 @@ vim.keymap.set('n', '<C-Home>', '<Cmd>bp<CR>')
 vim.keymap.set('n', 'U', '<C-r>')
 
 -- Write and quit
-vim.keymap.set('n', '<Leader>w', '<Cmd>w<CR>')
-vim.keymap.set('n', '<Leader>W', '<Cmd>w!<CR>')
-vim.keymap.set('n', '<Leader>q', '<Cmd>q<CR>')
-vim.keymap.set('n', '<Leader>Q', '<Cmd>q!<CR>')
-vim.keymap.set('n', '<Leader>aw', '<Cmd>wa<CR>')
-vim.keymap.set('n', '<Leader>aW', '<Cmd>wa!<CR>')
-vim.keymap.set('n', '<Leader>aq', '<Cmd>qa<CR>')
-vim.keymap.set('n', '<Leader>aQ', '<Cmd>qa!<CR>')
-vim.keymap.set('n', '<Leader>x', '<Cmd>qa<CR>')
-vim.keymap.set('n', '<Leader>X', '<Cmd>qa!<CR>')
-vim.keymap.set('n', '<Leader>s', '<Cmd>wqa<CR>')
-vim.keymap.set('n', '<Leader>S', '<Cmd>wqa!<CR>')
+vim.keymap.set({'n', 'v'}, '<Leader>w', '<Cmd>w<CR>')
+vim.keymap.set({'n', 'v'}, '<Leader>W', '<Cmd>w!<CR>')
+vim.keymap.set({'n', 'v'}, '<Leader>q', '<Cmd>q<CR>')
+vim.keymap.set({'n', 'v'}, '<Leader>Q', '<Cmd>q!<CR>')
+vim.keymap.set({'n', 'v'}, '<Leader>aw', '<Cmd>wa<CR>')
+vim.keymap.set({'n', 'v'}, '<Leader>aW', '<Cmd>wa!<CR>')
+vim.keymap.set({'n', 'v'}, '<Leader>aq', '<Cmd>qa<CR>')
+vim.keymap.set({'n', 'v'}, '<Leader>aQ', '<Cmd>qa!<CR>')
+vim.keymap.set({'n', 'v'}, '<Leader>x', '<Cmd>qa<CR>')
+vim.keymap.set({'n', 'v'}, '<Leader>X', '<Cmd>qa!<CR>')
+vim.keymap.set({'n', 'v'}, '<Leader>s', '<Cmd>wqa<CR>')
+vim.keymap.set({'n', 'v'}, '<Leader>S', '<Cmd>wqa!<CR>')
 vim.api.nvim_create_user_command('W', 'w', { desc = 'Write' })
 vim.api.nvim_create_user_command('WQ', 'wq', { desc = 'Write and quit' })
 vim.api.nvim_create_user_command('Wqa', 'wqa', { desc = 'Write and quit all' })
@@ -273,16 +275,24 @@ cmp.setup({
   }
 })
 
-local capabilities = vim.lsp.protocol.make_client_capabilities()
+local capabilities = require('cmp_nvim_lsp').default_capabilities()
 capabilities.textDocument.completion.completionItem.snippetSupport = true
-capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
 vim.o.signcolumn = 'yes'
 
 require('lspconfig').eslint.setup({ capabilities = capabilities })
-require('lspconfig').html.setup({ capabilities = capabilities })
+require('lspconfig').html.setup({
+  capabilities = capabilities,
+  init_options = {
+    configurationSection = { 'html', 'css', 'javascript' },
+    embeddedLanguages = {
+      css = true,
+      javascript = true
+    }
+  }
+})
 
-local typescriptSetup = {
+require('typescript').setup({ server = {
   capabilities = capabilities,
   on_attach = function(client, bufnr)
     print('tsserver attached')
@@ -296,7 +306,7 @@ local typescriptSetup = {
     vim.keymap.set('n', '<Leader>h', vim.lsp.buf.hover, bufopts)
     vim.keymap.set('n', '<Leader>H', vim.lsp.buf.signature_help, bufopts)
 
-    vim.keymap.set('n', '<Leader>=', vim.lsp.buf.formatting, bufopts)
+    vim.keymap.set('n', '<Leader>=', vim.lsp.buf.format, bufopts)
     vim.keymap.set('n', '<Leader>r', vim.lsp.buf.rename, bufopts)
     vim.keymap.set('n', '<Leader>@', vim.lsp.buf.code_action, bufopts)
 
@@ -306,9 +316,7 @@ local typescriptSetup = {
       print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
     end, bufopts)
   end
-}
--- require('lspconfig').tsserver.setup(typescriptSetup)
-require('typescript').setup({ server = typescriptSetup })
+} })
 
 require('lualine').setup({
   options = {
@@ -372,15 +380,15 @@ require('lualine').setup({
     lualine_x = {},
     lualine_y = { 'tabs' },
     lualine_z = {
-      {
-        function()
-          local h = io.popen('defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources')
-          local r = h:read('*a'):match('"KeyboardLayout Name" = (.+);'):gsub('%W', ''):sub(1, 2):lower()
-          h:close()
-          return ({ us = 'ENG', ru = 'РУС' })[r]
-        end,
-        icon = ''
-      }
+      -- {
+      --   function()
+      --     local h = io.popen('defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources')
+      --     local r = h:read('*a'):match('"KeyboardLayout Name" = (.+);'):gsub('%W', ''):sub(1, 2):lower()
+      --     h:close()
+      --     return ({ us = 'ENG', ru = 'РУС' })[r]
+      --   end,
+      --   icon = ''
+      -- }
   }
   },
   winbar = {},
