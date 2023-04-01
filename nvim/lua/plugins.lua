@@ -151,7 +151,7 @@ return require('lazy').setup({
       require('lualine').setup({
         options = {
           icons_enabled = true,
-          theme = 'yacolors',
+          theme = 'catppuccin',
           component_separators = { left = '', right = '' },
           section_separators = { left = '', right = '' },
           always_divide_middle = true,
@@ -219,6 +219,7 @@ return require('lazy').setup({
     'nvim-tree/nvim-tree.lua', -- A file explorer tree for neovim written in lua
     dependencies = { 'nvim-tree/nvim-web-devicons' }, -- Adds file type icons to Vim plugins
     cmd = 'NvimTreeToggle',
+    event = 'BufReadPre',
     keys = {
       { '<Leader>t', '<Cmd>NvimTreeToggle<CR>', desc = 'NvimTree' }
     },
@@ -497,14 +498,66 @@ return require('lazy').setup({
     },
 
     {
-      'veged/yacolors.nvim',
-      lazy = false,
-      priority = 1000,
-      dependencies = 'rktjmp/lush.nvim', -- Create Neovim themes with real-time feedback, export anywhere
-      config = function()
+      'f-person/auto-dark-mode.nvim',
+      name = 'auto-dark-mode',
+      opts = {
+        update_interval = 60000,
+        set_dark_mode = function()
+          vim.o.background = 'dark'
+          io.popen('kitty +kitten themes --reload-in=all Catppuccin-Latte')
+        end,
+        set_light_mode = function()
+          vim.o.background = 'light'
+          io.popen('kitty +kitten themes --reload-in=all Catppuccin-Mocha')
+        end
+      }
+    },
+
+    -- {
+    --   'veged/yacolors.nvim',
+    --   lazy = false,
+    --   priority = 1000,
+    --   dependencies = 'rktjmp/lush.nvim', -- Create Neovim themes with real-time feedback, export anywhere
+    --   config = function()
+    --     vim.o.termguicolors = true
+    --     vim.o.background = 'light'
+    --     vim.cmd('colorscheme yacolors')
+    --   end
+    -- },
+    {
+      'catppuccin/nvim',
+      name = 'catppuccin',
+      dependencies = 'auto-dark-mode',
+      opts = {
+        background = {
+          light = 'latte',
+          dark = 'mocha',
+        },
+        styles = {
+          comments = {},
+          conditionals = { 'italic', 'bold' },
+          loops = { 'italic', 'bold' },
+          functions = {},
+          keywords = { 'italic', 'bold' },
+          strings = {},
+          variables = {},
+          numbers = {},
+          booleans = {},
+          properties = {},
+          types = {},
+          operators = {},
+        },
+        custom_highlights = function(colors)
+          return {
+            -- Comment = { fg = colors.flamingo },
+            -- ["@constant.builtin"] = { fg = colors.peach, style = {} },
+            -- ["@comment"] = { fg = colors.surface2, style = { "italic" } },
+          }
+        end
+      },
+      init = function()
         vim.o.termguicolors = true
-        vim.o.background = 'light'
-        vim.cmd('colorscheme yacolors')
+        vim.cmd.colorscheme 'catppuccin'
       end
     },
 

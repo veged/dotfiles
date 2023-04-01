@@ -67,12 +67,15 @@ export EDITOR='nvim'
 # For a full list of active aliases, run `alias`.
 
 alias v="nvim -o"
-alias vc="nvim ~/.config/nvim/init.lua"
+alias vc="v ~/.config/nvim/{init.lua,lua/plugins.lua}"
 alias vd="nvim -d"
 alias l="exa --icons"
 alias l1="l -1"
 alias ll="l -lah"
 alias t="exa -T"
+
+alias kitty-light="kitty +kitten themes --reload-in=all Catppuccin-Latte"
+alias kitty-dark="kitty +kitten themes --reload-in=all Catppuccin-Mocha"
 
 # Usage: prompt-length TEXT [COLUMNS]
 #
