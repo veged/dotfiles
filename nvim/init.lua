@@ -68,7 +68,7 @@ vim.keymap.set('v', '>', '>gv')
 vim.keymap.set('v', '<C-c>', '"+y')
 vim.keymap.set('n', '<C-c>', '"+yy')
 vim.keymap.set('v', '<C-x>', '"+d')
-vim.keymap.set('n', '<C-x>', '"+dd')
+-- vim.keymap.set('n', '<C-x>', '"+dd')
 
 -- Toggle mouse
 vim.opt.mouse = ''
