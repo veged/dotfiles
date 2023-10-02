@@ -225,7 +225,7 @@ return require('lazy').setup({
 
   {
     'nvim-tree/nvim-tree.lua', -- A file explorer tree for neovim written in lua
-    dependencies = { 'nvim-tree/nvim-web-devicons' }, -- Adds file type icons to Vim plugins
+    dependencies = 'nvim-tree/nvim-web-devicons', -- Adds file type icons to Vim plugins
     cmd = 'NvimTreeToggle',
     event = 'BufReadPre',
     keys = {
@@ -349,6 +349,19 @@ return require('lazy').setup({
           }
         }
       })
+      lspconfig.lua_ls.setup({
+        settings = {
+          Lua = {
+            runtime = { version = 'LuaJIT' },
+            diagnostics = { globals = { 'vim' } },
+            workspace = {
+              library = vim.api.nvim_get_runtime_file("", true),
+              checkThirdParty = false
+            },
+            telemetry = { enable = false }
+          }
+        }
+      })
     end
   },
 
@@ -366,9 +379,10 @@ return require('lazy').setup({
     event = 'InsertEnter',
     config = function()
       local cmp = require('cmp')
-      local types = require('cmp.types')
-      local str = require('cmp.utils.str')
+      -- local types = require('cmp.types')
+      -- local str = require('cmp.utils.str')
       local lspkind = require('lspkind')
+      local luasnip = require('luasnip')
 
       vim.opt.completeopt = { 'menu', 'noselect' }
 
@@ -512,13 +526,16 @@ return require('lazy').setup({
         update_interval = 60000,
         set_dark_mode = function()
           vim.o.background = 'dark'
-          io.popen('kitty +kitten themes --reload-in=all Catppuccin-Latte')
+          io.popen('kitty +kitten themes --reload-in=all Catppuccin-Mocha')
         end,
         set_light_mode = function()
           vim.o.background = 'light'
-          io.popen('kitty +kitten themes --reload-in=all Catppuccin-Mocha')
+          io.popen('kitty +kitten themes --reload-in=all Catppuccin-Latte')
         end
-      }
+      },
+      init = function()
+        require('auto-dark-mode').init()
+      end
     },
 
     -- {
@@ -643,6 +660,7 @@ return require('lazy').setup({
             String = { fg = C.teal }, -- a string constant: 'this is a string'
             ['@punctuation.string'] = { fg = C.sapphire }, -- a string constant: 'this is a string'
             ['@punctuation.string.bracket'] = { style = { 'bold' } }, -- a string constant: 'this is a string'
+            ['@string.escape'] = { fg = C.teal, style = { 'bold' } },
             ['@string.regex'] = { fg = C.green },
             ['@punctuation.regex.bracket'] = { fg = C.green },
             Character = { fg = C.teal, style = { 'bold' } }, --  a character constant: 'c', '\n'
@@ -780,12 +798,9 @@ return require('lazy').setup({
 
     {
       'jose-elias-alvarez/typescript.nvim', -- A Lua plugin, written in TypeScript, to write TypeScript
-      ft = { 'typescript', 'typescriptreact' },
-      config = function()
-        require('typescript').setup({ server = {
-          capabilities = require('cmp_nvim_lsp').default_capabilities(),
+      opts = {
+        server = {
           on_attach = function(client, bufnr)
-            print('tsserver attached')
             local bufopts = { noremap=true, silent=true, buffer=bufnr }
             vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, bufopts)
             vim.keymap.set('n', 'gd', vim.lsp.buf.definition, bufopts)
@@ -806,8 +821,8 @@ return require('lazy').setup({
               print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
             end, bufopts)
           end
-        } })
-      end
+        }
+      }
     },
 
     'JoosepAlviste/nvim-ts-context-commentstring', -- Neovim treesitter plugin for setting the commentstring based on the cursor location in a file
@@ -832,5 +847,18 @@ return require('lazy').setup({
     {
       'andrejlevkovitch/vim-lua-format', -- Lua vim formatter supported by LuaFormatter
       ft = 'lua'
+    },
+
+    {
+      'folke/neodev.nvim',
+      ft = 'lua',
+      opts = {
+        library = {
+          enabled = true,
+          runtime = true,
+          types = true,
+          plugins = true
+        },
+      }
     }
 })
