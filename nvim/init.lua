@@ -122,7 +122,6 @@ vim.api.nvim_create_user_command('Wqa', 'wqa', { desc = 'Write and quit all' })
 vim.api.nvim_create_user_command('Q', 'q', { desc = 'Quit' })
 vim.api.nvim_create_user_command('Qa', 'qa', { desc = 'Quit all' })
 
-
 vim.o.signcolumn = 'yes'
 
 vim.o.foldenable = false

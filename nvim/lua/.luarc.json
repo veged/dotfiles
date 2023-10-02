@@ -1,0 +1,16 @@
+{
+    "workspace.library": [
+        "/Users/veged/.config/nvim",
+        "/Users/veged/.local/share/nvim/lazy/lazy.nvim",
+        "/Users/veged/.local/share/nvim/lazy/cmp-nvim-lsp",
+        "/Users/veged/.local/share/nvim/lazy/nvim-lspconfig",
+        "/Users/veged/.local/share/nvim/lazy/auto-dark-mode",
+        "/Users/veged/.local/share/nvim/lazy/catppuccin",
+        "/opt/homebrew/Cellar/neovim/HEAD-436e014/share/nvim/runtime",
+        "/Users/veged/.local/share/nvim/lazy/cmp-nvim-lsp/after",
+        "/Users/veged/.local/share/nvim/lazy/catppuccin/after",
+        "/Users/veged/.config/nvim/after",
+        "/Users/veged/.local/state/nvim/lazy/readme",
+        "${3rd}/luassert/library"
+    ]
+}
