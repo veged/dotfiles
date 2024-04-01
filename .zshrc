@@ -1,7 +1,10 @@
 # Fig pre block. Keep at the top of this file.
 [[ -f "$HOME/.fig/shell/zshrc.pre.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.pre.zsh"
+
+export GOROOT=`go env GOPATH`
+
 # If you come from bash you might have to change your $PATH.
-export PATH=./node_modules/.bin:$HOME/Documents/arcadia:$PATH
+export PATH=$GOROOT/bin:./node_modules/.bin:$HOME/Documents/arcadia:$PATH
 
 ZSH_DISABLE_COMPFIX="true"
 # Path to your oh-my-zsh installation.

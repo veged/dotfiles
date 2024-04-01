@@ -4,7 +4,7 @@ vim.g.loaded_netrwPlugin = 1
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 vim.o.langmap = 'ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯ;ABCDEFGHIJKLMNOPQRSTUVWXYZ,фисвуапршолдьтщзйкыегмцчня;abcdefghijklmnopqrstuvwxyz'
-vim.api.nvim_create_autocmd( 'InsertLeave', { pattern = '*', command = 'silent !macism com.apple.keylayout.US' }) -- require https://github.com/laishulu/macism
+vim.api.nvim_create_autocmd( 'InsertLeave', { pattern = '*', command = 'silent !macism org.sil.ukelele.keyboardlayout.vgd.vgd' }) -- require https://github.com/laishulu/macism
 
 require('plugins')
 
@@ -18,7 +18,7 @@ vim.o.scrolloff = 3
 -- Remember last location in file
 vim.api.nvim_create_autocmd('BufRead', { pattern = '*', command = [[call setpos(".", getpos("'\""))]] })
 
-vim.o.wrap = false
+vim.o.wrap = true
 vim.o.autoindent = true
 vim.o.smartindent = true
 vim.o.expandtab = true
