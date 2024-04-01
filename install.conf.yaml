@@ -1,6 +1,12 @@
 - defaults:
     link:
       relink: true
+    brewfile:
+      stdout: false
+      stderr: false
+      file: Brewfile
+      include: ['tap', 'brew', 'cask', 'mas']
+
 
 - link:
   ~/.zshrc:
@@ -13,3 +19,9 @@
 
 - shell:
   - [git submodule update --init --recursive, Installing submodules]
+
+# This apply to all commands that come after setting the defaults.
+- defaults:
+
+- brewfile:
+    file: Brewfile
