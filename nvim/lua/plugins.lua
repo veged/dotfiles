@@ -139,7 +139,7 @@ return require('lazy').setup({
         newfile_status = true,
         path = 1,
         symbols = {
-          modified = ' פֿ',
+          modified = ' 󰙏',
           readonly = ' ',
           unnamed = '··· no name ···',
           newfile = '  '
@@ -473,8 +473,6 @@ return require('lazy').setup({
             enable = true,
             additional_vim_regex_highlighting = false
           },
-          -- indent = { enable = true },
-          context_commentstring = { enable = true },
           textobjects = {
             select = {
               enable = true,

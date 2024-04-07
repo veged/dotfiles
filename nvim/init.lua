@@ -127,3 +127,5 @@ vim.o.signcolumn = 'yes'
 vim.o.foldenable = false
 vim.o.foldmethod = 'expr'
 vim.o.foldexpr = 'nvim_treesitter#foldexpr()'
+
+vim.g.skip_ts_context_commentstring_module = true
