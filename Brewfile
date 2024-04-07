@@ -57,13 +57,14 @@ cask "alfred"
 cask "transmission"
 cask "bettertouchtool"
 cask "appcleaner"
-cask "dracula-colorslurp"
 cask "disk-inventory-x"
 cask "github"
 cask "handbrake"
+cask "fig"
 
 
 mas "Amphetamine", id: 937984704
+mas "ColorSlurp", id: 1287239339
 
 vscode "asvetliakov.vscode-neovim"
 vscode "eamodio.gitlens"
@@ -81,8 +82,6 @@ vscode "ms-vscode.remote-repositories"
 vscode "ms-vscode.remote-server"
 vscode "ms-vscode.vscode-typescript-next"
 vscode "ms-vsliveshare.vsliveshare"
-vscode "perseus.vscode-yandex-arc"
 vscode "pkief.material-icon-theme"
 vscode "spadin.zmk-tools"
-vscode "withfig.fig"
 vscode "xabikos.javascriptsnippets"

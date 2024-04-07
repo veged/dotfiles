@@ -1,27 +1,23 @@
 - defaults:
     link:
-      relink: true
+        relink: true
     brewfile:
-      stdout: false
-      stderr: false
-      file: Brewfile
-      include: ['tap', 'brew', 'cask', 'mas']
-
+        stdout: true
+        stderr: true
+        include: ['tap', 'brew', 'cask', 'mas']
 
 - link:
-  ~/.zshrc:
-  ~/.gitconfig:
-  ~/.config/kitty: kitty
-  ~/.config/nvim: nvim
+    ~/.zshrc: .zshrc
+    ~/.gitconfig: .gitconfig
+    ~/.config/kitty: kitty
+    ~/.config/nvim: nvim
 
 - create:
     - ~/.config
 
 - shell:
-  - [git submodule update --init --recursive, Installing submodules]
-
-# This apply to all commands that come after setting the defaults.
-- defaults:
+    - [git submodule update --init --recursive, Installing submodules]
 
 - brewfile:
     file: Brewfile
+
