@@ -3,6 +3,7 @@ tap "homebrew/cask-fonts"
 tap "homebrew/cask-versions"
 tap "homebrew/services"
 tap "laishulu/macism"
+tap "dracula/install"
 tap "yandex/arc", "https://arc-vcs.yandex-team.ru/homebrew-tap"
 
 brew "bat"
@@ -51,6 +52,17 @@ cask "macfuse"
 cask "hiddenbar"
 cask "monitorcontrol"
 cask "rescuetime"
+cask "alfred"
+cask "transmission"
+cask "bettertouchtool"
+cask "appcleaner"
+cask "dracula-colorslurp"
+cask "disk-inventory-x"
+cask "github"
+cask "handbrake"
+
+
+mas "Amphetamine", id: 937984704
 
 vscode "asvetliakov.vscode-neovim"
 vscode "eamodio.gitlens"
