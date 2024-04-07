@@ -72,10 +72,10 @@ export EDITOR='nvim'
 alias v="nvim -o"
 alias vc="v ~/.config/nvim/{init.lua,lua/plugins.lua}"
 alias vd="nvim -d"
-alias l="exa --icons"
+alias l="eza --icons"
 alias l1="l -1"
 alias ll="l -lah"
-alias t="exa -T"
+alias t="eza -T"
 
 alias kitty-light="kitty +kitten themes --reload-in=all Catppuccin-Latte"
 alias kitty-dark="kitty +kitten themes --reload-in=all Catppuccin-Mocha"
@@ -170,6 +170,8 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
 fpath+=~/.zfunc
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
@@ -183,4 +185,3 @@ source $HOME/.config/broot/launcher/bash/br
 
 source /Users/veged/.config/broot/launcher/bash/br
 
-eval "$(/opt/homebrew/bin/brew shellenv)"
