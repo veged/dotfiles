@@ -182,3 +182,5 @@ source $HOME/.config/broot/launcher/bash/br
 [[ -f "$HOME/.fig/shell/zshrc.post.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.post.zsh"
 
 source /Users/veged/.config/broot/launcher/bash/br
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
