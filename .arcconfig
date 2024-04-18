@@ -1,0 +1,25 @@
+[alias]
+	co = checkout
+	st = status
+	di = diff
+	ci = commit
+	undo-commit = reset --soft HEAD^
+	dt = difftool
+[core]
+	editor = nvim
+	autocrlf = input
+[diff]
+	renames = true
+	noprefix = true
+	tool = nvimdiff
+[difftool "nvimdiff"]
+	cmd = nvim -d $BASE $LOCAL
+[branch "trunk"]
+    allowCommit = false
+
+
+[commit-msg-hook "frontend"]
+    arctic-husky-commit-msg = .arc/user_hooks/hooks/commit-msg
+
+[pre-commit-hook "frontend"]
+    arctic-husky-pre-commit = .arc/user_hooks/hooks/pre-commit
