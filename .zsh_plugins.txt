@@ -1,0 +1,13 @@
+zdharma-continuum/fast-syntax-highlighting kind:defer
+
+belak/zsh-utils path:completion
+
+zsh-users/zsh-completions
+lukechilds/zsh-better-npm-completion
+dim-an/cod kind:path
+
+# belak/zsh-utils path:editor
+belak/zsh-utils path:utility
+belak/zsh-utils path:prompt
+
+jirutka/zsh-shift-select
