@@ -12,7 +12,6 @@ export XDG_DATA_HOME=$HOME/.local/share
 export XDG_STATE_HOME=$HOME/.local/state
 export XDG_CACHE_HOME=$HOME/.cache
 
-
 source $(brew --prefix)/opt/antidote/share/antidote/antidote.zsh
 antidote load
 
@@ -184,10 +183,9 @@ export ZSH_THEME_GIT_PROMPT_SUFFIX='%b%f'
 export ZSH_THEME_GIT_PROMPT_DIRTY='%F{red}'
 export ZSH_THEME_GIT_PROMPT_CLEAN='%F{green}'
 
-
 fpath+=~/.zfunc
 
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+eval "$(fzf --zsh)"
 
 eval "$(zoxide init zsh)"
 
