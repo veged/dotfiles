@@ -20,6 +20,12 @@ end})
 
 return require('lazy').setup({
   {
+    "williamboman/mason.nvim",
+    opts = {
+      PATH = "prepend",
+    }
+  },
+  {
     'nvim-telescope/telescope.nvim', -- Find, Filter, Preview, Pick.
     branch = '0.1.x',
     dependencies = 'nvim-lua/plenary.nvim', -- All the lua functions I don't want to write twice.
@@ -333,7 +339,12 @@ return require('lazy').setup({
 
   {
     'neovim/nvim-lspconfig', -- Quickstart configurations for the Nvim LSP client
-    dependencies = 'hrsh7th/cmp-nvim-lsp',
+    dependencies = {
+      'hrsh7th/cmp-nvim-lsp',
+      'williamboman/mason.nvim',
+      'williamboman/mason-lspconfig.nvim',
+      'WhoIsSethDaniel/mason-tool-installer.nvim'
+    },
     config = function()
       local capabilities = require('cmp_nvim_lsp').default_capabilities()
       capabilities.textDocument.completion.completionItem.snippetSupport = true
@@ -845,6 +856,11 @@ return require('lazy').setup({
     {
       'andrejlevkovitch/vim-lua-format', -- Lua vim formatter supported by LuaFormatter
       ft = 'lua'
+    },
+
+    {
+      'amadeus/vim-mjml', -- Lua vim formatter supported by LuaFormatter
+      ft = 'mjml'
     },
 
     {
