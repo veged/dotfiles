@@ -8,6 +8,7 @@
 
 - link:
     ~/.zshrc: .zshrc
+    ~/.zsh_plugins.txt: .zsh_plugins.txt
     ~/.gitconfig: .gitconfig
     ~/.config/kitty: kitty
     ~/.config/nvim: nvim

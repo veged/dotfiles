@@ -1,15 +1,22 @@
-eval "$(/opt/homebrew/bin/brew shellenv)"
-
 # CodeWhisperer pre block. Keep at the top of this file.
 [[ -f "${HOME}/Library/Application Support/codewhisperer/shell/zshrc.pre.zsh" ]] && builtin source "${HOME}/Library/Application Support/codewhisperer/shell/zshrc.pre.zsh"
-export GOROOT=`go env GOPATH`
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+export GOROOT="$(brew --prefix golang)/libexec"
 
 # If you come from bash you might have to change your $PATH.
 export PATH=$GOROOT/bin:./node_modules/.bin:$HOME/Documents/arcadia:$PATH
 
-ZSH_DISABLE_COMPFIX="true"
-# Path to your oh-my-zsh installation.
-export ZSH=$HOME/.oh-my-zsh
+export XDG_CONFIG_HOME=$HOME/.config
+export XDG_DATA_HOME=$HOME/.local/share
+export XDG_STATE_HOME=$HOME/.local/state
+export XDG_CACHE_HOME=$HOME/.cache
+
+
+source $(brew --prefix)/opt/antidote/share/antidote/antidote.zsh
+antidote load
+
+source <(cod init $$ zsh)
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -18,22 +25,8 @@ export ZSH=$HOME/.oh-my-zsh
 export LSCOLORS="exfxcxdxbxegedabagacad"
 export LS_COLORS="di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*' menu select
 
-# Would you like to use another custom folder than $ZSH/custom?
-# ZSH_CUSTOM=/path/to/new-custom-folder
-
-# Which plugins would you like to load?
-# Standard plugins can be found in $ZSH/plugins/
-# Custom plugins may be added to $ZSH_CUSTOM/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
-plugins=(
-    arc-prompt
-    zsh-shift-select
-    zsh-better-npm-completion
-)
-
-source $ZSH/oh-my-zsh.sh
 source ~/.iterm2_shell_integration.zsh
 unsetopt share_history
 
@@ -80,6 +73,8 @@ alias t="eza -T"
 
 alias kitty-light="kitty +kitten themes --reload-in=all Catppuccin-Latte"
 alias kitty-dark="kitty +kitten themes --reload-in=all Catppuccin-Mocha"
+
+alias ya='$HOME/arcadia/ya'
 
 # Usage: prompt-length TEXT [COLUMNS]
 #
@@ -157,8 +152,31 @@ setopt no_prompt_{bang,subst} prompt_{cr,percent,sp}
 autoload -Uz add-zsh-hook
 add-zsh-hook precmd set-prompt
 
+# Git status
+git_prompt_info() {
+    local message=""
+    local message_color="%F{green}"
+
+    # https://git-scm.com/docs/git-status#_short_format
+    local staged=$(git status --porcelain 2>/dev/null | grep -e "^[MADRCU]")
+    local unstaged=$(git status --porcelain 2>/dev/null | grep -e "^[MADRCU? ][MADRCU?]")
+
+    if [[ -n ${staged} ]]; then
+        message_color="%F{red}"
+    elif [[ -n ${unstaged} ]]; then
+        message_color="%F{yellow}"
+    fi
+
+    local branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+    if [[ -n ${branch} ]]; then
+        message+="${message_color}${branch}%f"
+    fi
+
+    echo -n "${message}"
+}
+
 ZSH_PROMPT_TOP_LEFT() { echo "%{$(iterm2_prompt_mark)%}%F{yellow}%~%f" }
-ZSH_PROMPT_TOP_RIGHT() { echo "$(git_prompt_info)$(arc_prompt_info)" }
+ZSH_PROMPT_TOP_RIGHT() { echo "$(git_prompt_info)" }
 ZSH_PROMPT_BOTTOM_LEFT() { echo "%F{%(?.green.red)}%(!. .➤)%f " }
 ZSH_PROMPT_BOTTOM_RIGHT() { echo '' }
 export ZSH_THEME_GIT_PROMPT_PREFIX='%B '
@@ -166,10 +184,6 @@ export ZSH_THEME_GIT_PROMPT_SUFFIX='%b%f'
 export ZSH_THEME_GIT_PROMPT_DIRTY='%F{red}'
 export ZSH_THEME_GIT_PROMPT_CLEAN='%F{green}'
 
-
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 fpath+=~/.zfunc
 
@@ -179,10 +193,8 @@ eval "$(zoxide init zsh)"
 
 source $HOME/.config/broot/launcher/bash/br
 
-source /Users/veged/.config/broot/launcher/bash/br
-
-
-[[ -f "$HOME/fig-export/dotfiles/dotfile.zsh" ]] && builtin source "$HOME/fig-export/dotfiles/dotfile.zsh"
+export NVM_DIR="$HOME/.nvm"
+[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
 
 # CodeWhisperer post block. Keep at the bottom of this file.
 [[ -f "${HOME}/Library/Application Support/codewhisperer/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/codewhisperer/shell/zshrc.post.zsh"

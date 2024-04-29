@@ -6,6 +6,9 @@ tap "laishulu/macism"
 tap "dracula/install"
 tap "yandex/arc", "https://arc-vcs.yandex-team.ru/homebrew-tap"
 
+brew "trash"
+brew "zsh"
+brew "antidote"
 brew "bat"
 brew "broot"
 brew "glib"
@@ -44,6 +47,7 @@ brew "laishulu/macism/macism"
 brew "yandex/arc/arc-launcher"
 
 cask "chromium"
+cask "readdle-spark"
 cask "fontforge"
 cask "keycastr"
 cask "kitty"
@@ -61,7 +65,7 @@ cask "disk-inventory-x"
 cask "github"
 cask "handbrake"
 cask "fig"
-
+cask "slack"
 
 mas "Amphetamine", id: 937984704
 mas "ColorSlurp", id: 1287239339
