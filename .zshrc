@@ -1,5 +1,5 @@
-# CodeWhisperer pre block. Keep at the top of this file.
-[[ -f "${HOME}/Library/Application Support/codewhisperer/shell/zshrc.pre.zsh" ]] && builtin source "${HOME}/Library/Application Support/codewhisperer/shell/zshrc.pre.zsh"
+# Q pre block. Keep at the top of this file.
+[[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.pre.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.pre.zsh"
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
 export GOROOT="$(brew --prefix golang)/libexec"
@@ -63,7 +63,7 @@ export EDITOR='nvim'
 # For a full list of active aliases, run `alias`.
 
 alias v="nvim -o"
-alias vc="v ~/.config/nvim/{init.lua,lua/plugins.lua}"
+alias vc="v -O ~/.config/nvim/{init.lua,lua/plugins.lua}"
 alias vd="nvim -d"
 alias l="eza --icons"
 alias l1="l -1"
@@ -183,7 +183,7 @@ export ZSH_THEME_GIT_PROMPT_SUFFIX='%b%f'
 export ZSH_THEME_GIT_PROMPT_DIRTY='%F{red}'
 export ZSH_THEME_GIT_PROMPT_CLEAN='%F{green}'
 
-fpath+=~/.zfunc
+fpath+='/opt/homebrew/share/zsh/site-functions'
 
 eval "$(fzf --zsh)"
 
@@ -194,5 +194,5 @@ source $HOME/.config/broot/launcher/bash/br
 export NVM_DIR="$HOME/.nvm"
 [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
 
-# CodeWhisperer post block. Keep at the bottom of this file.
-[[ -f "${HOME}/Library/Application Support/codewhisperer/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/codewhisperer/shell/zshrc.post.zsh"
+# Q post block. Keep at the bottom of this file.
+[[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh"
