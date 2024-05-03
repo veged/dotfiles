@@ -1,3 +1,6 @@
+local g = vim.g
+local o = vim.o
+
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
@@ -11,7 +14,7 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
-vim.api.nvim_create_autocmd({ 'VimEnter' }, { callback = function(data)
+vim.api.nvim_create_autocmd('VimEnter', { callback = function(data)
   if vim.fn.isdirectory(data.file) == 1 then
     vim.cmd.cd(data.file)
     require('nvim-tree.api').tree.open()
@@ -136,8 +139,8 @@ return require('lazy').setup({
     "folke/which-key.nvim", -- displays a popup with possible keybindings of the command you started typing
     event = "VeryLazy",
     init = function()
-      vim.o.timeout = true
-      vim.o.timeoutlen = 300
+      o.timeout = true
+      o.timeoutlen = 300
     end,
     opts = {
       -- your configuration comes here
@@ -486,7 +489,7 @@ return require('lazy').setup({
       'nvim-treesitter/nvim-treesitter', -- Nvim Treesitter configurations and abstraction layer
       build = ':TSUpdate',
       config = function()
-        -- vim.g.skip_ts_default_groups = true
+        -- g.skip_ts_default_groups = true
         -- require('nvim-treesitter.highlight').set_custom_captures(treesitter_custom_captures)
 
         require'nvim-treesitter.configs'.setup {
@@ -546,11 +549,11 @@ return require('lazy').setup({
       opts = {
         update_interval = 60000,
         set_dark_mode = function()
-          vim.o.background = 'dark'
+          o.background = 'dark'
           io.popen('kitty +kitten themes --reload-in=all Catppuccin-Mocha')
         end,
         set_light_mode = function()
-          vim.o.background = 'light'
+          o.background = 'light'
           io.popen('kitty +kitten themes --reload-in=all Catppuccin-Latte')
         end
       },
@@ -565,8 +568,8 @@ return require('lazy').setup({
     --   priority = 1000,
     --   dependencies = 'rktjmp/lush.nvim', -- Create Neovim themes with real-time feedback, export anywhere
     --   config = function()
-    --     vim.o.termguicolors = true
-    --     vim.o.background = 'light'
+    --     o.termguicolors = true
+    --     o.background = 'light'
     --     vim.cmd('colorscheme yacolors')
     --   end
     -- },
@@ -800,7 +803,7 @@ return require('lazy').setup({
         end
       },
       init = function()
-        vim.o.termguicolors = true
+        o.termguicolors = true
         vim.cmd.colorscheme 'catppuccin'
       end
     },
