@@ -132,7 +132,19 @@ return require('lazy').setup({
 
   'LunarVim/bigfile.nvim', -- Make editing big files faster
 
-  'folke/which-key.nvim', -- displays a popup with possible keybindings of the command you started typing
+  {
+    "folke/which-key.nvim", -- displays a popup with possible keybindings of the command you started typing
+    event = "VeryLazy",
+    init = function()
+      vim.o.timeout = true
+      vim.o.timeoutlen = 300
+    end,
+    opts = {
+      -- your configuration comes here
+      -- or leave it empty to use the default settings
+      -- refer to the configuration section below
+    }
+  },
 
   'lewis6991/gitsigns.nvim', -- Git integration for buffers
 
