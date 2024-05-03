@@ -21,8 +21,8 @@ source <(cod init $$ zsh)
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-export LSCOLORS="exfxcxdxbxegedabagacad"
-export LS_COLORS="di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
+export LSCOLORS='exfxcxdxbxegedabagacad'
+export LS_COLORS='di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43'
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 zstyle ':completion:*' menu select
 
@@ -31,10 +31,10 @@ unsetopt share_history
 
 export LANG=en_US.UTF-8
 
-bindkey "\e[1;3D" backward-word     # ⌥←
-bindkey "\e[1;3C" forward-word      # ⌥→
-bindkey "^[[1;9D" beginning-of-line # ⌘←
-bindkey "^[[1;9C" end-of-line       # ⌘→
+bindkey '\e[1;3D' backward-word     # ⌥←
+bindkey '\e[1;3C' forward-word      # ⌥→
+bindkey '^[[1;9D' beginning-of-line # ⌘←
+bindkey '^[[1;9C' end-of-line       # ⌘→
 
 pb-copy-region-as-kill () {
   zle copy-region-as-kill
@@ -48,32 +48,39 @@ pb-kill-region () {
 }
 zle -N pb-kill-region
 
-bindkey "^[[99;9u" pb-copy-region-as-kill # ⌘c
-bindkey "^[[120;9u" pb-kill-region # ⌘x
+bindkey '^[[99;9u' pb-copy-region-as-kill # ⌘c
+bindkey '^[[120;9u' pb-kill-region # ⌘x
 
 resume-last-job () { fg % }
 zle -N resume-last-job
-bindkey "^[[102;9u" resume-last-job
+bindkey '^[[102;9u' resume-last-job
 
 export EDITOR='nvim'
+
+export BAT_THEME='Catppuccin Mocha'
 
 # Set personal aliases, overriding those provided by oh-my-zsh libs,
 # plugins, and themes. Aliases can be placed here, though oh-my-zsh
 # users are encouraged to define aliases within the ZSH_CUSTOM folder.
 # For a full list of active aliases, run `alias`.
 
-alias v="nvim -o"
-alias vc="v -O ~/.config/nvim/{init.lua,lua/plugins.lua}"
-alias vd="nvim -d"
-alias l="eza --icons"
-alias l1="l -1"
-alias ll="l -lah"
-alias t="eza -T"
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ↑='..'
+alias ↑↑='...'
+alias ←='cd -'
+alias v='nvim -o'
+alias vc='v -O ~/.config/nvim/{init.lua,lua/plugins.lua}'
+alias vd='nvim -d'
+alias l='eza --icons -a'
+alias l1='l -1a'
+alias ll='l -lah'
+alias t='eza -Ta --icons'
 
-alias kitty-light="kitty +kitten themes --reload-in=all Catppuccin-Latte"
-alias kitty-dark="kitty +kitten themes --reload-in=all Catppuccin-Mocha"
+alias kitty-light='kitty +kitten themes --reload-in=all Catppuccin-Latte'
+alias kitty-dark='kitty +kitten themes --reload-in=all Catppuccin-Mocha'
 
-alias ya='$HOME/arcadia/ya'
+alias ya="$HOME/arcadia/ya"
 
 # Usage: prompt-length TEXT [COLUMNS]
 #
@@ -153,7 +160,7 @@ add-zsh-hook precmd set-prompt
 
 # Git status
 git_prompt_info() {
-    local message=""
+    local message=''
     local message_color="%F{green}"
 
     # https://git-scm.com/docs/git-status#_short_format
@@ -185,14 +192,42 @@ export ZSH_THEME_GIT_PROMPT_CLEAN='%F{green}'
 
 fpath+='/opt/homebrew/share/zsh/site-functions'
 
+# FZF
 eval "$(fzf --zsh)"
+
+export FZF_DEFAULT_OPTS=" \
+--color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 \
+--color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc \
+--color=marker:#f5e0dc,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8"
+
+_fzf_compgen_path() {
+  fd --hidden --follow --exclude ".git" . "$1"
+}
+
+_fzf_compgen_dir() {
+  fd --type d --hidden --follow --exclude ".git" . "$1"
+}
+
+export FZF_CTRL_T_OPTS="--preview 'bat -n --color=always --line-range :500 {}' --bind 'ctrl-/:change-preview-window(down|hidden|)'"
+
+_fzf_comprun() {
+  local command=$1
+  shift
+
+  case "$command" in
+    cd) fzf --preview 'eza --tree --level=3 --color=always --icons {} | head -200' "$@" ;;
+    export|unset) fzf --preview "eval 'echo \$'{}" "$@" ;;
+    ssh) fzf --preview 'dig {}' "$@" ;;
+    *) fzf --preview 'bat -n --color=always --line-range :500 {}' "$@" ;;
+  esac
+}
 
 eval "$(zoxide init zsh)"
 
 source $HOME/.config/broot/launcher/bash/br
 
 export NVM_DIR="$HOME/.nvm"
-[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
+[ -s '/opt/homebrew/opt/nvm/nvm.sh' ] && \. '/opt/homebrew/opt/nvm/nvm.sh'  # This loads nvm
 
 # Q post block. Keep at the bottom of this file.
 [[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh"
