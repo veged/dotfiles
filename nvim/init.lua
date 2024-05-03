@@ -30,102 +30,148 @@ vim.o.list = true
 vim.opt.listchars = { tab = '⋗⋅', trail = '·', nbsp = '∷', extends = '※' }
 vim.api.nvim_create_autocmd('BufEnter', { pattern = '*', command = 'EnableStripWhitespaceOnSave' })
 
--- Spell
+local wk = require('which-key')
+
+-- Spell checking
 vim.o.spell = false
 vim.o.spelllang = 'ru_yo,en_us'
 vim.o.spelloptions = 'camel,noplainbuffer'
-vim.keymap.set('n', '<Leader>?', function() vim.o.spell = not vim.o.spell end)
+wk.register({
+  ['<Leader>?'] = {
+    function()
+      vim.o.spell = not vim.o.spell
+      print('󰓆  Spell checking ' .. (vim.o.spell and 'enabled' or 'disabled'))
+    end,
+    'Toggle spell checking'
+  }
+})
 
 -- Search and replace
 vim.o.ignorecase = true
 vim.o.smartcase = true
-vim.api.nvim_create_autocmd('BufReadPost', { pattern = 'quickfix', command = 'nnoremap <buffer> <CR> <CR>' })
-vim.keymap.set('n', '<CR>', '<Cmd>nohlsearch<CR>', { desc = 'Clear the search highlight by Enter' })
-
-vim.keymap.set('n', 'n', '<Plug>(highlight-current-n-n)')
-vim.keymap.set('n', 'N', '<Plug>(highlight-current-n-N)')
 vim.o.gdefault = true
+vim.api.nvim_create_autocmd('BufReadPost', { pattern = 'quickfix', command = 'nnoremap <buffer> <CR> <CR>' })
+wk.register({
+  ['<CR>'] = { '<Cmd>nohlsearch<CR>', 'Clear the search highlight' },
+  n = { '<Plug>(highlight-current-n-n)', 'Next search highlight' },
+  N = { '<Plug>(highlight-current-n-N)', 'Previous search highlight' }
+})
 
 -- Natural arrows in command mode
-vim.keymap.set('c', '<Left>', function() return vim.fn.pumvisible() == 1 and '<Up>' or '<Left>' end, { expr = true })
-vim.keymap.set('c', '<Right>', function() return vim.fn.pumvisible() == 1 and '<Down>' or '<Right>' end, { expr = true })
-vim.keymap.set('c', '<Up>', function() return vim.fn.pumvisible() == 1 and '<Left>' or '<Up>' end, { expr = true })
-vim.keymap.set('c', '<Down>', function() return vim.fn.pumvisible() == 1 and '<Right>' or '<Down>' end, { expr = true })
+for key, pum in pairs({ Left = 'Up', Right = 'Down', Up = 'Left', Down = 'Right' }) do
+  key = '<' .. key .. '>'
+  vim.keymap.set('c', key, function() return vim.fn.pumvisible() == 1 and '<' .. pum .. '>' or key end, { expr = true })
+end
 
 -- Visual mode
-vim.keymap.set('n', '<S-Left>', 'vh')
-vim.keymap.set('n', '<S-Right>', 'vl')
-vim.keymap.set('n', '<S-Up>', 'Vk')
-vim.keymap.set('n', '<S-Down>', 'Vj')
-vim.keymap.set('v', '<S-Left>', 'h')
-vim.keymap.set('v', '<S-Right>', 'l')
-vim.keymap.set('v', '<S-Up>', 'k')
-vim.keymap.set('v', '<S-Down>', 'j')
-vim.keymap.set('v', '<', '<gv')
-vim.keymap.set('v', '>', '>gv')
+wk.register({
+  ['<S-Left>'] = { 'vh', '⇧←' },
+  ['<S-Right>'] = { 'vl', '⇧→' },
+  ['<S-Up>'] = { 'Vk', '⇧↑' },
+  ['<S-Down>'] = { 'Vj', '⇧↓' }
+})
+wk.register({
+  ['<S-Left>'] = { 'h', '⇧←' },
+  ['<S-Right>'] = { 'l', '⇧→' },
+  ['<S-Up>'] = { 'k', '⇧↑' },
+  ['<S-Down>'] = { 'j', '⇧↓' },
+  ['<'] = { '<gv', 'Move left and keep selection' },
+  ['>'] = { '>gv', 'Move right and keep selection' }
+}, { mode = 'v' })
 
 -- System clipboard
-vim.keymap.set('v', '<C-c>', '"+y')
-vim.keymap.set('n', '<C-c>', '"+yy')
-vim.keymap.set('v', '<C-x>', '"+d')
--- vim.keymap.set('n', '<C-x>', '"+dd')
+wk.register({
+  ['<C-c>'] = { '"+yy', 'Copy to system clipboard' },
+  ['<C-x>'] = { '"+dd', 'Cut to system clipboard' }
+})
+wk.register({
+  ['<C-c>'] = { '"+y', 'Copy to system clipboard' },
+  ['<C-x>'] = { '"+d', 'Cut to system clipboard' }
+}, { mode = 'v' })
 
 -- Toggle mouse
-vim.opt.mouse = ''
-vim.keymap.set('n', '<Leader>m', function()
-  if vim.o.mouse == 'a' then
-    vim.o.mouse = ''
-    print('  Mouse usage disabled')
-  else
-    vim.o.mouse = 'a'
-    print('  Mouse usage enabled')
-  end
-end)
+vim.o.mouse = ''
+wk.register({
+  ['<Leader>m'] = {
+    function()
+      if vim.o.mouse == 'a' then
+        vim.o.mouse = ''
+        print('󰍾  Mouse usage disabled')
+      else
+        vim.o.mouse = 'a'
+        print('󰍽  Mouse usage enabled')
+      end
+    end,
+    'Toggle mouse'
+  }
+})
 
 -- Toggle cursor crosshair
-vim.keymap.set('n', '<Leader>c', '<Cmd>set cursorline! cursorcolumn!<CR>')
+wk.register({ ['<Leader>c'] = { '<Cmd>set cursorline! cursorcolumn!<CR>', 'Toggle cursor crosshair' } })
 
 -- Toggle line numbers
-vim.keymap.set('n', '<Leader>n', function()
-  if vim.o.number then
-    vim.o.number = false
-    vim.o.relativenumber = true
-  elseif vim.o.relativenumber then
-    vim.o.number = false
-    vim.o.relativenumber = false
-  else
-    vim.o.number = true
-  end
-end)
+wk.register({
+  ['<Leader>n'] = {
+    function()
+      if not vim.o.number then
+        vim.o.number = true
+        vim.o.relativenumber = true
+      elseif vim.o.relativenumber then
+        vim.o.number = true
+        vim.o.relativenumber = false
+      else
+        vim.o.number = false
+      end
+    end,
+    'Toggle line numbers'
+  }
+})
 
-vim.keymap.set('n', '<C-End>', '<Cmd>bn<CR>')
-vim.keymap.set('n', '<C-Home>', '<Cmd>bp<CR>')
+wk.register({
+  ['<C-End>'] = { '<Cmd>bn<CR>', 'Next buffer' },
+  ['<C-Home>'] = { '<Cmd>bp<CR>', 'Previous buffer' }
+})
 
-vim.keymap.set('n', 'U', '<C-r>')
+wk.register({ U = { '<C-r>', 'Redo' } })
 
 -- Write and quit
-vim.keymap.set({'n', 'v'}, '<Leader>w', '<Cmd>w<CR>')
-vim.keymap.set({'n', 'v'}, '<Leader>W', '<Cmd>wa<CR>')
-vim.keymap.set({'n', 'v'}, '<Leader>q', '<Cmd>q<CR>')
-vim.keymap.set({'n', 'v'}, '<Leader>Q', '<Cmd>qa<CR>')
-vim.keymap.set({'n', 'v'}, '<Leader>!w', '<Cmd>w!<CR>')
-vim.keymap.set({'n', 'v'}, '<Leader>!W', '<Cmd>wa!<CR>')
-vim.keymap.set({'n', 'v'}, '<Leader>!q', '<Cmd>q!<CR>')
-vim.keymap.set({'n', 'v'}, '<Leader>!Q', '<Cmd>qa!<CR>')
-vim.keymap.set({'n', 'v'}, '<Leader>x', '<Cmd>qa<CR>')
-vim.keymap.set({'n', 'v'}, '<Leader>!x', '<Cmd>qa!<CR>')
-vim.keymap.set({'n', 'v'}, '<Leader>s', '<Cmd>wqa<CR>')
-vim.keymap.set({'n', 'v'}, '<Leader>!s', '<Cmd>wqa!<CR>')
-vim.api.nvim_create_user_command('W', 'w', { desc = 'Write' })
-vim.api.nvim_create_user_command('WQ', 'wq', { desc = 'Write and quit' })
-vim.api.nvim_create_user_command('Wqa', 'wqa', { desc = 'Write and quit all' })
-vim.api.nvim_create_user_command('Q', 'q', { desc = 'Quit' })
-vim.api.nvim_create_user_command('Qa', 'qa', { desc = 'Quit all' })
+wk.register({
+  ['<Leader>'] = {
+    w = { '<Cmd>w<CR>', 'Write' },
+    W = { '<Cmd>w<CR>', 'Write all' },
+    q = { '<Cmd>q<CR>', 'Quit' },
+    Q = { '<Cmd>qa<CR>', 'Quit all' },
+    x = { '<Cmd>qa<CR>', 'Quit all' },
+    s = { '<Cmd>wqa<CR>', 'Write and quit all' },
+    ['!'] = {
+      w = { '<Cmd>w!<CR>', 'Force write' },
+      W = { '<Cmd>wa!<CR>', 'Force write all' },
+      q = { '<Cmd>q!<CR>', 'Force quit' },
+      Q = { '<Cmd>qa!<CR>', 'Force quit all' },
+      x = { '<Cmd>qa!<CR>', 'Force quit all' },
+      s = { '<Cmd>wqa!<CR>', 'Force write and quit all' },
+      name = 'Force'
+    }
+  },
+  { mode = { 'n', 'v' } }
+})
+
+-- vim.api.nvim_create_user_command('W', 'w', { desc = 'Write' })
+-- vim.api.nvim_create_user_command('Wa', 'w', { desc = 'Write all' })
+-- vim.api.nvim_create_user_command('Wq', 'wq', { desc = 'Write and quit' })
+-- vim.api.nvim_create_user_command('Wqa', 'wqa', { desc = 'Write and quit all' })
+-- vim.api.nvim_create_user_command('Q', 'q', { desc = 'Quit' })
+-- vim.api.nvim_create_user_command('Qa', 'qa', { desc = 'Quit all' })
 
 vim.o.signcolumn = 'yes'
 
 vim.o.foldenable = false
 vim.o.foldmethod = 'expr'
 vim.o.foldexpr = 'nvim_treesitter#foldexpr()'
+
+wk.register({
+  ['-'] = { '<C-x>', 'Decrement' },
+  ['+'] = { '<C-a>', 'Increment' }
+})
 
 vim.g.skip_ts_context_commentstring_module = true
