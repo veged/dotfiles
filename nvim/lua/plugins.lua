@@ -107,16 +107,12 @@ return require('lazy').setup({
 
   {
     'numToStr/Comment.nvim', -- Smart and powerful comment plugin
+    event = 'VeryLazy',
     opts = {
       toggler = { line = '<Leader>/', block = '<Leader>*' },
       opleader = { line = '<Leader>/', block = '<Leader>*' }
     },
-    keys = {
-      '<Leader>/',
-      '<Leader>*',
-      { '<Leader>/', mode = 'v' },
-      { '<Leader>*', mode = 'v' }
-    }
+    lazy = true
   },
 
   {
@@ -137,15 +133,15 @@ return require('lazy').setup({
 
   {
     "folke/which-key.nvim", -- displays a popup with possible keybindings of the command you started typing
-    event = "VeryLazy",
     init = function()
       o.timeout = true
-      o.timeoutlen = 300
+      o.timeoutlen = 400
     end,
     opts = {
-      -- your configuration comes here
-      -- or leave it empty to use the default settings
-      -- refer to the configuration section below
+      -- operators = {
+      --   ['<Leader>/'] = 'Comment line',
+      --   ['<Leader>*'] = 'Comment block'
+      -- }
     }
   },
 
@@ -822,6 +818,7 @@ return require('lazy').setup({
 
     {
       'jose-elias-alvarez/typescript.nvim', -- A Lua plugin, written in TypeScript, to write TypeScript
+      ft = { 'javascript', 'typescript' },
       opts = {
         server = {
           on_attach = function(client, bufnr)
