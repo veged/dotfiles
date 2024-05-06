@@ -827,36 +827,18 @@ return require('lazy').setup({
 
     {
       'moll/vim-node', -- Tools and environment to make Vim superb for developing with Node.js
-      ft = { 'javascript', 'typescript' }
+      ft = { 'javascript', 'typescript', 'typescriptreact' }
     },
 
     {
       'jose-elias-alvarez/typescript.nvim', -- A Lua plugin, written in TypeScript, to write TypeScript
-      ft = { 'javascript', 'typescript' },
+      ft = { 'javascript', 'typescript', 'typescriptreact' },
       opts = {
-        server = {
-          on_attach = function(_, bufnr)
-            local bufopts = { noremap=true, silent=true, buffer=bufnr }
-            vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, bufopts)
-            vim.keymap.set('n', 'gd', vim.lsp.buf.definition, bufopts)
-            vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, bufopts)
-            vim.keymap.set('n', 'gt', vim.lsp.buf.type_definition, bufopts)
-            vim.keymap.set('n', 'gr', vim.lsp.buf.references, bufopts)
-
-            vim.keymap.set('n', '<Leader>h', vim.lsp.buf.hover, bufopts)
-            vim.keymap.set('n', '<Leader>H', vim.lsp.buf.signature_help, bufopts)
-
-            vim.keymap.set('n', '<Leader>=', vim.lsp.buf.format, bufopts)
-            vim.keymap.set('n', '<Leader>r', vim.lsp.buf.rename, bufopts)
-            vim.keymap.set('n', '<Leader>@', vim.lsp.buf.code_action, bufopts)
-
-            vim.keymap.set('n', '<Leader>~a', vim.lsp.buf.add_workspace_folder, bufopts)
-            vim.keymap.set('n', '<Leader>~r', vim.lsp.buf.remove_workspace_folder, bufopts)
-            vim.keymap.set('n', '<Leader>~l', function()
-              print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-            end, bufopts)
-          end
-        }
+        disable_commands = false, -- prevent the plugin from creating Vim commands
+        debug = false, -- enable debug logging for commands
+        go_to_source_definition = {
+          fallback = true, -- fall back to standard LSP definition on failure
+        },
       }
     },
 

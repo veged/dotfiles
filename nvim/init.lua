@@ -156,3 +156,37 @@ keymapN{
 
 g.skip_ts_context_commentstring_module = true
 g.python3_host_prog = '/Users/veged/.local/share/virtualenvs/veged-vne2RedP/bin/python'
+
+-- LSP
+
+autocmd('LspAttach', function(args)
+  local bufnr = args.buf
+  local client = vim.lsp.get_client_by_id(args.data.client_id)
+  if client.server_capabilities.completionProvider then
+    vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
+  end
+  if client.server_capabilities.definitionProvider then
+    vim.bo[bufnr].tagfunc = "v:lua.vim.lsp.tagfunc"
+  end
+
+  local bufopts = { noremap = true, silent = true, buffer = bufnr }
+
+  keymapN('gD', vim.lsp.buf.declaration, bufopts)
+  keymapN('gd', vim.lsp.buf.definition, bufopts)
+  keymapN('gi', vim.lsp.buf.implementation, bufopts)
+  keymapN('gt', vim.lsp.buf.type_definition, bufopts)
+  keymapN('gr', vim.lsp.buf.references, bufopts)
+
+  keymapN('<Leader>h', vim.lsp.buf.hover, bufopts)
+  keymapN('<Leader>H', vim.lsp.buf.signature_help, bufopts)
+
+  keymapN('<Leader>=', vim.lsp.buf.format, bufopts)
+  keymapN('<Leader>r', vim.lsp.buf.rename, bufopts)
+  keymapN('<Leader>@', vim.lsp.buf.code_action, bufopts)
+
+  keymapN('<Leader>~a', vim.lsp.buf.add_workspace_folder, bufopts)
+  keymapN('<Leader>~r', vim.lsp.buf.remove_workspace_folder, bufopts)
+  keymapN('<Leader>~l', function()
+    print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+  end, bufopts)
+end)
