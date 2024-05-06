@@ -12,7 +12,7 @@ end
 
 local function keymap(m, a1, a2, a3)
   if a3 then
-    vim.keymap.set(m, a1, a2, { desc = a3 })
+    vim.keymap.set(m, a1, a2, type(a3) == 'string' and { desc = a3 } or a3)
   else
     for k, v in pairs(a1) do
       if #v == 2 then
