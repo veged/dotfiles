@@ -1,6 +1,3 @@
-local g = vim.g
-local o = vim.o
-
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
@@ -14,12 +11,12 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
-vim.api.nvim_create_autocmd('VimEnter', { callback = function(data)
+autocmd('VimEnter', function(data)
   if vim.fn.isdirectory(data.file) == 1 then
     vim.cmd.cd(data.file)
     require('nvim-tree.api').tree.open()
   end
-end})
+end)
 
 return require('lazy').setup({
   {
@@ -35,10 +32,12 @@ return require('lazy').setup({
     keys = { '<Leader>ff', '<Leader>fg', '<Leader>fb', '<Leader>fh' },
     config = function()
       local telescopeBuiltin = require('telescope.builtin')
-      vim.keymap.set('n', '<Leader>ff', telescopeBuiltin.find_files)
-      vim.keymap.set('n', '<Leader>fg', telescopeBuiltin.live_grep)
-      vim.keymap.set('n', '<Leader>fb', telescopeBuiltin.buffers)
-      vim.keymap.set('n', '<Leader>fh', telescopeBuiltin.help_tags)
+      keymapN({
+        ['<Leader>f']= {
+          f = telescopeBuiltin.find_files,
+          g = telescopeBuiltin.live_grep,
+          b = telescopeBuiltin.buffers,
+          h = telescopeBuiltin.help_tags } })
 
       require('telescope').setup {
         defaults = {
@@ -120,7 +119,13 @@ return require('lazy').setup({
     event = 'InsertEnter'
   },
 
-  'ntpeters/vim-better-whitespace', -- Better whitespace highlighting
+  {
+    'ntpeters/vim-better-whitespace', -- Better whitespace highlighting
+    init = function()
+      g.better_whitespace_operator = ''
+    end,
+  },
+
   'tpope/vim-repeat', -- Enable repeating supported plugin maps with .
   'nishigori/increment-activator', -- enhance to increment candidates U have defined
 
@@ -375,9 +380,18 @@ return require('lazy').setup({
         settings = {
           Lua = {
             runtime = { version = 'LuaJIT' },
-            diagnostics = { globals = { 'vim' } },
+            diagnostics = {
+              globals = { 'vim' },
+              disable = {
+                  'lowercase-global',
+                  'undefined-global'
+              },
+            },
             workspace = {
-              library = vim.api.nvim_get_runtime_file("", true),
+              library = {
+                vim.env.VIMRUNTIME,
+                '${3rd}/luv/library'
+              },
               checkThirdParty = false
             },
             telemetry = { enable = false }
@@ -524,8 +538,8 @@ return require('lazy').setup({
             },
             swap = {
               enable = true,
-              swap_next = { ['<Leader>a'] = '@parameter.inner' },
-              swap_previous = { ['<Leader>A'] = '@parameter.inner' }
+              swap_next = { ['<Leader>p'] = '@parameter.inner' },
+              swap_previous = { ['<Leader>P'] = '@parameter.inner' }
             }
           },
           playground = { enable = true }
@@ -800,7 +814,7 @@ return require('lazy').setup({
       },
       init = function()
         o.termguicolors = true
-        vim.cmd.colorscheme 'catppuccin'
+        vim.cmd.colorscheme('catppuccin')
       end
     },
 
@@ -821,7 +835,7 @@ return require('lazy').setup({
       ft = { 'javascript', 'typescript' },
       opts = {
         server = {
-          on_attach = function(client, bufnr)
+          on_attach = function(_, bufnr)
             local bufopts = { noremap=true, silent=true, buffer=bufnr }
             vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, bufopts)
             vim.keymap.set('n', 'gd', vim.lsp.buf.definition, bufopts)

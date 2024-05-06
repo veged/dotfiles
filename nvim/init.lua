@@ -1,14 +1,5 @@
+require('utils')
 require('plugins')
-
-local g = vim.g
-local o = vim.o
-local autocmd = function(e, p, c) vim.api.nvim_create_autocmd(e, { pattern = p, command = c }) end
-local keys = require('which-key').register
-local keysV = function(k) keys(k, { mode = 'v' }) end
-local key = function(k, c, d) keys({ [k] = { c, d } }) end
-local Cmd = function (s) return '<Cmd>' .. s .. '<CR>' end
-local S= function (s) return '<S-' .. s .. '>' end
-local C= function (s) return '<C-' .. s .. '>' end
 
 g.loaded_netrw = 1
 g.loaded_netrwPlugin = 1
@@ -16,7 +7,7 @@ g.loaded_netrwPlugin = 1
 g.mapleader = ' '
 g.maplocalleader = ' '
 o.langmap = 'ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯ;ABCDEFGHIJKLMNOPQRSTUVWXYZ,фисвуапршолдьтщзйкыегмцчня;abcdefghijklmnopqrstuvwxyz'
-autocmd('InsertLeave', '*', 'silent !macism org.sil.ukelele.keyboardlayout.vgd.vgd') -- require https://github.com/laishulu/macism
+autocmd('InsertLeave', 'silent !macism org.sil.ukelele.keyboardlayout.vgd.vgd') -- require https://github.com/laishulu/macism
 
 g.loaded_ruby_provider = 0
 g.loaded_node_provider = 0
@@ -26,7 +17,7 @@ o.scrolljump = 5
 o.scrolloff = 3
 
 -- Remember last location in file
-autocmd('BufRead', '*', [[call setpos(".", getpos("'\""))]])
+autocmd('BufRead', [[call setpos(".", getpos("'\""))]])
 
 o.wrap = true
 o.autoindent = true
@@ -38,13 +29,13 @@ o.softtabstop = 2
 
 o.list = true
 vim.opt.listchars = { tab = '⋗⋅', trail = '·', nbsp = '∷', extends = '※' }
-autocmd('BufEnter', '*', 'EnableStripWhitespaceOnSave')
+autocmd('BufEnter', 'EnableStripWhitespaceOnSave')
 
 -- Spell checking
 o.spell = false
 o.spelllang = 'ru_yo,en_us'
 o.spelloptions = 'camel,noplainbuffer'
-key(
+keymapN(
   '<Leader>?',
   function()
     o.spell = not o.spell
@@ -57,8 +48,8 @@ key(
 o.ignorecase = true
 o.smartcase = true
 o.gdefault = true
-autocmd('BufReadPost', 'quickfix', 'nnoremap <buffer> <CR> <CR>')
-keys{
+autocmd('BufReadPost', 'nnoremap <buffer> <CR> <CR>', 'quickfix')
+keymapN{
   ['<CR>'] = { Cmd'nohlsearch', 'Clear the search highlight' },
   n = { '<Plug>(highlight-current-n-n)', 'Next search highlight' },
   N = { '<Plug>(highlight-current-n-N)', 'Previous search highlight' }
@@ -76,12 +67,12 @@ for k, pum in pairs({ Left = 'Up', Right = 'Down', Up = 'Left', Down = 'Right' }
 end
 
 -- Visual mode
-keys{
+keymapN{
   [S'Left'] = { 'vh', '⇧←' },
   [S'Right'] = { 'vl', '⇧→' },
   [S'Up'] = { 'Vk', '⇧↑' },
   [S'Down'] = { 'Vj', '⇧↓' } }
-keysV{
+keymapV{
   [S'Left'] = { 'h', '⇧←' },
   [S'Right'] = { 'l', '⇧→' },
   [S'Up'] = { 'k', '⇧↑' },
@@ -90,16 +81,16 @@ keysV{
   ['>'] = { '>gv', 'Move right and keep selection' } }
 
 -- System clipboard
-keys{
+keymapN{
   [C'c'] = { '"+yy', 'Copy to system clipboard' },
   [C'x'] = { '"+dd', 'Cut to system clipboard' } }
-keysV{
+keymapV{
   [C'c'] = { '"+y', 'Copy to system clipboard' },
   [C'x'] = { '"+d', 'Cut to system clipboard' } }
 
 -- Toggle mouse
 o.mouse = ''
-key(
+keymapN(
   '<Leader>m',
   function()
     if o.mouse == 'a' then
@@ -113,10 +104,10 @@ key(
   'Toggle mouse')
 
 -- Toggle cursor crosshair
-key('<Leader>c', Cmd'set cursorline! cursorcolumn!', 'Toggle cursor crosshair')
+keymapN('<Leader>c', Cmd'set cursorline! cursorcolumn!', 'Toggle cursor crosshair')
 
 -- Toggle line numbers
-key(
+keymapN(
   '<Leader>n',
   function()
     if not o.number then
@@ -131,39 +122,27 @@ key(
   end,
   'Toggle line numbers')
 
-keys{
+keymapN{
   [C'End'] = { Cmd'bn', 'Next buffer' },
   [C'Home'] = { Cmd'bp', 'Previous buffer' } }
 
-key('U', C'r', 'Redo')
+keymapN('U', C'r', 'Redo')
 
 -- Write and quit
-keys{
+keymapN{
   ['<Leader>'] = {
     w = { Cmd'w', 'Write' },
-    W = { Cmd'w', 'Write all' },
+    W = { Cmd'w!', 'Force write' },
+    a = { Cmd'w', 'Write all' },
+    A = { Cmd'wa!', 'Force write all' },
     q = { Cmd'q', 'Quit' },
-    Q = { Cmd'qa', 'Quit all' },
+    Q = { Cmd'q!', 'Force quit' },
     x = { Cmd'qa', 'Quit all' },
+    X = { Cmd'qa!', 'Force quit all' },
     s = { Cmd'wqa', 'Write and quit all' },
-    ['!'] = {
-      w = { Cmd'w!', 'Force write' },
-      W = { Cmd'wa!', 'Force write all' },
-      q = { Cmd'q!', 'Force quit' },
-      Q = { Cmd'qa!', 'Force quit all' },
-      x = { Cmd'qa!', 'Force quit all' },
-      s = { Cmd'wqa!', 'Force write and quit all' },
-      name = 'Force'
-    }
+    S = { Cmd'wqa!', 'Force write and quit all' },
   },
   { mode = { 'n', 'v' } } }
-
--- vim.api.nvim_create_user_command('W', 'w', { desc = 'Write' })
--- vim.api.nvim_create_user_command('Wa', 'w', { desc = 'Write all' })
--- vim.api.nvim_create_user_command('Wq', 'wq', { desc = 'Write and quit' })
--- vim.api.nvim_create_user_command('Wqa', 'wqa', { desc = 'Write and quit all' })
--- vim.api.nvim_create_user_command('Q', 'q', { desc = 'Quit' })
--- vim.api.nvim_create_user_command('Qa', 'qa', { desc = 'Quit all' })
 
 o.signcolumn = 'yes'
 
@@ -171,8 +150,9 @@ o.foldenable = false
 o.foldmethod = 'expr'
 o.foldexpr = 'nvim_treesitter#foldexpr()'
 
-keys{
+keymapN{
   ['-'] = { C'x', 'Decrement' },
   ['+'] = { C'a', 'Increment' } }
 
 g.skip_ts_context_commentstring_module = true
+g.python3_host_prog = '/Users/veged/.local/share/virtualenvs/veged-vne2RedP/bin/python'
