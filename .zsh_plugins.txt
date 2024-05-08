@@ -5,6 +5,7 @@ belak/zsh-utils path:completion
 zsh-users/zsh-completions
 lukechilds/zsh-better-npm-completion
 dim-an/cod kind:path
+zsh-users/zsh-autosuggestions
 
 belak/zsh-utils path:utility
 belak/zsh-utils path:prompt
