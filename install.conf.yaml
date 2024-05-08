@@ -8,6 +8,7 @@
 
 - link:
     ~/.profile: .profile
+    ~/.zprofile: .zprofile
     ~/.zshrc: .zshrc
     ~/.zsh_plugins.txt: .zsh_plugins.txt
     ~/.gitconfig: .gitconfig
