@@ -1,16 +1,5 @@
 # Q pre block. Keep at the top of this file.
 [[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.pre.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.pre.zsh"
-eval "$(/opt/homebrew/bin/brew shellenv)"
-
-export GOROOT="$(brew --prefix golang)/libexec"
-
-# If you come from bash you might have to change your $PATH.
-export PATH=$GOROOT/bin:./node_modules/.bin:$HOME/Documents/arcadia:$PATH
-
-export XDG_CONFIG_HOME=$HOME/.config
-export XDG_DATA_HOME=$HOME/.local/share
-export XDG_STATE_HOME=$HOME/.local/state
-export XDG_CACHE_HOME=$HOME/.cache
 
 source $(brew --prefix)/opt/antidote/share/antidote/antidote.zsh
 antidote load
@@ -21,15 +10,11 @@ source <(cod init $$ zsh)
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-export LSCOLORS='exfxcxdxbxegedabagacad'
-export LS_COLORS='di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43'
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 zstyle ':completion:*' menu select
 
 source ~/.iterm2_shell_integration.zsh
 unsetopt share_history
-
-export LANG=en_US.UTF-8
 
 bindkey '\e[1;3D' backward-word     # ⌥←
 bindkey '\e[1;3C' forward-word      # ⌥→
@@ -54,8 +39,6 @@ bindkey '^[[120;9u' pb-kill-region # ⌘x
 resume-last-job () { fg % }
 zle -N resume-last-job
 bindkey '^[[102;9u' resume-last-job
-
-export EDITOR='nvim'
 
 export BAT_THEME='Catppuccin Mocha'
 
@@ -225,9 +208,6 @@ _fzf_comprun() {
 eval "$(zoxide init zsh)"
 
 source $HOME/.config/broot/launcher/bash/br
-
-export NVM_DIR="$HOME/.nvm"
-[ -s '/opt/homebrew/opt/nvm/nvm.sh' ] && \. '/opt/homebrew/opt/nvm/nvm.sh'  # This loads nvm
 
 # Q post block. Keep at the bottom of this file.
 [[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh"
