@@ -7,6 +7,7 @@
         include: ['tap', 'brew', 'cask', 'mas']
 
 - link:
+    ~/.profile: .profile
     ~/.zshrc: .zshrc
     ~/.zsh_plugins.txt: .zsh_plugins.txt
     ~/.gitconfig: .gitconfig
