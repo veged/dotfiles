@@ -1,5 +1,4 @@
 require('utils')
-require('plugins')
 
 g.loaded_netrw = 1
 g.loaded_netrwPlugin = 1
@@ -158,7 +157,6 @@ g.skip_ts_context_commentstring_module = true
 g.python3_host_prog = '/Users/veged/.local/share/virtualenvs/veged-vne2RedP/bin/python'
 
 -- LSP
-
 autocmd('LspAttach', function(args)
   local bufnr = args.buf
   local client = vim.lsp.get_client_by_id(args.data.client_id)
@@ -190,3 +188,5 @@ autocmd('LspAttach', function(args)
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, bufopts)
 end)
+
+require('plugins')
