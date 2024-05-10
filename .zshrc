@@ -6,13 +6,6 @@ antidote load
 
 source <(cod init $$ zsh)
 
-# Set name of the theme to load --- if set to "random", it will
-# load a random theme each time oh-my-zsh is loaded, in which case,
-# to know which specific one was loaded, run: echo $RANDOM_THEME
-# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
-zstyle ':completion:*' menu select
-
 source ~/.iterm2_shell_integration.zsh
 unsetopt share_history
 
@@ -179,31 +172,169 @@ fpath+='/opt/homebrew/share/zsh/site-functions'
 eval "$(fzf --zsh)"
 
 export FZF_DEFAULT_OPTS=" \
+--ansi \
 --color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 \
 --color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc \
 --color=marker:#f5e0dc,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8"
 
 _fzf_compgen_path() {
-  fd --hidden --follow --exclude ".git" . "$1"
+  eza --icons=always --color=always -1 -a --absolute "$1"
 }
 
 _fzf_compgen_dir() {
-  fd --type d --hidden --follow --exclude ".git" . "$1"
+  eza --icons=always --color=always -1 -a --absolute --only-dirs "$1"
 }
 
 export FZF_CTRL_T_OPTS="--preview 'bat -n --color=always --line-range :500 {}' --bind 'ctrl-/:change-preview-window(down|hidden|)'"
 
-_fzf_comprun() {
-  local command=$1
-  shift
+# _fzf_comprun() {
+#   local command=$1
+#   shift
+#
+#   case "$command" in
+#     cd) fzf --preview 'eza --icons=always --color=always --tree --level=3 {} | head -200' "$@" ;;
+#     export|unset) fzf --preview "eval 'echo \$'{}" "$@" ;;
+#     ssh) fzf --preview 'dig {}' "$@" ;;
+#     *) fzf --preview 'bat -n --color=always --line-range :500 {}' "$@" ;;
+#   esac
+# }
+#
+# export FZF_DEFAULT_COMMAND="eza --icons=always --color=always -1da"
+# export FZF_ALT_C_COMMAND=$FZF_DEFAULT_COMMAND" --only-dirs"
+#
+# function _fd_base() {
+#   echo "! _fd_base !" $1 $2 >> /tmp/zsh.log
+#   echo "! _fd_base 1 !" ${1:-'.* .'} >> /tmp/zsh.log
+#   local -a opts
+#   [ $1 = 'dirs' ] && opts=('--type=d')
+#   echo "fd -0 --follow --hidden $opts --exact-depth=1 --format='{/}' -g '$2*' | xargs -0 eza --icons=always --color=always --no-quotes -1da" >> /tmp/zsh.log
+#   eval "fd -0 --follow --hidden $opts --exact-depth=1 --format='{/}' -g '$2*' | xargs -0 eza --icons=always --color=always --no-quotes -1da"
+# }
+#
+# function _fd_filter() {
+#   echo "! _fd_filter !" $1 + $2 >> /tmp/zsh.log
+#   # Special-case some of the usages
+#   case "$2" in
+#     '~'*)
+#       # Expand and then collapse `~` at the beginning of the search string and then re-check it
+#       _fd_filter "${1/#\~/$HOME}" $2
+#       ;;
+#     (../)##(..)#)
+#       # Parent dir only, handle manually as `dirname` fails to handle that correctly
+#       _fd_base $1 $2
+#       ;;
+#     *)
+#       # All the rest
+#       _fd_base $1 $2
+#       ;;
+#   esac
+# }
+#
+# function _fd_select() {
+#   echo "! _fd_select !" $1 $2 >> /tmp/zsh.log
+#   local -a opts=(--preview="bat -n --color=always --pager=never --line-range :300 {echo {+} | sed \"s/^. //\"}" --preview-window=right:70%)
+#   if [[ "$2" == 'dirs' ]]; then
+#     opts=(--preview='eza --tree --level=3 --color=always --icons {} | head -200' --preview-window=right:50%)
+#   fi
+#
+#   echo "! _fd_select opts !" $opts >> /tmp/zsh.log
+#   _fd_filter $1 $2 | fzf $opts \
+#     --ansi \
+#     --exit-0 \
+#     --layout=reverse --height=75% \
+#     --tiebreak=begin \
+#     --bind 'enter:execute(echo {+} | sed "s/^. //")+abort' \
+#     --query="$2"
+# }
+#
+# function _fd_execute() {
+#   # All through compadd
+#   #local result=("${(@f)$(_fd_filter $1 $2)}")
+#   #compadd -a -f result
+#
+#   # Display FZF manually with a hack to prevent multiple appearances of FZF (i.e. multiple calls to
+#   # _files and _cd) when cancelling the matching
+#   echo "! _fd_execute !" $_matcher_num $1 $2 >> /tmp/zsh.log
+#   if [[ $_matcher_num == 1 ]]; then
+#     local result=$(_fd_select $1 $2)
+#     echo "! _fd_execute resul !" $result >> /tmp/zsh.log
+#     [ "$result" = '' ] || compadd -f -U -- "$result"
+#     return 0
+#   fi
+#   return 1
+# }
+#
+# # Save the original functions since we want them to run when executing `-command-` completion
+# autoload +X _files _cd
+# functions[_save_orig_files]=$functions[_files]
+# functions[_save_orig_cd]=$functions[_cd]
+#
+# function _files() {
+#   echo "! _files !" $LBUFFER >> /tmp/zsh.log
+#   if [[ $curcontext == ':complete:-command-:' ]]; then
+#     _save_orig_files $@
+#   else
+#     echo "! _files curcontext != :complete:-command-: !" ${(z)LBUFFER} >> /tmp/zsh.log
+#     local query=(${(z)LBUFFER})
+#     echo "! _files query !" $query >> /tmp/zsh.log
+#     [ "${LBUFFER[-1]}" = ' ' ] && query+=('')
+#     echo "! _files query[-1] !" $query[-1] >> /tmp/zsh.log
+#     _fd_execute 'files' "$query[-1]"
+#   fi
+# }
+# function _fzf_compgen_path() {
+#   echo "! _fzf_compgen_dir !" $1 >> /tmp/zsh.log
+#   _fs_base $1
+# }
+#
+# function _cd() {
+#   echo "! _cd !" $LBUFFER >> /tmp/zsh.log
+#   echo "! _cd curcontext !" $curcontext >> /tmp/zsh.log
+#   if [[ $curcontext == ':complete:-command-:' ]]; then
+#     _save_orig_cd $@
+#   else
+#     echo "! _cd curcontext != :complete:-command-: !" ${(z)LBUFFER} >> /tmp/zsh.log
+#     local query=(${(z)LBUFFER})
+#     echo "! _cd query !" $query >> /tmp/zsh.log
+#     [ "${LBUFFER[-1]}" = ' ' ] && query+=('')
+#     echo "! _cd query[-1] !" $query[-1] >> /tmp/zsh.log
+#     _fd_execute 'dirs' "$query[-1]"
+#   fi
+# }
+# function _fzf_compgen_dir() {
+#   echo "! _fzf_compgen_dir !" $1 >> /tmp/zsh.log
+#   _fd_base 'dirs' $1
+# }
+#
 
-  case "$command" in
-    cd) fzf --preview 'eza --tree --level=3 --color=always --icons {} | head -200' "$@" ;;
-    export|unset) fzf --preview "eval 'echo \$'{}" "$@" ;;
-    ssh) fzf --preview 'dig {}' "$@" ;;
-    *) fzf --preview 'bat -n --color=always --line-range :500 {}' "$@" ;;
-  esac
-}
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*' menu no
+
+zstyle ":completion:*:descriptions" format "[%d]"
+
+# zstyle ':fzf-tab:complete:*' fzf-flags "--ansi"
+# " --color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 --color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc --color=marker:#f5e0dc,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8"
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza --tree --level=3 --color=always --icons $realpath | head -200'
+zstyle ':fzf-tab:complete:export|unset' fzf-preview "eval 'echo \$'$realpath"
+zstyle ':fzf-tab:complete:*' fzf-preview 'bat -n --color=always --line-range :500 $realpath'
+
+# disable sort when completing `git checkout`
+zstyle ':completion:*:git-checkout:*' sort false
+
+# give a preview of commandline arguments when completing `kill`
+zstyle ':completion:*:*:*:*:processes' command "ps -u $USER -o pid,user,comm -w -w"
+zstyle ':fzf-tab:complete:(kill|ps):argument-rest' fzf-preview '[[ $group == "[process ID]" ]] && ps -p $word -o args='
+zstyle ':fzf-tab:complete:(kill|ps):argument-rest' fzf-flags '--preview-window=down:3:wrap'
+
+zstyle ':completion:*:*:local-directories' command "eza --icons=always -a --color=always -L1 $1"
+
+zstyle ':fzf-tab:*' prefix ''
+
+zstyle ':fzf-tab:*' switch-group '<' '>'
+zstyle ':fzf-tab:*' continuous-trigger 'space'
+zstyle ':fzf-tab:*' fzf-bindings 'tab:accept'
+zstyle ':fzf-tab:*' accept-line enter
+
 
 eval "$(zoxide init zsh)"
 

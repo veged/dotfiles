@@ -1,8 +1,7 @@
-zdharma-continuum/fast-syntax-highlighting kind:defer
-
 belak/zsh-utils path:completion
 
 zsh-users/zsh-completions
+Aloxaf/fzf-tab
 lukechilds/zsh-better-npm-completion
 dim-an/cod kind:path
 zsh-users/zsh-autosuggestions
@@ -11,3 +10,6 @@ belak/zsh-utils path:utility
 belak/zsh-utils path:prompt
 
 jirutka/zsh-shift-select
+
+
+zdharma-continuum/fast-syntax-highlighting kind:defer
