@@ -503,7 +503,7 @@ return require('lazy').setup({
         -- require('nvim-treesitter.highlight').set_custom_captures(treesitter_custom_captures)
 
         require'nvim-treesitter.configs'.setup {
-          ensure_installed = { 'html', 'css', 'javascript', 'typescript', 'json', 'lua' },
+          ensure_installed = { 'bash', 'html', 'css', 'javascript', 'typescript', 'json', 'lua' },
           auto_install = true,
           highlight = {
             enable = true,
@@ -544,6 +544,8 @@ return require('lazy').setup({
           },
           playground = { enable = true }
         }
+
+        vim.treesitter.language.register('bash', 'zsh')
       end
     },
 
