@@ -1,6 +1,7 @@
 # Q pre block. Keep at the top of this file.
 [[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.pre.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.pre.zsh"
 
+fpath+='/opt/homebrew/share/zsh/site-functions'
 source $(brew --prefix)/opt/antidote/share/antidote/antidote.zsh
 antidote load
 
@@ -9,10 +10,13 @@ source <(cod init $$ zsh)
 source ~/.iterm2_shell_integration.zsh
 unsetopt share_history
 
+bindkey -e
 bindkey '\e[1;3D' backward-word     # ⌥←
 bindkey '\e[1;3C' forward-word      # ⌥→
 bindkey '^[[1;9D' beginning-of-line # ⌘←
+bindkey '^[[H'    beginning-of-line # Home
 bindkey '^[[1;9C' end-of-line       # ⌘→
+bindkey '^[[F'    end-of-line       # End
 
 pb-copy-region-as-kill () {
   zle copy-region-as-kill
@@ -31,14 +35,9 @@ bindkey '^[[120;9u' pb-kill-region # ⌘x
 
 resume-last-job () { fg % }
 zle -N resume-last-job
-bindkey '^[[102;9u' resume-last-job
+bindkey '^[[102;9u' resume-last-job # ⌘f
 
-export BAT_THEME='Catppuccin Mocha'
-
-# Set personal aliases, overriding those provided by oh-my-zsh libs,
-# plugins, and themes. Aliases can be placed here, though oh-my-zsh
-# users are encouraged to define aliases within the ZSH_CUSTOM folder.
-# For a full list of active aliases, run `alias`.
+# Aliases
 
 alias ..='cd ..'
 alias ...='cd ../..'
@@ -105,6 +104,8 @@ function prompt-length() {
 #
 # Requires: prompt_percent and no_prompt_subst.
 function set-prompt() {
+  set-dark-or-light-mode
+
   emulate -L zsh
 
   top_left=$(ZSH_PROMPT_TOP_LEFT)
@@ -166,39 +167,49 @@ export ZSH_THEME_GIT_PROMPT_SUFFIX='%b%f'
 export ZSH_THEME_GIT_PROMPT_DIRTY='%F{red}'
 export ZSH_THEME_GIT_PROMPT_CLEAN='%F{green}'
 
-fpath+='/opt/homebrew/share/zsh/site-functions'
 
 # FZF
 eval "$(fzf --zsh)"
 
-export FZF_DEFAULT_OPTS=" \
---ansi \
---color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 \
---color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc \
---color=marker:#f5e0dc,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8"
+export FZF_DEFAULT_COLOR_LIGHT_OPTS=" \
+  --color=fg:-1,fg+:#d0d0d0,bg:-1,bg+:#7c7f93 \
+  --color=hl:#d20f39,hl+:#5fd7ff,info:#8839ef,marker:#dc8a78 \
+  --color=prompt:#8839ef,spinner:#dc8a78,pointer:#dc8a78,header:#d20f39 \
+  --color=gutter:#eff1f5,border:#262626,label:#aeaeae,query:#5c5f77"
+export FZF_DEFAULT_COLOR_DARK_OPTS=" \
+  --color=fg:-1,fg+:#d0d0d0,bg:-1,bg+:#262626 \
+  --color=hl:#f38ba8,hl+:#5fd7ff,info:#cba6f7,marker:#f5e0dc \
+  --color=prompt:#cba6f7,spinner:#f5e0dc,pointer:#f5e0dc,header:#f38ba8 \
+  --color=gutter:#1e1e2e,border:#262626,label:#aeaeae,query:#d9d9d9"
+export FZF_DEFAULT_BASE_OPTS=" \
+  --ansi \
+  --border='rounded' --border-label='' --preview-window='border-rounded' \
+  --prompt='➤' --marker='' --pointer='◆' --separator='─' --scrollbar='❚'"
 
 _fzf_compgen_path() {
-  eza --icons=always --color=always -1 -a --absolute "$1"
+  # eza --icons=always --color=always -1ad --absolute "$1"
+  fd --hidden --follow --exclude ".git" . "$1"
 }
 
 _fzf_compgen_dir() {
-  eza --icons=always --color=always -1 -a --absolute --only-dirs "$1"
+  # eza --icons=always --color=always -1ad --absolute --only-dirs "$1"
+  fd --type d --hidden --follow --exclude ".git" . "$1"
 }
 
 export FZF_CTRL_T_OPTS="--preview 'bat -n --color=always --line-range :500 {}' --bind 'ctrl-/:change-preview-window(down|hidden|)'"
 
-# _fzf_comprun() {
-#   local command=$1
-#   shift
-#
-#   case "$command" in
-#     cd) fzf --preview 'eza --icons=always --color=always --tree --level=3 {} | head -200' "$@" ;;
-#     export|unset) fzf --preview "eval 'echo \$'{}" "$@" ;;
-#     ssh) fzf --preview 'dig {}' "$@" ;;
-#     *) fzf --preview 'bat -n --color=always --line-range :500 {}' "$@" ;;
-#   esac
-# }
-#
+_fzf_comprun() {
+  local command=$1
+  shift
+
+  case "$command" in
+    cd) fzf --preview 'eza --icons=always --color=always --tree --level=3 {} | head -200' "$@" ;;
+    export|unset) fzf --preview "eval 'echo \$'{}" "$@" ;;
+    ssh) fzf --preview 'dig {}' "$@" ;;
+    *) fzf --preview 'bat -n --color=always --line-range :500 {}' "$@" ;;
+  esac
+}
+
 # export FZF_DEFAULT_COMMAND="eza --icons=always --color=always -1da"
 # export FZF_ALT_C_COMMAND=$FZF_DEFAULT_COMMAND" --only-dirs"
 #
@@ -339,6 +350,34 @@ zstyle ':fzf-tab:*' accept-line enter
 eval "$(zoxide init zsh)"
 
 source $HOME/.config/broot/launcher/bash/br
+
+# Dark and light modes
+
+set-dark-or-light-mode() {
+  {
+    local mode='light'
+    defaults read -g AppleInterfaceStyle 2>/dev/null | grep -q Dark && mode='dark'
+    if [[ $DARK_OR_LIGHT_MODE != $mode ]]; then
+      export DARK_OR_LIGHT_MODE=$mode
+      case "$mode" in
+        light)
+          export BAT_THEME='Catppuccin Latte'
+          export KITTY_THEME=Catppuccin-Latte
+          export FZF_DEFAULT_COLOR_OPTS=$FZF_DEFAULT_COLOR_LIGHT_OPTS
+          ;;
+        dark)
+          export BAT_THEME='Catppuccin Mocha'
+          export KITTY_THEME=Catppuccin-Mocha
+          export FZF_DEFAULT_COLOR_OPTS=$FZF_DEFAULT_COLOR_DARK_OPTS
+          ;;
+      esac
+      export FZF_DEFAULT_OPTS="$FZF_DEFAULT_BASE_OPTS $FZF_DEFAULT_COLOR_OPTS"
+      lsof -U -Fn | rg -o '/.*nvim.*' | xargs -L1 -r nvim --remote-send "<Esc><Esc>:set background=$mode<CR>" --server
+      kitty +kitten themes --reload-in=all $KITTY_THEME
+    fi
+  } >/dev/null 2>&1
+}
+set-dark-or-light-mode
 
 # Q post block. Keep at the bottom of this file.
 [[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh"
