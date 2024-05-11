@@ -554,26 +554,6 @@ return require('lazy').setup({
       cmd = 'TSPlaygroundToggle'
     },
 
-    {
-      'f-person/auto-dark-mode.nvim',
-      name = 'auto-dark-mode',
-      priority = 1,
-      opts = {
-        update_interval = 60000,
-        set_dark_mode = function()
-          o.background = 'dark'
-          io.popen('kitty +kitten themes --reload-in=all Catppuccin-Mocha')
-        end,
-        set_light_mode = function()
-          o.background = 'light'
-          io.popen('kitty +kitten themes --reload-in=all Catppuccin-Latte')
-        end
-      },
-      init = function()
-        require('auto-dark-mode').init()
-      end
-    },
-
     -- {
     --   'veged/yacolors.nvim',
     --   lazy = false,
@@ -588,7 +568,6 @@ return require('lazy').setup({
     {
       'catppuccin/nvim',
       name = 'catppuccin',
-      dependencies = 'auto-dark-mode',
       opts = {
         background = {
           light = 'latte',

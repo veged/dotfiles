@@ -189,4 +189,6 @@ autocmd('LspAttach', function(args)
   end, bufopts)
 end)
 
+o.background = os.getenv('DARK_OR_LIGHT_MODE') or 'light'
+
 require('plugins')
