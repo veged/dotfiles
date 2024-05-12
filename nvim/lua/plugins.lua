@@ -20,10 +20,8 @@ end)
 
 return require('lazy').setup({
   {
-    "williamboman/mason.nvim",
-    opts = {
-      PATH = "prepend",
-    }
+    'williamboman/mason.nvim',
+    opts = { PATH = 'prepend' }
   },
   {
     'nvim-telescope/telescope.nvim', -- Find, Filter, Preview, Pick.
@@ -33,11 +31,11 @@ return require('lazy').setup({
     config = function()
       local telescopeBuiltin = require('telescope.builtin')
       keymapN({
-        ['<Leader>f']= {
-          f = telescopeBuiltin.find_files,
-          g = telescopeBuiltin.live_grep,
-          b = telescopeBuiltin.buffers,
-          h = telescopeBuiltin.help_tags } })
+        ['<Leader>f'] = {
+          f = { telescopeBuiltin.find_files, 'Find files' },
+          g = { telescopeBuiltin.live_grep, 'Live grep' },
+          b = { telescopeBuiltin.buffers, 'Buffers' },
+          h = { telescopeBuiltin.help_tags, 'Help tags' } } })
 
       require('telescope').setup {
         defaults = {
@@ -325,9 +323,11 @@ return require('lazy').setup({
         }
       })
 
-      vim.keymap.set('i', '<Tab>', function() return luasnip.expand_or_locally_jumpable() and '<Plug>luasnip-expand-or-jump' or '<Tab>' end, { expr = true })
-      vim.keymap.set('i', '<S-Tab>', function() luasnip.jump(-1) end)
-      vim.keymap.set('i', '<M-Tab>', function() if luasnip.choice_active() then require('luasnip.extras.select_choice')() end end)
+      keymapI{
+        ['<Tab>'] = { function() return luasnip.expand_or_locally_jumpable() and '<Plug>luasnip-expand-or-jump' or '<Tab>' end, { expr = true } },
+        ['<S-Tab>'] = function() luasnip.jump(-1) end,
+        ['<M-Tab>'] = function() if luasnip.choice_active() then require('luasnip.extras.select_choice')() end end
+      }
     end
   },
 
