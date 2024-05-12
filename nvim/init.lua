@@ -51,14 +51,12 @@ autocmd('BufReadPost', 'nnoremap <buffer> <CR> <CR>', 'quickfix')
 keymapN{
   ['<CR>'] = { Cmd'nohlsearch', 'Clear the search highlight' },
   n = { '<Plug>(highlight-current-n-n)', 'Next search highlight' },
-  N = { '<Plug>(highlight-current-n-N)', 'Previous search highlight' }
-}
+  N = { '<Plug>(highlight-current-n-N)', 'Previous search highlight' } }
 
 -- Natural arrows in command mode
 for k, pum in pairs({ Left = 'Up', Right = 'Down', Up = 'Left', Down = 'Right' }) do
   k = '<' .. k .. '>'
-  vim.keymap.set(
-    'c',
+  keymapC(
     k,
     function() return vim.fn.pumvisible() == 1 and '<' .. pum .. '>' or k end,
     { expr = true }
@@ -128,8 +126,9 @@ keymapN{
 keymapN('U', C'r', 'Redo')
 
 -- Write and quit
-keymapN{
-  ['<Leader>'] = {
+keymap(
+  { 'n', 'v' },
+  {['<Leader>'] = {
     w = { Cmd'w', 'Write' },
     W = { Cmd'w!', 'Force write' },
     a = { Cmd'w', 'Write all' },
@@ -139,9 +138,8 @@ keymapN{
     x = { Cmd'qa', 'Quit all' },
     X = { Cmd'qa!', 'Force quit all' },
     s = { Cmd'wqa', 'Write and quit all' },
-    S = { Cmd'wqa!', 'Force write and quit all' },
-  },
-  { mode = { 'n', 'v' } } }
+    S = { Cmd'wqa!', 'Force write and quit all' } } }
+  )
 
 o.signcolumn = 'yes'
 
@@ -161,32 +159,36 @@ autocmd('LspAttach', function(args)
   local bufnr = args.buf
   local client = vim.lsp.get_client_by_id(args.data.client_id)
   if client.server_capabilities.completionProvider then
-    vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
+    vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
   end
   if client.server_capabilities.definitionProvider then
-    vim.bo[bufnr].tagfunc = "v:lua.vim.lsp.tagfunc"
+    vim.bo[bufnr].tagfunc = 'v:lua.vim.lsp.tagfunc'
   end
 
+  local buf = vim.lsp.buf
   local bufopts = { noremap = true, silent = true, buffer = bufnr }
 
-  keymapN('gD', vim.lsp.buf.declaration, bufopts)
-  keymapN('gd', vim.lsp.buf.definition, bufopts)
-  keymapN('gi', vim.lsp.buf.implementation, bufopts)
-  keymapN('gt', vim.lsp.buf.type_definition, bufopts)
-  keymapN('gr', vim.lsp.buf.references, bufopts)
+  keymapN(
+    {
+      g = {
+        D = { buf.declaration, 'Go to declaration' },
+        d = { buf.definition, 'Go to definition' },
+        i = { buf.implementation, 'Go to implementation' },
+        t = { buf.type_definition, 'Go to type definition' },
+        r = { buf.references, 'Go to feferences' } },
+      ['<Leader>'] = {
+        h = { buf.hover, 'Hover' },
+        H = { buf.signature_help, 'Signature help' },
+        ['='] = { buf.format, 'Format' },
+        r = { buf.rename, 'Rename' },
+        ['@'] = { buf.code_action, 'Code action' },
+        ['~'] = {
+          a = { buf.add_workspace_folder, 'Add workspace folder' },
+          r = { buf.remove_workspace_folder, 'Remove workspace folder' },
+          l = { function() print(vim.inspect(buf.list_workspace_folders())) end, 'Show workspace folder' } } }
+    },
+    bufopts)
 
-  keymapN('<Leader>h', vim.lsp.buf.hover, bufopts)
-  keymapN('<Leader>H', vim.lsp.buf.signature_help, bufopts)
-
-  keymapN('<Leader>=', vim.lsp.buf.format, bufopts)
-  keymapN('<Leader>r', vim.lsp.buf.rename, bufopts)
-  keymapN('<Leader>@', vim.lsp.buf.code_action, bufopts)
-
-  keymapN('<Leader>~a', vim.lsp.buf.add_workspace_folder, bufopts)
-  keymapN('<Leader>~r', vim.lsp.buf.remove_workspace_folder, bufopts)
-  keymapN('<Leader>~l', function()
-    print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-  end, bufopts)
 end)
 
 o.background = os.getenv('DARK_OR_LIGHT_MODE') or 'light'
