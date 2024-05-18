@@ -123,6 +123,9 @@ keymapN{
   [C'End'] = { Cmd'bn', 'Next buffer' },
   [C'Home'] = { Cmd'bp', 'Previous buffer' } }
 
+keymapN(C'g', C']', 'Jump tag')
+keymapN(CS'G', C't', 'Jump tag back')
+
 keymapN('U', C'r', 'Redo')
 
 -- Write and quit
@@ -191,6 +194,7 @@ autocmd('LspAttach', function(args)
 
 end)
 
-o.background = os.getenv('DARK_OR_LIGHT_MODE') or 'light'
+o.background = os.getenv('DARK_OR_LIGHT_MODE')
+  or vim.trim(vim.fn.system('defaults read -g AppleInterfaceStyle 2>/dev/null | grep -q Dark && echo dark || echo light'))
 
 require('plugins')

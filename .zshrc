@@ -381,3 +381,9 @@ set-dark-or-light-mode
 
 # Q post block. Keep at the bottom of this file.
 [[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh"
+
+if [[ $ZSH_EVAL ]]
+then
+  eval "$ZSH_EVAL"
+  unset ZSH_EVAL
+fi
