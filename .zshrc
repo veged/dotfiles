@@ -104,8 +104,6 @@ function prompt-length() {
 #
 # Requires: prompt_percent and no_prompt_subst.
 function set-prompt() {
-  set-dark-or-light-mode
-
   emulate -L zsh
 
   top_left=$(ZSH_PROMPT_TOP_LEFT)
@@ -130,10 +128,6 @@ function set-prompt() {
     fi
   fi
 }
-
-setopt no_prompt_{bang,subst} prompt_{cr,percent,sp}
-autoload -Uz add-zsh-hook
-add-zsh-hook precmd set-prompt
 
 # Git status
 git_prompt_info() {
@@ -167,6 +161,18 @@ export ZSH_THEME_GIT_PROMPT_SUFFIX='%b%f'
 export ZSH_THEME_GIT_PROMPT_DIRTY='%F{red}'
 export ZSH_THEME_GIT_PROMPT_CLEAN='%F{green}'
 
+set-title() {
+  local title=$(print -Pn "%~")
+  print -Pn "\e]0;$title\a"
+  kitty @ set-window-title "$title"
+}
+
+setopt no_prompt_{bang,subst} prompt_{cr,percent,sp}
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd set-dark-or-light-mode
+add-zsh-hook precmd set-prompt
+add-zsh-hook precmd set-title
+
 
 # FZF
 eval "$(fzf --zsh)"
@@ -183,6 +189,7 @@ export FZF_DEFAULT_COLOR_DARK_OPTS=" \
   --color=gutter:#1e1e2e,border:#262626,label:#aeaeae,query:#d9d9d9"
 export FZF_DEFAULT_BASE_OPTS=" \
   --ansi \
+  --min-height=9 \
   --border='rounded' --border-label='' --preview-window='border-rounded' \
   --prompt='➤' --marker='' --pointer='◆' --separator='─' --scrollbar='❚'"
 
@@ -323,9 +330,8 @@ zstyle ':completion:*' menu no
 
 zstyle ":completion:*:descriptions" format "[%d]"
 
-# zstyle ':fzf-tab:complete:*' fzf-flags "--ansi"
-# " --color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 --color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc --color=marker:#f5e0dc,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8"
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza --tree --level=3 --color=always --icons $realpath | head -200'
+zstyle ':fzf-tab:complete:*' fzf-min-height 9
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza --tree --level=3 --color=always --icons $realpath'
 zstyle ':fzf-tab:complete:export|unset' fzf-preview "eval 'echo \$'$realpath"
 zstyle ':fzf-tab:complete:*' fzf-preview 'bat -n --color=always --line-range :500 $realpath'
 
