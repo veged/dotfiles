@@ -197,4 +197,12 @@ end)
 o.background = os.getenv('DARK_OR_LIGHT_MODE')
   or vim.trim(vim.fn.system('defaults read -g AppleInterfaceStyle 2>/dev/null | grep -q Dark && echo dark || echo light'))
 
+autocmd(
+  {"BufEnter", "BufWinEnter", "TabEnter"},
+  function()
+    local title = "nvim: " .. vim.fn.expand("%:t")
+    vim.opt.titlestring = title
+    os.execute('kitty @ set-window-title ' .. title)
+  end)
+
 require('plugins')
