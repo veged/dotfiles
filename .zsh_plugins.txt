@@ -6,6 +6,8 @@ Freed-Wu/fzf-tab-source
 lukechilds/zsh-better-npm-completion
 dim-an/cod kind:path
 zsh-users/zsh-autosuggestions
+lukechilds/zsh-better-npm-completion
+
 
 belak/zsh-utils path:utility
 belak/zsh-utils path:prompt
