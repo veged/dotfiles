@@ -16,7 +16,7 @@ o.scrolljump = 5
 o.scrolloff = 3
 
 -- Remember last location in file
-autocmd('BufRead', [[call setpos(".", getpos("'\""))]])
+autocmd('BufRead', [[call setpos('.', getpos("'\""))]])
 
 o.wrap = true
 o.autoindent = true
@@ -28,7 +28,6 @@ o.softtabstop = 2
 
 o.list = true
 vim.opt.listchars = { tab = '⋗⋅', trail = '·', nbsp = '∷', extends = '※' }
-autocmd('BufEnter', 'EnableStripWhitespaceOnSave')
 
 -- Spell checking
 o.spell = false
@@ -136,6 +135,8 @@ keymap(
     W = { Cmd'w!', 'Force write' },
     a = { Cmd'w', 'Write all' },
     A = { Cmd'wa!', 'Force write all' },
+    d = { Cmd'bd', 'Delete buffer' },
+    D = { Cmd'bd!', 'Force delete buffer' },
     q = { Cmd'q', 'Quit' },
     Q = { Cmd'q!', 'Force quit' },
     x = { Cmd'qa', 'Quit all' },
