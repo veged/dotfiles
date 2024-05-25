@@ -491,14 +491,16 @@ return require('lazy').setup({
     'nvim-telescope/telescope.nvim', -- Find, Filter, Preview, Pick.
     branch = '0.1.x',
     dependencies = 'nvim-lua/plenary.nvim', -- All the lua functions I don't want to write twice.
-    keys = { '<Leader>ff', '<Leader>fg', '<Leader>fb', '<Leader>fh' },
+    keys = { '<Leader>fc', '<Leader>ff', '<Leader>fg', '<Leader>fb', '<Leader>f:', '<Leader>fh' },
     config = function()
       local telescopeBuiltin = require('telescope.builtin')
       keymapN({
         ['<Leader>f'] = {
+          c = { telescopeBuiltin.colorscheme, 'Find color scheme' },
           f = { telescopeBuiltin.find_files, 'Find files' },
           g = { telescopeBuiltin.live_grep, 'Live grep' },
           b = { telescopeBuiltin.buffers, 'Buffers' },
+          [':'] = { telescopeBuiltin.command_history, 'Command history' },
           h = { telescopeBuiltin.help_tags, 'Help tags' } } })
 
       require('telescope').setup {
@@ -515,6 +517,9 @@ return require('lazy').setup({
             '.gitignore'
           },
           file_ignore_patterns = { 'node_modules' }
+        },
+        pickers = {
+          colorscheme = { enable_preview = true }
         }
       }
     end
