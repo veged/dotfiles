@@ -284,7 +284,7 @@ return require('lazy').setup({
 
   {
     'L3MON4D3/LuaSnip', -- Snippet Engine for Neovim written in Lua
-    dependencies = { "rafamadriz/friendly-snippets" },
+    dependencies = { 'rafamadriz/friendly-snippets' },
     build = 'make install_jsregexp',
     event = 'InsertEnter',
     config = function()
