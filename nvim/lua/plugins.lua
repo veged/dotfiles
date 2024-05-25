@@ -171,8 +171,8 @@ return require('lazy').setup({
     'numToStr/Comment.nvim', -- Smart and powerful comment plugin
     event = 'VeryLazy',
     opts = {
-      toggler = { line = '<Leader>/', block = '<Leader>*' },
-      opleader = { line = '<Leader>/', block = '<Leader>*' }
+      toggler = { line = '<Leader><Leader>', block = '<Leader>*' },
+      opleader = { line = '<Leader><Leader>', block = '<Leader>*' }
     },
     lazy = true
   },
@@ -662,105 +662,106 @@ return require('lazy').setup({
           ['@constant.builtin'] = { fg = C.text, style = { 'bold' } },
           ['@parameter'] = { link = 'Identifier' }, -- For parameters of a function.
           Function = { fg = C.text }, -- function name (also: methods for classes)
-            ['@constructor'] = { fg = C.text },
-            ['@property'] = { fg = C.text },
-            ['@field'] = { fg = C.text },
-            ['@method'] = { fg = C.text },
-            Keyword = { fg = C.blue, style = { 'bold', 'italic' } }, --  any other keyword
-            ['@keyword.declaration'] = { fg = C.green, style = { 'bold', 'italic' } }, -- Keywords used to define a variable/constant: `var`, `let` and `const` in JavaScript
-            ['@keyword.function'] = { fg = C.green, style = { 'bold', 'italic' } }, -- Keywords used to define a function: `function` in Lua, `def` and `lambda` in Python.
-            ['@punctuation.function'] = { fg = C.green }, -- Punctuation in function declarations.
-            ['@punctuation.function.special'] = { fg = C.green, style = { 'bold', 'italic' } },
-            ['@keyword.class'] = { fg = C.green, style = { 'bold', 'italic' } },
-            ['@punctuation.class'] = { fg = C.green },
-            Statement = { fg = C.blue, style = { 'bold', 'italic' } }, -- (preferred) any statement
-            Conditional = { fg = C.sapphire, style = { 'bold', 'italic' } }, -- if, then, else, endif, switch, etC.
-            ['@punctuation.conditional'] = { fg = C.sapphire },
-            Repeat = { fg = C.peach }, -- for, do, while, etC.
-            ['@punctuation.repeat'] = { fg = C.peach },
-            Label = { fg = C.sapphire, style = { 'bold', 'italic' } }, --    case, default, etC.
-            Operator = { fg = C.overlay1 }, -- 'sizeof', '+', '*', etC.
-            ["@punctuation.keyword"] = { style = { 'italic' } },
-            ['@keyword.operator'] = { fg = C.overlay1, style = { 'bold', 'italic' } },
-            ['@keyword.with'] = { fg = C.green, style = { 'bold', 'italic' } },
-            ['@punctuation.with'] = { fg = C.green },
-            ['@keyword.coroutine'] = { fg = C.mauve, style = { 'bold', 'italic' } },
-            ['@keyword.return'] = { fg = C.mauve, style = { 'bold', 'italic' } },
-            ['@keyword.break'] = { link = '@keyword.return' },
-            ['@keyword.continue'] = { link = '@keyword.return' },
-            Exception = { fg = C.red }, --  try, catch, throw
-            ['@exception'] = { fg = C.red }, --  try, catch, throw
-            ['@keyword.exception'] = { fg = C.red, style = { 'bold', 'italic' } }, --  try, catch, throw
-            ['@punctuation.exception'] = { link = '@exception' }, --  try, catch, throw
-            ['@keyword.debugger'] = { fg = C.red, style = { 'bold', 'italic' } },
+          ['@constructor'] = { fg = C.text },
+          ['@property'] = { fg = C.text },
+          ['@field'] = { fg = C.text },
+          ['@method'] = { fg = C.text },
+          Keyword = { fg = C.blue, style = { 'bold', 'italic' } }, --  any other keyword
+          ['@keyword'] = { fg = C.blue, style = { 'bold', 'italic' } }, -- any other keyword
+          ['@keyword.declaration'] = { fg = C.green, style = { 'bold', 'italic' } }, -- Keywords used to define a variable/constant: `var`, `let` and `const` in JavaScript
+          ['@keyword.function'] = { fg = C.green, style = { 'bold', 'italic' } }, -- Keywords used to define a function: `function` in Lua, `def` and `lambda` in Python.
+          ['@punctuation.function'] = { fg = C.green }, -- Punctuation in function declarations.
+          ['@punctuation.function.special'] = { fg = C.green, style = { 'bold', 'italic' } },
+          ['@keyword.class'] = { fg = C.green, style = { 'bold', 'italic' } },
+          ['@punctuation.class'] = { fg = C.green },
+          Statement = { fg = C.blue, style = { 'bold', 'italic' } }, -- (preferred) any statement
+          Conditional = { fg = C.sapphire, style = { 'bold', 'italic' } }, -- if, then, else, endif, switch, etC.
+          ['@punctuation.conditional'] = { fg = C.sapphire },
+          Repeat = { fg = C.peach }, -- for, do, while, etC.
+          ['@punctuation.repeat'] = { fg = C.peach },
+          Label = { fg = C.sapphire, style = { 'bold', 'italic' } }, --    case, default, etC.
+          Operator = { fg = C.overlay1 }, -- 'sizeof', '+', '*', etC.
+          ["@punctuation.keyword"] = { style = { 'italic' } },
+          ['@keyword.operator'] = { fg = C.overlay1, style = { 'bold', 'italic' } },
+          ['@keyword.with'] = { fg = C.green, style = { 'bold', 'italic' } },
+          ['@punctuation.with'] = { fg = C.green },
+          ['@keyword.coroutine'] = { fg = C.mauve, style = { 'bold', 'italic' } },
+          ['@keyword.return'] = { fg = C.mauve, style = { 'bold', 'italic' } },
+          ['@keyword.break'] = { link = '@keyword.return' },
+          ['@keyword.continue'] = { link = '@keyword.return' },
+          Exception = { fg = C.red }, --  try, catch, throw
+          ['@exception'] = { fg = C.red }, --  try, catch, throw
+          ['@keyword.exception'] = { fg = C.red, style = { 'bold', 'italic' } }, --  try, catch, throw
+          ['@punctuation.exception'] = { link = '@exception' }, --  try, catch, throw
+          ['@keyword.debugger'] = { fg = C.red, style = { 'bold', 'italic' } },
 
-            PreProc = { fg = C.overlay1 }, -- (preferred) generic Preprocessor
-            Include = { fg = C.green }, --  preprocessor #include
-            Define = { fg = C.green }, -- preprocessor #define
-            Macro = { fg = C.green }, -- same as Define
-            PreCondit = { fg = C.sapphire }, -- preprocessor #if, #else, #endif, etc.
+          PreProc = { fg = C.overlay1 }, -- (preferred) generic Preprocessor
+          Include = { fg = C.green }, --  preprocessor #include
+          Define = { fg = C.green }, -- preprocessor #define
+          Macro = { fg = C.green }, -- same as Define
+          PreCondit = { fg = C.sapphire }, -- preprocessor #if, #else, #endif, etc.
 
-            Type = { fg = C.text }, -- (preferred) int, long, char, etC.
-            StorageClass = { fg = C.sapphire }, -- static, register, volatile, etC.
-            Structure = { fg = C.teal }, --  struct, union, enum, etC.
-            Typedef = { link = 'Type' }, --  A typedef
+          Type = { fg = C.text }, -- (preferred) int, long, char, etC.
+          StorageClass = { fg = C.sapphire }, -- static, register, volatile, etC.
+          Structure = { fg = C.teal }, --  struct, union, enum, etC.
+          Typedef = { link = 'Type' }, --  A typedef
 
-            Special = { fg = C.sapphire }, -- (preferred) any special symbol
-            SpecialChar = { fg = C.sapphire, style = { 'bold' } }, -- special character in a constant
-            Tag = { link = 'Special' }, -- you can use CTRL-] on this
-            Delimiter = { fg = C.overlay2 }, -- character that needs attention
-            -- Specialoverlay0= { }, -- special things inside a overlay0
-            Debug = { fg = C.red, style = { 'italic' } }, -- debugging statements
+          Special = { fg = C.sapphire }, -- (preferred) any special symbol
+          SpecialChar = { fg = C.sapphire, style = { 'bold' } }, -- special character in a constant
+          Tag = { link = 'Special' }, -- you can use CTRL-] on this
+          Delimiter = { fg = C.overlay2 }, -- character that needs attention
+          -- Specialoverlay0= { }, -- special things inside a overlay0
+          Debug = { fg = C.red, style = { 'italic' } }, -- debugging statements
 
-            Underlined = { style = { 'underline' } }, -- (preferred) text that stands out, HTML links
-            Bold = { style = { 'bold' } },
-            Italic = { style = { 'italic' } },
-            -- ('Ignore', below, may be invisible...)
-            -- Ignore = { }, -- (preferred) left blank, hidden  |hl-Ignore|
+          Underlined = { style = { 'underline' } }, -- (preferred) text that stands out, HTML links
+          Bold = { style = { 'bold' } },
+          Italic = { style = { 'italic' } },
+          -- ('Ignore', below, may be invisible...)
+          -- Ignore = { }, -- (preferred) left blank, hidden  |hl-Ignore|
 
-            Error = { fg = C.red }, -- (preferred) any erroneous construct
-            Todo = { bg = C.yellow, fg = C.base, style = { 'bold' } }, -- (preferred) anything that needs extra attention; mostly the keywords TODO FIXME and XXX
-            qfLineNr = { fg = C.yellow },
-            qfFileName = { fg = C.blue },
-            -- htmlH1 = { fg = C.pink, style = { 'bold' } },
-            -- htmlH2 = { fg = C.blue, style = { 'bold' } },
-            -- mkdHeading = { fg = C.peach, style = { 'bold' } },
-            -- mkdCode = { bg = C.terminal_black, fg = C.text },
-            -- mkdCodeDelimiter = { bg = C.base, fg = C.text },
-            -- mkdCodeStart = { fg = C.flamingo, style = { 'bold' } },
-            -- mkdCodeEnd = { fg = C.flamingo, style = { 'bold' } },
-            -- mkdLink = { fg = C.blue, style = { 'underline' } },
+          Error = { fg = C.red }, -- (preferred) any erroneous construct
+          Todo = { bg = C.yellow, fg = C.base, style = { 'bold' } }, -- (preferred) anything that needs extra attention; mostly the keywords TODO FIXME and XXX
+          qfLineNr = { fg = C.yellow },
+          qfFileName = { fg = C.blue },
+          -- htmlH1 = { fg = C.pink, style = { 'bold' } },
+          -- htmlH2 = { fg = C.blue, style = { 'bold' } },
+          -- mkdHeading = { fg = C.peach, style = { 'bold' } },
+          -- mkdCode = { bg = C.terminal_black, fg = C.text },
+          -- mkdCodeDelimiter = { bg = C.base, fg = C.text },
+          -- mkdCodeStart = { fg = C.flamingo, style = { 'bold' } },
+          -- mkdCodeEnd = { fg = C.flamingo, style = { 'bold' } },
+          -- mkdLink = { fg = C.blue, style = { 'underline' } },
 
-            -- debugging
-            debugPC = { bg = O.transparent_background and C.none or C.crust }, -- used for highlighting the current line in terminal-debug
-            debugBreakpoint = { bg = C.base, fg = C.overlay0 }, -- used for breakpoint colors in terminal-debug
-            -- illuminate
-            illuminatedWord = { bg = C.surface1 },
-            illuminatedCurWord = { bg = C.surface1 },
-            -- diff
-            diffAdded = { fg = C.green },
-            diffRemoved = { fg = C.red },
-            diffChanged = { fg = C.blue },
-            diffOldFile = { fg = C.yellow },
-            diffNewFile = { fg = C.peach },
-            diffFile = { fg = C.blue },
-            diffLine = { fg = C.overlay0 },
-            diffIndexLine = { fg = C.teal },
-            DiffAdd = { bg = U.darken(C.green, 0.4, C.base) }, -- diff mode: Added line |diff.txt|
-            DiffChange = { bg = U.darken(C.peach, 0.4, C.base) }, -- diff mode: Changed line |diff.txt|
-            DiffDelete = { bg = U.darken(C.red, 0.4, C.base) }, -- diff mode: Deleted line |diff.txt|
-            DiffText = { bg = U.darken(C.peach, 0.4, C.base) }, -- diff mode: Changed text within a changed line |diff.txt|
-            -- misc
+          -- debugging
+          debugPC = { bg = O.transparent_background and C.none or C.crust }, -- used for highlighting the current line in terminal-debug
+          debugBreakpoint = { bg = C.base, fg = C.overlay0 }, -- used for breakpoint colors in terminal-debug
+          -- illuminate
+          illuminatedWord = { bg = C.surface1 },
+          illuminatedCurWord = { bg = C.surface1 },
+          -- diff
+          diffAdded = { fg = C.green },
+          diffRemoved = { fg = C.red },
+          diffChanged = { fg = C.blue },
+          diffOldFile = { fg = C.yellow },
+          diffNewFile = { fg = C.peach },
+          diffFile = { fg = C.blue },
+          diffLine = { fg = C.overlay0 },
+          diffIndexLine = { fg = C.teal },
+          DiffAdd = { bg = U.darken(C.green, 0.4, C.base) }, -- diff mode: Added line |diff.txt|
+          DiffChange = { bg = U.darken(C.peach, 0.4, C.base) }, -- diff mode: Changed line |diff.txt|
+          DiffDelete = { bg = U.darken(C.red, 0.4, C.base) }, -- diff mode: Deleted line |diff.txt|
+          DiffText = { bg = U.darken(C.peach, 0.4, C.base) }, -- diff mode: Changed text within a changed line |diff.txt|
+          -- misc
 
-            -- glyphs
-            GlyphPalette1 = { fg = C.red },
-            GlyphPalette2 = { fg = C.teal },
-            GlyphPalette3 = { fg = C.yellow },
-            GlyphPalette4 = { fg = C.blue },
-            GlyphPalette6 = { fg = C.teal },
-            GlyphPalette7 = { fg = C.text },
-            GlyphPalette9 = { fg = C.red },
-          }
+          -- glyphs
+          GlyphPalette1 = { fg = C.red },
+          GlyphPalette2 = { fg = C.teal },
+          GlyphPalette3 = { fg = C.yellow },
+          GlyphPalette4 = { fg = C.blue },
+          GlyphPalette6 = { fg = C.teal },
+          GlyphPalette7 = { fg = C.text },
+          GlyphPalette9 = { fg = C.red },
+        }
       end
     },
     init = function()

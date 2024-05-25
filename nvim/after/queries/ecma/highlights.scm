@@ -26,6 +26,7 @@
 (if_statement consequence: (statement_block ["{" "}"] @punctuation.keyword @punctuation.conditional.bracket))
 (if_statement alternative: (else_clause (statement_block ["{" "}"] @punctuation.keyword @punctuation.conditional.bracket)))
 
+(switch_statement value: (parenthesized_expression ["(" ")"] @punctuation.keyword @punctuation.conditional.bracket))
 (switch_statement body: (switch_body ["{" "}"] @punctuation.keyword @punctuation.conditional.bracket))
 (switch_case ":" @punctuation.keyword @punctuation.conditional.delimiter)
 (switch_default ":" @punctuation.keyword @punctuation.conditional.delimiter)
@@ -68,33 +69,34 @@
 (method_definition parameters: (formal_parameters "," @punctuation.keyword @punctuation.function.delimiter))
 (method_definition body: (statement_block ["{" "}"] @punctuation.keyword @punctuation.function.bracket))
 
-["if" "else" "switch" "case" "default"] @keyword.conditional @conditional
+["if" "else" "switch" "case"] @keyword @conditional
+(switch_default "default" @keyword @conditional)
 
-["import" "from" "as"] @keyword.include @include
+["import" "from" "as"] @keyword @keyword.include @include
 
 ["new" "delete" "typeof" "in" "instanceof" "void"] @keyword @keyword.operator @operator
 
-["for" "do" "of" "while"] @keyword.repeat @repeat
+["for" "do" "of" "while"] @keyword @keyword.repeat @repeat
 
-(for_in_statement operator: "in" @keyword.repeat @repeat)
+(for_in_statement operator: "in" @keyword @keyword.repeat @repeat)
 
-["class" "extends" "static" "get" "set"] @keyword.class
+["class" "extends" "static" "get" "set"] @keyword @keyword.class
 
 "static" @storageclass
 
-"debugger" @keyword.debugger
+"debugger" @keyword @keyword.debugger
 
-"with" @keyword.with
+"with" @keyword @keyword.with
 
 ["const" "let" "var"] @keyword.declaration
 
 ["return" "yield" "export"] @keyword @keyword.return
 (export_statement "default" @keyword.return)
 
-(break_statement "break" @keyword @keyword.break)
+(break_statement "break" @keyword.break)
 (continue_statement "continue" @keyword @keyword.continue)
 
-"function" @keyword @keyword.function
+"function" @keyword
 
 ["async" "await"] @keyword @keyword.coroutine
 
