@@ -101,15 +101,11 @@ function prompt-length() {
 }
 
 # Sets PROMPT and RPROMPT.
-#
-# Requires: prompt_percent and no_prompt_subst.
-function set-prompt() {
-  emulate -L zsh
-
-  top_left=$(ZSH_PROMPT_TOP_LEFT)
-  top_right=$(ZSH_PROMPT_TOP_RIGHT)
-  bottom_left=$(ZSH_PROMPT_BOTTOM_LEFT)
-  bottom_right=$(ZSH_PROMPT_BOTTOM_RIGHT)
+function set-prompt() (
+  local top_left=$(ZSH_PROMPT_TOP_LEFT)
+  local top_right=$(ZSH_PROMPT_TOP_RIGHT)
+  local bottom_left=$(ZSH_PROMPT_BOTTOM_LEFT)
+  local bottom_right=$(ZSH_PROMPT_BOTTOM_RIGHT)
 
   local -i left_len=$(prompt-length ${top_left})
   local -i right_len=$(prompt-length ${top_right} 9999)
@@ -127,33 +123,61 @@ function set-prompt() {
       RPROMPT=${bottom_right}
     fi
   fi
+)
+
+# VCS status
+set-vcs() {
+  local git_branch=$(git rev-parse --abbrev-ref HEAD 2> /dev/null)
+  if [[ -n ${git_branch} ]]; then
+    current_vcs 'git'
+    CURRENT_VCS_BRANCH=$(print_vcs_branch "$(git status --porcelain 2>/dev/null)" "$git_branch")
+  else
+    local arc_info=("${(f)$(arc info 2>/dev/null)}")
+    local arc_branch=${${(M)arc_info:#branch:*}#branch: }
+    if [[ -n ${arc_branch} ]]; then
+      current_vcs 'arc'
+      CURRENT_VCS_BRANCH=$(print_vcs_branch "$(arc status --short 2>/dev/null)" "$arc_branch")
+    else
+      current_vcs ''
+      CURRENT_VCS_BRANCH=''
+    fi
+  fi
 }
 
-# Git status
-git_prompt_info() {
-    local message=''
-    local message_color="%F{green}"
+print_vcs_branch() {
+  local vcs_status=("${(f)1}")
 
-    # https://git-scm.com/docs/git-status#_short_format
-    local staged=$(git status --porcelain 2>/dev/null | grep -e "^[MADRCU]")
-    local unstaged=$(git status --porcelain 2>/dev/null | grep -e "^[MADRCU? ][MADRCU?]")
+  if [[ ${(M)vcs_status:#[MADRCU][ MADRCU]*} ]]; then # staged
+    print -n "%F{yellow}"
+  elif [[ ${(M)vcs_status:# [MADRCU]*} ]]; then # unstaged
+    print -n "%F{red}"
+  else
+    print -n "%F{green}"
+  fi
 
-    if [[ -n ${staged} ]]; then
-        message_color="%F{red}"
-    elif [[ -n ${unstaged} ]]; then
-        message_color="%F{yellow}"
-    fi
+  print -n "$2%f"
+}
 
-    local branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-    if [[ -n ${branch} ]]; then
-        message+="${message_color}${branch}%f"
-    fi
-
-    echo -n "${message}"
+export CURRENT_VCS=''
+alias s='echo "Not in any VCS folder!"'
+current_vcs() {
+  if [[ $CURRENT_VCS != $1 ]]; then
+    export CURRENT_VCS="$1"
+    case "$1" in
+      git)
+        alias s='git st'
+        ;;
+      arc)
+        alias s='arc st'
+        ;;
+      *)
+        ;;
+    esac
+  fi
 }
 
 ZSH_PROMPT_TOP_LEFT() { echo "%{$(iterm2_prompt_mark)%}%F{yellow}%~%f" }
-ZSH_PROMPT_TOP_RIGHT() { echo "$(git_prompt_info)" }
+ZSH_PROMPT_TOP_RIGHT() { echo $CURRENT_VCS_BRANCH }
 ZSH_PROMPT_BOTTOM_LEFT() { echo "%F{%(?.green.red)}%(!. .➤)%f " }
 ZSH_PROMPT_BOTTOM_RIGHT() { echo '' }
 export ZSH_THEME_GIT_PROMPT_PREFIX='%B '
@@ -170,6 +194,7 @@ set-title() {
 setopt no_prompt_{bang,subst} prompt_{cr,percent,sp}
 autoload -Uz add-zsh-hook
 add-zsh-hook precmd set-dark-or-light-mode
+add-zsh-hook precmd set-vcs
 add-zsh-hook precmd set-prompt
 add-zsh-hook precmd set-title
 
