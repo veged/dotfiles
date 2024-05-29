@@ -96,7 +96,7 @@
 (break_statement "break" @keyword.break)
 (continue_statement "continue" @keyword @keyword.continue)
 
-"function" @keyword
+"function" @keyword @keyword.function
 
 ["async" "await"] @keyword @keyword.coroutine
 
