@@ -1,4 +1,4 @@
-# Q pre block. Keep at the top of this file.
+# Amazon Q pre block. Keep at the top of this file.
 [[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.pre.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.pre.zsh"
 
 fpath+='/opt/homebrew/share/zsh/site-functions'
@@ -8,7 +8,8 @@ antidote load
 source <(cod init $$ zsh)
 
 source ~/.iterm2_shell_integration.zsh
-unsetopt share_history
+
+setopt share_history hist_ignore_all_dups append_history hist_ignore_space
 
 bindkey -e
 bindkey '\e[1;3D' backward-word     # ⌥←
@@ -83,7 +84,7 @@ alias ya="$HOME/arcadia/ya"
 #   prompt-length '%D'          => 8
 #   prompt-length '%1(l..ab)'   => 2
 #   prompt-length '%(!.a.)'     => 1 if root, 0 if not
-function prompt-length() {
+prompt-length() {
   emulate -L zsh
   local -i COLUMNS=${2:-COLUMNS}
   local -i x y=${#1} m
@@ -101,7 +102,7 @@ function prompt-length() {
 }
 
 # Sets PROMPT and RPROMPT.
-function set-prompt() (
+set-prompt() {
   local top_left=$(ZSH_PROMPT_TOP_LEFT)
   local top_right=$(ZSH_PROMPT_TOP_RIGHT)
   local bottom_left=$(ZSH_PROMPT_BOTTOM_LEFT)
@@ -123,7 +124,7 @@ function set-prompt() (
       RPROMPT=${bottom_right}
     fi
   fi
-)
+}
 
 # VCS status
 set-vcs() {
@@ -197,7 +198,6 @@ add-zsh-hook precmd set-dark-or-light-mode
 add-zsh-hook precmd set-vcs
 add-zsh-hook precmd set-prompt
 add-zsh-hook precmd set-title
-
 
 # FZF
 eval "$(fzf --zsh)"
@@ -410,7 +410,7 @@ set-dark-or-light-mode() {
 }
 set-dark-or-light-mode
 
-# Q post block. Keep at the bottom of this file.
+# Amazon Q post block. Keep at the bottom of this file.
 [[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh"
 
 if [[ $ZSH_EVAL ]]

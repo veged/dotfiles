@@ -36,7 +36,8 @@ return require('lazy').setup({
       local capabilities = require('cmp_nvim_lsp').default_capabilities()
       capabilities.textDocument.completion.completionItem.snippetSupport = true
       local lspconfig = require('lspconfig')
-      lspconfig.html.setup({
+      lspconfig.typos_lsp.setup{}
+      lspconfig.html.setup{
         capabilities = capabilities,
         init_options = {
           configurationSection = { 'html', 'css', 'javascript' },
@@ -45,7 +46,7 @@ return require('lazy').setup({
             javascript = true
           }
         }
-      })
+      }
       lspconfig.cssls.setup{ capabilities = capabilities }
       lspconfig.css_variables.setup{}
       lspconfig.eslint.setup{ capabilities = capabilities }
