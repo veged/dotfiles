@@ -133,7 +133,7 @@ keymap(
   {['<Leader>'] = {
     w = { Cmd'w', 'Write' },
     W = { Cmd'w!', 'Force write' },
-    a = { Cmd'w', 'Write all' },
+    a = { Cmd'wa', 'Write all' },
     A = { Cmd'wa!', 'Force write all' },
     d = { Cmd'bd', 'Delete buffer' },
     D = { Cmd'bd!', 'Force delete buffer' },
