@@ -162,7 +162,14 @@ return require('lazy').setup({
     }
   },
 
-  'nishigori/increment-activator', -- enhance to increment candidates U have defined
+  {
+    'nishigori/increment-activator', -- enhance to increment candidates U have defined
+    config = function()
+      keymapN{
+        ['-'] = { '<Plug>(increment-activator-decrement)', 'Decrement' },
+        ['+'] = { '<Plug>(increment-activator-increment)', 'Increment' } }
+    end
+  },
 
   'tpope/vim-surround', -- Delete/change/add parentheses/quotes/XML-tags/much more with ease
 
@@ -454,7 +461,7 @@ return require('lazy').setup({
       reload_on_bufenter = true,
       view = {
         centralize_selection = false,
-        width = '20%',
+        width = '15%',
         signcolumn = 'yes'
       },
       renderer = {
