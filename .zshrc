@@ -7,9 +7,9 @@ antidote load
 
 source <(cod init $$ zsh)
 
-source ~/.iterm2_shell_integration.zsh
+[[ $TERM_PROGRAM == 'iTerm.app' ]] && source ~/.iterm2_shell_integration.zsh
 
-setopt share_history hist_ignore_all_dups append_history hist_ignore_space
+setopt hist_ignore_all_dups append_history hist_ignore_space
 
 bindkey -e
 bindkey '\e[1;3D' backward-word     # ⌥←
@@ -177,7 +177,7 @@ current_vcs() {
   fi
 }
 
-ZSH_PROMPT_TOP_LEFT() { echo "%{$(iterm2_prompt_mark)%}%F{yellow}%~%f" }
+ZSH_PROMPT_TOP_LEFT() { echo "%{$([ ${+functions[iterm2_prompt_mark]} -eq 1 ] && iterm2_prompt_mark)%}%F{yellow}%~%f"}
 ZSH_PROMPT_TOP_RIGHT() { echo $CURRENT_VCS_BRANCH }
 ZSH_PROMPT_BOTTOM_LEFT() { echo "%F{%(?.green.red)}%(!. .➤)%f " }
 ZSH_PROMPT_BOTTOM_RIGHT() { echo '' }
@@ -189,7 +189,7 @@ export ZSH_THEME_GIT_PROMPT_CLEAN='%F{green}'
 set-title() {
   local title=$(print -Pn "%~")
   print -Pn "\e]0;$title\a"
-  kitty @ set-window-title "$title"
+  [[ $TERM == 'xterm-kitty' ]] && kitty @ set-window-title "$title"
 }
 
 setopt no_prompt_{bang,subst} prompt_{cr,percent,sp}
@@ -300,7 +300,7 @@ _fzf_comprun() {
 #   echo "! _fd_execute !" $_matcher_num $1 $2 >> /tmp/zsh.log
 #   if [[ $_matcher_num == 1 ]]; then
 #     local result=$(_fd_select $1 $2)
-#     echo "! _fd_execute resul !" $result >> /tmp/zsh.log
+#     echo "! _fd_execute result !" $result >> /tmp/zsh.log
 #     [ "$result" = '' ] || compadd -f -U -- "$result"
 #     return 0
 #   fi
@@ -404,7 +404,7 @@ set-dark-or-light-mode() {
       esac
       export FZF_DEFAULT_OPTS="$FZF_DEFAULT_BASE_OPTS $FZF_DEFAULT_COLOR_OPTS"
       lsof -U -Fn | rg -o '/.*nvim.*' | xargs -L1 -r nvim --remote-send "<Esc><Esc>:set background=$mode<CR>" --server
-      kitty +kitten themes --reload-in=all $KITTY_THEME
+      [[ $TERM == 'xterm-kitty' ]] && kitty +kitten themes --reload-in=all $KITTY_THEME
     fi
   } >/dev/null 2>&1
 }
@@ -418,3 +418,10 @@ then
   eval "$ZSH_EVAL"
   unset ZSH_EVAL
 fi
+
+# bun completions
+[ -s "/Users/veged/.bun/_bun" ] && source "/Users/veged/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
