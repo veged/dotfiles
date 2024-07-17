@@ -160,16 +160,22 @@ print_vcs_branch() {
 }
 
 export CURRENT_VCS=''
-alias s='echo "Not in any VCS folder!"'
+alias st='echo "Not in any VCS folder!"'
 current_vcs() {
   if [[ $CURRENT_VCS != $1 ]]; then
     export CURRENT_VCS="$1"
-    case "$1" in
+    alias st="$CURRENT_VCS status"
+    alias df="$CURRENT_VCS diff"
+    alias ci="$CURRENT_VCS commit"
+    alias co='$CURRENT_VCS checkout'
+    alias pu='$CURRENT_VCS push'
+    alias br='$CURRENT_VCS branch'
+    case "$CURRENT_VCS" in
       git)
-        alias s='git st'
+        alias p='git pull main'
         ;;
       arc)
-        alias s='arc st'
+        alias p='arc pull trunk'
         ;;
       *)
         ;;
