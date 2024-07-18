@@ -5,7 +5,7 @@ fpath+='/opt/homebrew/share/zsh/site-functions'
 source $(brew --prefix)/opt/antidote/share/antidote/antidote.zsh
 antidote load
 
-source <(cod init $$ zsh)
+# source <(cod init $$ zsh)
 
 [[ $TERM_PROGRAM == 'iTerm.app' ]] && source ~/.iterm2_shell_integration.zsh
 
@@ -170,6 +170,7 @@ current_vcs() {
     alias co='$CURRENT_VCS checkout'
     alias pu='$CURRENT_VCS push'
     alias br='$CURRENT_VCS branch'
+    alias sq='$CURRENT_VCS squash'
     case "$CURRENT_VCS" in
       git)
         alias p='git pull main'
@@ -185,7 +186,7 @@ current_vcs() {
 
 ZSH_PROMPT_TOP_LEFT() { echo "%{$([ ${+functions[iterm2_prompt_mark]} -eq 1 ] && iterm2_prompt_mark)%}%F{yellow}%~%f"}
 ZSH_PROMPT_TOP_RIGHT() { echo $CURRENT_VCS_BRANCH }
-ZSH_PROMPT_BOTTOM_LEFT() { echo "%F{%(?.green.red)}%(!. .➤)%f " }
+ZSH_PROMPT_BOTTOM_LEFT() { echo "%F{%(?.green.red)}%(!. .󰜴)%f " }
 ZSH_PROMPT_BOTTOM_RIGHT() { echo '' }
 export ZSH_THEME_GIT_PROMPT_PREFIX='%B '
 export ZSH_THEME_GIT_PROMPT_SUFFIX='%b%f'
@@ -222,7 +223,7 @@ export FZF_DEFAULT_BASE_OPTS=" \
   --ansi \
   --min-height=9 \
   --border='rounded' --border-label='' --preview-window='border-rounded' \
-  --prompt='➤' --marker='' --pointer='◆' --separator='─' --scrollbar='❚'"
+  --prompt='󰜴 ' --marker='' --pointer='◆' --separator='─' --scrollbar='❚'"
 
 _fzf_compgen_path() {
   # eza --icons=always --color=always -1ad --absolute "$1"
@@ -386,7 +387,7 @@ zstyle ':fzf-tab:*' accept-line enter
 
 eval "$(zoxide init zsh)"
 
-source $HOME/.config/broot/launcher/bash/br
+# source $HOME/.config/broot/launcher/bash/br
 
 # Dark and light modes
 
