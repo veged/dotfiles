@@ -11,6 +11,7 @@
 	# git reauthor $START..$END
 	reauthor = !sh -c 'eval `git log --reverse --topo-order --pretty=format:\"git cherry-pick %H &&  git commit --amend -C %H --author=\\\"%aN <%aE>\\\" && \" $0 ` "echo success" '
 	dt = difftool
+	undo = reset --soft HEAD~1
 [color]
 	branch = auto
 	diff = auto

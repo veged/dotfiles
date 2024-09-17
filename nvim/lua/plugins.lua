@@ -25,6 +25,28 @@ return require('lazy').setup({
   },
 
   {
+    'williamboman/mason-lspconfig.nvim',
+    opts = {
+      ensure_installed = {
+        -- 'clangd',
+        -- 'cpptools',
+        -- 'css-lsp',
+        -- 'css-variables-language-server',
+        -- 'cssmodules-language-server',
+        -- 'eslint-lsp',
+        -- 'eslint_d',
+        -- 'html-lsp',
+        -- 'json-lsp',
+        -- 'lua-language-server',
+        -- 'luacheck',
+        -- 'luaformatter',
+        -- 'typos-lsp',
+        -- 'vtsls'
+      },
+    },
+  },
+
+  {
     'neovim/nvim-lspconfig', -- Quickstart configurations for the Nvim LSP client
     dependencies = {
       'hrsh7th/cmp-nvim-lsp',
@@ -50,7 +72,7 @@ return require('lazy').setup({
       lspconfig.cssls.setup{ capabilities = capabilities }
       lspconfig.css_variables.setup{}
       lspconfig.eslint.setup{ capabilities = capabilities }
-      lspconfig.tsserver.setup{ capabilities = capabilities }
+      lspconfig.vtsls.setup{ capabilities = capabilities }
       lspconfig.jsonls.setup{ capabilities = capabilities }
       lspconfig.lua_ls.setup{
         capabilities = capabilities,
@@ -460,6 +482,7 @@ return require('lazy').setup({
       sync_root_with_cwd = true,
       reload_on_bufenter = true,
       view = {
+        side = 'right',
         centralize_selection = false,
         width = '15%',
         signcolumn = 'yes'
@@ -499,7 +522,7 @@ return require('lazy').setup({
     'nvim-telescope/telescope.nvim', -- Find, Filter, Preview, Pick.
     branch = '0.1.x',
     dependencies = 'nvim-lua/plenary.nvim', -- All the lua functions I don't want to write twice.
-    keys = { '<Leader>fc', '<Leader>ff', '<Leader>fg', '<Leader>fb', '<Leader>f:', '<Leader>fh' },
+    keys = { '<Leader>fc', '<Leader>ff', '<Leader>fg', '<Leader>f/', '<Leader>fb', '<Leader>f:', '<Leader>fh' },
     config = function()
       local telescopeBuiltin = require('telescope.builtin')
       keymapN({
@@ -507,6 +530,7 @@ return require('lazy').setup({
           c = { telescopeBuiltin.colorscheme, 'Find color scheme' },
           f = { telescopeBuiltin.find_files, 'Find files' },
           g = { telescopeBuiltin.live_grep, 'Live grep' },
+          ['/'] = { telescopeBuiltin.current_buffer_fuzzy_find, 'Current buffer fuzzy find' },
           b = { telescopeBuiltin.buffers, 'Buffers' },
           [':'] = { telescopeBuiltin.command_history, 'Command history' },
           h = { telescopeBuiltin.help_tags, 'Help tags' } } })
@@ -536,9 +560,9 @@ return require('lazy').setup({
   {
     'folke/trouble.nvim', -- A pretty diagnostics, references, telescope results, quickfix and location list to help you solve all the trouble your code is causing
     dependencies = 'nvim-tree/nvim-web-devicons',
-    cmd = 'TroubleToggle',
+    cmd = 'Trouble',
     keys = {
-      { '<Leader>!', '<Cmd>TroubleToggle<CR>', desc = 'Trouble' }
+      { '<Leader>!', '<Cmd>Trouble diagnostics toggle filter.buf=0<CR>', desc = 'Buffer Diagnostics (Trouble)' }
     },
     opts = { use_diagnostic_signs = true }
   },
@@ -799,15 +823,8 @@ return require('lazy').setup({
   },
 
   {
-    'jose-elias-alvarez/typescript.nvim', -- A Lua plugin, written in TypeScript, to write TypeScript
-    ft = { 'javascript', 'typescript', 'typescriptreact' },
-    opts = {
-      disable_commands = false, -- prevent the plugin from creating Vim commands
-      debug = false, -- enable debug logging for commands
-      go_to_source_definition = {
-        fallback = true, -- fall back to standard LSP definition on failure
-      },
-    }
+    'yioneko/nvim-vtsls', -- Plugin to help utilize capabilities of vtsls
+    ft = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' }
   },
 
   {

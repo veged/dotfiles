@@ -166,6 +166,7 @@ current_vcs() {
     export CURRENT_VCS="$1"
     alias st="$CURRENT_VCS status"
     alias df="$CURRENT_VCS diff"
+    alias add="$CURRENT_VCS add"
     alias ci="$CURRENT_VCS commit"
     alias co='$CURRENT_VCS checkout'
     alias pu='$CURRENT_VCS push'
@@ -431,3 +432,10 @@ fi
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+# The next line updates PATH for CLI.
+if [ -f '/Users/veged/yandex-cloud/path.bash.inc' ]; then source '/Users/veged/yandex-cloud/path.bash.inc'; fi
+
+# The next line enables shell command completion for yc.
+if [ -f '/Users/veged/yandex-cloud/completion.zsh.inc' ]; then source '/Users/veged/yandex-cloud/completion.zsh.inc'; fi
+
