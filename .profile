@@ -5,15 +5,15 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 
 export GOROOT="$(brew --prefix golang)/libexec"
 
+export NVM_DIR="$HOME/.nvm"
+[ -s '/opt/homebrew/opt/nvm/nvm.sh' ] && \. '/opt/homebrew/opt/nvm/nvm.sh'  # This loads nvm
+
 export PATH=$GOROOT/bin:./node_modules/.bin:$HOME/arcadia:$PATH
 
 export XDG_CONFIG_HOME=$HOME/.config
 export XDG_DATA_HOME=$HOME/.local/share
 export XDG_STATE_HOME=$HOME/.local/state
 export XDG_CACHE_HOME=$HOME/.cache
-
-export NVM_DIR="$HOME/.nvm"
-[ -s '/opt/homebrew/opt/nvm/nvm.sh' ] && \. '/opt/homebrew/opt/nvm/nvm.sh'  # This loads nvm
 
 export EDITOR='nvim'
 
