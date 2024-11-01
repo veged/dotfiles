@@ -58,6 +58,8 @@ return require('lazy').setup({
       local capabilities = require('cmp_nvim_lsp').default_capabilities()
       capabilities.textDocument.completion.completionItem.snippetSupport = true
       local lspconfig = require('lspconfig')
+      local util = require('lspconfig/util')
+
       lspconfig.typos_lsp.setup{}
       lspconfig.html.setup{
         capabilities = capabilities,
@@ -71,7 +73,10 @@ return require('lazy').setup({
       }
       lspconfig.cssls.setup{ capabilities = capabilities }
       lspconfig.css_variables.setup{}
-      lspconfig.eslint.setup{ capabilities = capabilities }
+      lspconfig.eslint.setup{
+        capabilities = capabilities,
+        root_dir = util.root_pattern('package.json'),
+      }
       lspconfig.vtsls.setup{ capabilities = capabilities }
       lspconfig.jsonls.setup{ capabilities = capabilities }
       lspconfig.lua_ls.setup{
@@ -334,7 +339,7 @@ return require('lazy').setup({
       })
 
       luasnip.filetype_extend('html', { 'javascript' })
-      -- luasnip.filetype_extend('javascript', { 'html' })
+      luasnip.filetype_extend('javascript', { 'typescript' })
       -- luasnip.filetype_extend('javascriptreact', { 'html' })
       -- luasnip.filetype_extend('typescriptreact', { 'html' })
 
