@@ -52,6 +52,7 @@ alias l='eza --icons -a'
 alias l1='l -1a'
 alias ll='l -lah'
 alias t='eza -Ta --icons'
+alias icat='kitten icat'
 
 alias kitty-light='kitty +kitten themes --reload-in=all Catppuccin-Latte'
 alias kitty-dark='kitty +kitten themes --reload-in=all Catppuccin-Mocha'
@@ -165,12 +166,14 @@ current_vcs() {
   if [[ $CURRENT_VCS != $1 ]]; then
     export CURRENT_VCS="$1"
     alias st="$CURRENT_VCS status"
-    alias df="$CURRENT_VCS diff"
-    alias add="$CURRENT_VCS add"
+    alias di="$CURRENT_VCS diff"
+    alias ad="$CURRENT_VCS add"
     alias ci="$CURRENT_VCS commit"
     alias co='$CURRENT_VCS checkout'
     alias pu='$CURRENT_VCS push'
     alias br='$CURRENT_VCS branch'
+    alias re='$CURRENT_VCS rebase'
+    alias fe='$CURRENT_VCS fetch'
     case "$CURRENT_VCS" in
       git)
         alias p='git pull main'
