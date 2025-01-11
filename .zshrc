@@ -226,7 +226,7 @@ export FZF_DEFAULT_BASE_OPTS=" \
   --ansi \
   --min-height=9 \
   --border='rounded' --border-label='' --preview-window='border-rounded' \
-  --prompt='➤' --marker='' --pointer='◆' --separator='─' --scrollbar='❚'"
+  --prompt='➤ ' --marker='' --pointer='◆' --separator='─' --scrollbar='❚'"
 
 _fzf_compgen_path() {
   # eza --icons=always --color=always -1ad --absolute "$1"

@@ -203,7 +203,7 @@ autocmd(
   function()
     local title = "nvim: " .. vim.fn.expand("%:t")
     vim.opt.titlestring = title
-    os.execute('kitty @ set-window-title ' .. title)
+    -- os.execute('kitty @ set-window-title ' .. title)
   end)
 
 require('plugins')

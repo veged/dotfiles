@@ -13,6 +13,7 @@
     ~/.zsh_plugins.txt: .zsh_plugins.txt
     ~/.gitconfig: .gitconfig
     ~/.config/kitty: kitty
+    ~/.config/ghostty: ghostty
     ~/.config/nvim: nvim
 
 - create:
