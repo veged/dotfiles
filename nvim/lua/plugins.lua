@@ -691,6 +691,8 @@ return require('lazy').setup({
           Boolean = { fg = C.sapphire }, --  a boolean constant: TRUE, false
           ['@punctuation.array'] = { fg = C.peach },
           ['@punctuation.object'] = { fg = C.sapphire },
+          ['@punctuation.table'] = { fg = C.sapphire },
+          ['@operator.table'] = { fg = C.sapphire },
           Identifier = { fg = C.text }, -- (preferred) any variable name
           ['@variable.builtin'] = { fg = C.text, bold = true },
           ['@type.builtin'] = { link = '@variable.builtin' },
@@ -706,6 +708,7 @@ return require('lazy').setup({
           Keyword = { fg = C.blue, style = { 'bold', 'italic' } }, --  any other keyword
           ['@keyword'] = { fg = C.blue, style = { 'bold', 'italic' } }, -- any other keyword
           ['@keyword.declaration'] = { fg = C.green, style = { 'bold', 'italic' } }, -- Keywords used to define a variable/constant: `var`, `let` and `const` in JavaScript
+          ['@operator.declaration'] = { fg = C.green, style = { 'italic' } },
           ['@keyword.function'] = { fg = C.green, style = { 'bold', 'italic' } }, -- Keywords used to define a function: `function` in Lua, `def` and `lambda` in Python.
           ['@punctuation.function'] = { fg = C.green }, -- Punctuation in function declarations.
           ['@punctuation.function.special'] = { fg = C.green, style = { 'bold', 'italic' } },

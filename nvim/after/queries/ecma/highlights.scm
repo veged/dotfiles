@@ -89,6 +89,7 @@
 "with" @keyword @keyword.with
 
 ["const" "let" "var"] @keyword.declaration
+(variable_declarator "=" @operator.declaration)
 
 ["return" "yield" "export"] @keyword @keyword.return
 (export_statement "default" @keyword.return)
