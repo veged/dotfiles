@@ -158,6 +158,21 @@ keymapN{
 g.skip_ts_context_commentstring_module = true
 g.python3_host_prog = '/Users/veged/.local/share/virtualenvs/veged-vne2RedP/bin/python'
 
+-- Nano typograph
+keymapN(
+  '<Leader> ',
+  function()
+    vim.api.nvim_exec2(
+      'silent! /\\<\\(' ..
+        table.concat(
+          {'а', 'в', 'во', 'за', 'из', 'к', 'на', 'не', 'о', 'об', 'от', 'по', 'с', 'у', 'без', 'для', 'до', 'между', 'над', 'перед', 'под', 'после', 'при', 'через', 'вдоль', 'вместо', 'благодаря', 'возле', 'вокруг', 'из-за', 'из-под', 'кроме', 'мимо', 'и', 'около', 'прежде', 'про', 'против', 'ради', 'сквозь', 'спустя', 'среди'},
+          '\\|')
+        .. '\\)\\>\\zs\\s\\|\\s\\ze—',
+      { output = false })
+  end,
+  'Find non-breaking spaces candidates'
+)
+
 -- LSP
 autocmd('LspAttach', function(args)
   local bufnr = args.buf
