@@ -405,11 +405,13 @@ set-dark-or-light-mode() {
           export BAT_THEME='Catppuccin Latte'
           export KITTY_THEME=Catppuccin-Latte
           export FZF_DEFAULT_COLOR_OPTS=$FZF_DEFAULT_COLOR_LIGHT_OPTS
+          fast-theme $(antidote path catppuccin/zsh-fsh)/themes/catppuccin-latte.ini
           ;;
         dark)
           export BAT_THEME='Catppuccin Mocha'
           export KITTY_THEME=Catppuccin-Mocha
           export FZF_DEFAULT_COLOR_OPTS=$FZF_DEFAULT_COLOR_DARK_OPTS
+          fast-theme $(antidote path catppuccin/zsh-fsh)/themes/catppuccin-mocha.ini
           ;;
       esac
       export FZF_DEFAULT_OPTS="$FZF_DEFAULT_BASE_OPTS $FZF_DEFAULT_COLOR_OPTS"
