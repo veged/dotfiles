@@ -16,3 +16,5 @@ jirutka/zsh-shift-select
 
 catppuccin/zsh-fsh kind:defer
 zdharma-continuum/fast-syntax-highlighting kind:defer
+
+onyxraven/zsh-osx-keychain
