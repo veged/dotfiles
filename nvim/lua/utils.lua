@@ -42,5 +42,7 @@ function keymapI(a1, a2, a3, a4) keymap('i', a1, a2, a3, a4) end
 
 function Cmd(s) return '<Cmd>' .. s .. '<CR>' end
 function S(s) return '<S-' .. s .. '>' end
+function M(s) return '<M-' .. s .. '>' end
 function C(s) return '<C-' .. s .. '>' end
 function CS(s) return C('S-' .. s) end
+function MC(s) return C('C-' .. s) end

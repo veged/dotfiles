@@ -8,6 +8,7 @@ antidote load
 source <(cod init $$ zsh)
 
 [[ $TERM_PROGRAM == 'iTerm.app' ]] && source ~/.iterm2_shell_integration.zsh
+[[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
 
 setopt hist_ignore_all_dups append_history hist_ignore_space
 
@@ -437,6 +438,8 @@ fi
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+export ANTHROPIC_API_KEY=$(keychain-environment-variable ANTHROPIC_API_KEY)
 
 # The next line updates PATH for CLI.
 if [ -f '/Users/veged/yandex-cloud/path.bash.inc' ]; then source '/Users/veged/yandex-cloud/path.bash.inc'; fi

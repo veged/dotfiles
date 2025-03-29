@@ -33,14 +33,14 @@ vim.opt.listchars = { tab = '⋗⋅', trail = '·', nbsp = '∷', extends = '※
 o.spell = false
 o.spelllang = 'ru_yo,en_us'
 o.spelloptions = 'camel,noplainbuffer'
-keymapN(
+--[[ keymapN(
   '<Leader>?',
   function()
     o.spell = not o.spell
     print('󰓆  Spell checking ' .. (o.spell and 'enabled' or 'disabled'))
   end,
   'Toggle spell checking'
-)
+) ]]
 
 -- Search and replace
 o.ignorecase = true
@@ -86,7 +86,7 @@ keymapV{
 
 -- Toggle mouse
 o.mouse = ''
-keymapN(
+--[[ keymapN(
   '<Leader>m',
   function()
     if o.mouse == 'a' then
@@ -97,10 +97,10 @@ keymapN(
       print('󰍽  Mouse usage enabled')
     end
   end,
-  'Toggle mouse')
+  'Toggle mouse') ]]
 
 -- Toggle cursor crosshair
-keymapN('<Leader>c', Cmd'set cursorline! cursorcolumn!', 'Toggle cursor crosshair')
+-- keymapN('<Leader>c', Cmd'set cursorline! cursorcolumn!', 'Toggle cursor crosshair')
 
 -- Toggle line numbers
 keymapN(
@@ -119,8 +119,10 @@ keymapN(
   'Toggle line numbers')
 
 keymapN{
-  [C'End'] = { Cmd'bn', 'Next buffer' },
-  [C'Home'] = { Cmd'bp', 'Previous buffer' } }
+  [MC'End'] = { Cmd'bn', 'Next buffer' },
+  [MC'Home'] = { Cmd'bp', 'Previous buffer' },
+  [MC'PageDown'] = { Cmd'tabn', 'Next tab' },
+  [MC'PageUp'] = { Cmd'tabp', 'Previous tab' } }
 
 keymapN(C'g', C']', 'Jump tag')
 keymapN(CS'G', C't', 'Jump tag back')
@@ -165,7 +167,7 @@ keymapN(
     vim.api.nvim_exec2(
       'silent! /\\<\\(' ..
         table.concat(
-          {'а', 'в', 'во', 'за', 'из', 'к', 'на', 'не', 'о', 'об', 'от', 'по', 'с', 'у', 'без', 'для', 'до', 'между', 'над', 'перед', 'под', 'после', 'при', 'через', 'вдоль', 'вместо', 'благодаря', 'возле', 'вокруг', 'из-за', 'из-под', 'кроме', 'мимо', 'и', 'около', 'прежде', 'про', 'против', 'ради', 'сквозь', 'спустя', 'среди'},
+          {'а', 'в', 'во', 'за', 'из', 'к', 'на', 'не', 'о', 'об', 'от', 'по', 'с', 'со', 'у', 'без', 'для', 'до', 'между', 'над', 'перед', 'под', 'после', 'при', 'через', 'вдоль', 'вместо', 'благодаря', 'возле', 'вокруг', 'из-за', 'из-под', 'кроме', 'мимо', 'и', 'около', 'прежде', 'про', 'против', 'ради', 'сквозь', 'спустя', 'среди'},
           '\\|')
         .. '\\)\\>\\zs\\s\\|\\s\\ze—',
       { output = false })

@@ -1,3 +1,5 @@
+o = vim.opt
+
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
@@ -9,7 +11,7 @@ if not vim.loop.fs_stat(lazypath) then
     lazypath,
   })
 end
-vim.opt.rtp:prepend(lazypath)
+o.rtp:prepend(lazypath)
 
 autocmd('VimEnter', function(data)
   if vim.fn.isdirectory(data.file) == 1 then
@@ -60,7 +62,7 @@ return require('lazy').setup({
       local lspconfig = require('lspconfig')
       local util = require('lspconfig/util')
 
-      lspconfig.typos_lsp.setup{}
+      lspconfig.typos_lsp.setup{ init_options = { diagnosticSeverity = 'Warning' } }
       lspconfig.html.setup{
         capabilities = capabilities,
         init_options = {
@@ -249,7 +251,7 @@ return require('lazy').setup({
       local lspkind = require('lspkind')
       local luasnip = require('luasnip')
 
-      vim.opt.completeopt = { 'menu', 'noselect' }
+      o.completeopt = { 'menu', 'noselect' }
 
       cmp.setup({
         mapping = {
@@ -364,6 +366,93 @@ return require('lazy').setup({
   },
 
   {
+    'folke/snacks.nvim',
+    priority = 1000,
+    lazy = false,
+    ---@type snacks.Config
+    opts = {
+      toggle = { enabled = true },
+      quickfile = { enabled = true },
+      bigfile = { enabled = true },
+      image = { enabled = true },
+      -- dashboard = { enabled = true },
+      -- indent = { enabled = true },
+      explorer = { enabled = true },
+      input = { enabled = true },
+      picker = {
+        enabled = true,
+        sources = {
+          explorer = {
+            hidden = true,
+            ignored = true,
+            layout = { layout = { position = 'right' } }
+          }
+        },
+      },
+      notifier = {
+        enabled = true,
+        top_down = false
+      },
+      -- scope = { enabled = true },
+      -- scroll = { enabled = true },
+      statuscolumn = { enabled = true },
+      git = { enabled = true },
+      -- words = { enabled = true },
+    },
+    keys = {
+      { '<Leader>e', function() Snacks.explorer() end, desc = 'File Explorer' },
+      { '<Leader>:', function() Snacks.picker.command_history() end, desc = 'Command History' },
+      { '<Leader>^', function() Snacks.picker.notifications() end, desc = 'Notification History' }
+    },
+    init = function()
+      vim.api.nvim_create_autocmd('User', {
+        pattern = 'VeryLazy',
+        callback = function()
+          Snacks.toggle.option('spell', { name = 'Spelling' }):map('<Leader>?')
+          Snacks.toggle.new({
+            name = 'Mouse',
+            get = function() return next(o.mouse:get()) ~= nil end,
+            set = function(s) o.mouse = s and 'a' or '' end
+          }):map('<Leader>m')
+          Snacks.toggle.new({
+            name = 'Cursor Crosshair',
+            get = function() return o.cursorline:get() or o.cursorcolumn:get() end,
+            set = function(s)
+              o.cursorline = s
+              o.cursorcolumn = s
+            end
+          }):map('<Leader>c')
+        end
+      })
+    end
+  },
+
+  {
+    'folke/noice.nvim', -- Completely replaces the UI for messages, cmdline and the popupmenu
+    event = 'VeryLazy',
+    opts = {
+      lsp = {
+        -- override markdown rendering so that **cmp** and other plugins use **Treesitter**
+        override = {
+          ['vim.lsp.util.convert_input_to_markdown_lines'] = true,
+          ['vim.lsp.util.stylize_markdown'] = true,
+          ['cmp.entry.get_documentation'] = true, -- requires hrsh7th/nvim-cmp
+        },
+      },
+      presets = {
+        bottom_search = true,
+        command_palette = true,
+        long_message_to_split = true,
+        inc_rename = false,
+        lsp_doc_border = false
+      }
+    },
+    dependencies = {
+      'MunifTanjim/nui.nvim',
+    }
+  },
+
+  {
     'nvim-lualine/lualine.nvim', -- A blazing fast and easy to configure neovim statusline plugin
     config = function()
       local lualine_filename = { {
@@ -456,7 +545,13 @@ return require('lazy').setup({
     end
   },
 
-  'lewis6991/gitsigns.nvim', -- Git integration for buffers
+  {
+    'lewis6991/gitsigns.nvim', -- Git integration for buffers
+    event = { "BufReadPre", "BufNewFile" },
+    opts = {
+      word_diff = true
+    }
+  },
 
   {
     "folke/which-key.nvim", -- displays a popup with possible keybindings of the command you started typing
@@ -472,7 +567,7 @@ return require('lazy').setup({
     }
   },
 
-  {
+  --[[ {
     'nvim-tree/nvim-tree.lua', -- A file explorer tree for neovim written in lua
     dependencies = 'nvim-tree/nvim-web-devicons', -- Adds file type icons to Vim plugins
     cmd = 'NvimTreeToggle',
@@ -521,7 +616,7 @@ return require('lazy').setup({
         }
       }
     }
-  },
+  }, ]]
 
   {
     'nvim-telescope/telescope.nvim', -- Find, Filter, Preview, Pick.
@@ -791,6 +886,9 @@ return require('lazy').setup({
           DiffChange = { bg = U.darken(C.peach, 0.4, C.base) }, -- diff mode: Changed line |diff.txt|
           DiffDelete = { bg = U.darken(C.red, 0.4, C.base) }, -- diff mode: Deleted line |diff.txt|
           DiffText = { bg = U.darken(C.peach, 0.4, C.base) }, -- diff mode: Changed text within a changed line |diff.txt|
+          GitSignsChangeInline = { style = { 'underline' }, sp = U.darken(C.yellow, 0.4, C.base) },
+          GitSignsAddInline = { bg = C.base, style = { 'underline' }, sp = U.darken(C.green, 0.4, C.base) },
+          GitSignsDeleteInline = { bg = C.base, style = { 'underline' }, sp = U.darken(C.red, 0.4, C.base) },
           -- misc
 
           -- glyphs
@@ -868,5 +966,195 @@ return require('lazy').setup({
     }
   },
 
-  'LunarVim/bigfile.nvim' -- Make editing big files faster
+  {
+    'olimorris/codecompanion.nvim',
+    config = {
+      strategies = {
+        cmd = { adapter = 'custom_anthropic', language = 'ru' },
+        chat = { adapter = 'custom_anthropic', language = 'ru' },
+        inline = { adapter = 'custom_anthropic', language = 'ru' },
+      },
+      adapters = {
+        opts = {
+          allow_insecure = true,
+          language = 'ru'
+        },
+        custom_anthropic = function()
+          return require('codecompanion.adapters').extend('anthropic', {
+            name = 'custom',
+            url = 'http://api.eliza.yandex.net/anthropic/v1/messages',
+            -- env = { api_key = 'SOY_TOKEN' },
+            schema = {
+              model = { default = 'claude-3-7-sonnet-20250219' }
+            }
+          })
+        end,
+        custom_deepseek = function()
+          return require('codecompanion.adapters').extend('openai_compatible', {
+            url = 'http://api.eliza.yandex.net/together/v1/chat/completions',
+            -- env = { api_key = 'SOY_TOKEN' },
+            schema = {
+              model = { default = 'deepseek-ai/deepseek-r1' },
+            },
+          })
+        end
+      }
+    },
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'nvim-treesitter/nvim-treesitter',
+    },
+  },
+
+  {
+    'yetone/avante.nvim',
+    event = 'VeryLazy',
+    version = '*',
+    opts = {
+      provider = 'claude',
+      auto_suggestions_provider = 'claude',
+      cursor_applying_provider = nil,
+      cache_control = {
+        enabled = true,
+        ttl = 36000,
+        persist = true,
+      },
+      claude = {
+        endpoint = 'https://api.eliza.yandex-team.ru/raw/anthropic',
+        model = 'claude-3-7-sonnet-20250219',
+        disable_tools = true,
+        temperature = 0,
+        max_tokens = 18192,
+        timeout = 240000
+      },
+      behaviour = {
+        auto_suggestions = false, -- Experimental stage
+        auto_set_highlight_group = true,
+        auto_set_keymaps = true,
+        auto_apply_diff_after_generation = false,
+        support_paste_from_clipboard = false,
+        minimize_diff = true, -- Whether to remove unchanged lines when applying a code block
+        enable_token_counting = true, -- Whether to enable token counting. Default to true.
+        enable_cursor_planning_mode = false, -- Whether to enable Cursor Planning Mode. Default to false.
+      },
+      mappings = {
+        --- @class AvanteConflictMappings
+        diff = {
+          ours = 'co',
+          theirs = 'ct',
+          all_theirs = 'ca',
+          both = 'cb',
+          cursor = 'cc',
+          next = ']x',
+          prev = '[x',
+        },
+        suggestion = {
+          accept = '<M-l>',
+          next = '<M-]>',
+          prev = '<M-[>',
+          dismiss = '<C-]>',
+        },
+        jump = {
+          next = ']]',
+          prev = '[[',
+        },
+        submit = {
+          normal = '<CR>',
+          insert = '<C-s>',
+        },
+        sidebar = {
+          apply_all = 'A',
+          apply_cursor = 'a',
+          switch_windows = '<Tab>',
+          reverse_switch_windows = '<S-Tab>',
+        },
+      },
+      hints = { enabled = false },
+      windows = {
+        position = 'right', -- the position of the sidebar
+        wrap = true, -- similar to vim.o.wrap
+        width = 40, -- default % based on available width
+        sidebar_header = {
+          enabled = true, -- true, false to enable/disable the header
+          align = 'center', -- left, center, right for title
+          rounded = true,
+        },
+        input = {
+          prefix = '> ',
+          height = 8, -- Height of the input window in vertical layout
+        },
+        edit = {
+          border = 'rounded',
+          start_insert = true, -- Start insert mode when opening the edit window
+        },
+        ask = {
+          floating = false, -- Open the 'AvanteAsk' prompt in a floating window
+          start_insert = true, -- Start insert mode when opening the ask window
+          border = 'rounded',
+          ---@type 'ours' | 'theirs'
+          focus_on_apply = 'ours', -- which diff to focus after applying
+        },
+      },
+      highlights = {
+        diff = {
+          current = 'DiffText',
+          incoming = 'DiffAdd',
+        },
+      },
+      diff = {
+        autojump = true,
+        list_opener = 'copen',
+        --- Override the 'timeoutlen' setting while hovering over a diff (see :help timeoutlen).
+        --- Helps to avoid entering operator-pending mode with diff mappings starting with `c`.
+        --- Disable by setting to -1.
+        override_timeoutlen = 500,
+      },
+      suggestion = {
+        debounce = 600,
+        throttle = 600,
+      }
+    },
+    -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
+    build = 'make',
+    -- build = 'powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false' -- for windows
+    dependencies = {
+      'nvim-treesitter/nvim-treesitter',
+      'stevearc/dressing.nvim',
+      'nvim-lua/plenary.nvim',
+      'MunifTanjim/nui.nvim',
+      --- The below dependencies are optional,
+      'echasnovski/mini.pick', -- for file_selector provider mini.pick
+      'nvim-telescope/telescope.nvim', -- for file_selector provider telescope
+      'hrsh7th/nvim-cmp', -- autocompletion for avante commands and mentions
+      'ibhagwan/fzf-lua', -- for file_selector provider fzf
+      'nvim-tree/nvim-web-devicons', -- or echasnovski/mini.icons
+      'zbirenbaum/copilot.lua', -- for providers='copilot'
+      {
+        -- support for image pasting
+        'HakonHarnes/img-clip.nvim',
+        event = 'VeryLazy',
+        opts = {
+          -- recommended settings
+          default = {
+            embed_image_as_base64 = false,
+            prompt_for_file_name = false,
+            drag_and_drop = {
+              insert_mode = true,
+            },
+            -- required for Windows users
+            use_absolute_path = true,
+          },
+        },
+      },
+      {
+        -- Make sure to set this up properly if you have lazy=true
+        'MeanderingProgrammer/render-markdown.nvim',
+        opts = {
+          file_types = { 'markdown', 'Avante' },
+        },
+        ft = { 'markdown', 'Avante' },
+      },
+    },
+  }
+
 })
