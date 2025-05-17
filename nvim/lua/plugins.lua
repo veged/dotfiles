@@ -51,47 +51,82 @@ return require('lazy').setup({
   {
     'neovim/nvim-lspconfig', -- Quickstart configurations for the Nvim LSP client
     dependencies = {
-      'hrsh7th/cmp-nvim-lsp',
+      -- 'hrsh7th/cmp-nvim-lsp',
       'williamboman/mason.nvim',
       'williamboman/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim'
     },
     config = function()
-      local capabilities = require('cmp_nvim_lsp').default_capabilities()
-      capabilities.textDocument.completion.completionItem.snippetSupport = true
       local lspconfig = require('lspconfig')
       local util = require('lspconfig/util')
 
-      lspconfig.typos_lsp.setup{ init_options = { diagnosticSeverity = 'Warning' } }
-      lspconfig.html.setup{
-        capabilities = capabilities,
+      lspconfig.typos_lsp.setup { init_options = { diagnosticSeverity = 'Warning' } }
+      lspconfig.html.setup {
+        filetypes = { 'html' },
         init_options = {
-          configurationSection = { 'html', 'css', 'javascript' },
-          embeddedLanguages = {
-            css = true,
-            javascript = true
+          configurationSection = { 'html', 'javascript' },
+          embeddedLanguages = { javascript = true },
+        },
+        settings = {
+          html = {
+            suggest = { html5 = true },
+            format = {
+              templating = true,
+              wrapLineLength = 120,
+              wrapAttributes = 'auto',
+              enable = true
+            }
           }
         }
       }
-      lspconfig.cssls.setup{ capabilities = capabilities }
-      lspconfig.css_variables.setup{}
-      lspconfig.eslint.setup{
-        capabilities = capabilities,
+      lspconfig.cssls.setup {}
+      lspconfig.css_variables.setup {}
+      lspconfig.eslint.setup {
         root_dir = util.root_pattern('package.json'),
+        filetypes = { 'javascript', 'typescript', 'html', 'javascriptreact', 'typescriptreact' },
+        codeAction = {
+          disableRuleComment = { enable = true },
+          showDocumentation = { enable = true }
+        },
+        workingDirectories = { mode = 'auto' },
+        on_attach = function(client)
+          client.server_capabilities.documentFormattingProvider = true
+        end,
+        settings = {
+          eslint = {
+            format = { enable = true },
+            validate = 'on'
+          }
+        }
       }
-      lspconfig.vtsls.setup{ capabilities = capabilities }
-      lspconfig.jsonls.setup{ capabilities = capabilities }
-      lspconfig.lua_ls.setup{
-        capabilities = capabilities,
+      lspconfig.vtsls.setup {}
+      lspconfig.jsonls.setup {}
+      lspconfig.lua_ls.setup {
         settings = {
           Lua = {
             runtime = { version = 'LuaJIT' },
+            format = {
+              enable = true,
+              defaultConfig = {
+                indent_style = 'space',
+                indent_size = 2,
+                continuation_indent = 2,
+                quote_style='single',
+                call_arg_parentheses = 'remove',
+                trailing_table_separator = 'never',
+                space_around_table_field_list = true,
+                space_before_function_call_single_arg = false
+              }
+            },
             diagnostics = {
               globals = { 'vim' },
               disable = {
                 'lowercase-global',
                 'undefined-global'
               },
+              neededFileStatus = {
+                ['codestyle'] = 'Any'
+              }
             },
             workspace = {
               library = {
@@ -114,12 +149,27 @@ return require('lazy').setup({
       -- g.skip_ts_default_groups = true
       -- require('nvim-treesitter.highlight').set_custom_captures(treesitter_custom_captures)
 
-      require'nvim-treesitter.configs'.setup{
+      require 'nvim-treesitter.configs'.setup {
         ensure_installed = { 'html', 'css', 'javascript', 'typescript', 'json', 'lua' },
         auto_install = true,
         highlight = {
           enable = true,
           additional_vim_regex_highlighting = false
+        },
+        injections = {
+          html = {
+            javascript = [[
+              ((element
+                (start_tag
+                  (tag_name) @_tag
+                  (attribute
+                    (attribute_name) @_name
+                    (quoted_attribute_value (attribute_value) @_value)?
+                )
+                (text) @javascript
+              ) (#eq? @_tag "script"))
+            ]],
+          },
         },
         textobjects = {
           select = {
@@ -172,21 +222,21 @@ return require('lazy').setup({
     'booperlv/nvim-gomove', -- A complete plugin for moving and duplicating blocks and lines, with complete fold handling, reindenting, and undoing in one go
     opts = { map_defaults = false, reindent = true },
     keys = {
-      { '<M-Left>', '<Plug>GoNSMLeft' },
-      { '<M-Down>', '<Plug>GoNSMDown' },
-      { '<M-Up>', '<Plug>GoNSMUp' },
-      { '<M-Right>', '<Plug>GoNSMRight' },
-      { '<M-Left>', '<Plug>GoVSMLeft', mode = 'x' },
-      { '<M-Down>', '<Plug>GoVSMDown', mode = 'x' },
-      { '<M-Up>', '<Plug>GoVSMUp', mode = 'x' },
-      { '<M-Right>', '<Plug>GoVSMRight', mode = 'x' },
-      { '<M-S-Left>', '<Plug>GoNSDLeft' },
-      { '<M-S-Down>', '<Plug>GoNSDDown' },
-      { '<M-S-Up>', '<Plug>GoNSDUp' },
+      { '<M-Left>',    '<Plug>GoNSMLeft' },
+      { '<M-Down>',    '<Plug>GoNSMDown' },
+      { '<M-Up>',      '<Plug>GoNSMUp' },
+      { '<M-Right>',   '<Plug>GoNSMRight' },
+      { '<M-Left>',    '<Plug>GoVSMLeft',  mode = 'x' },
+      { '<M-Down>',    '<Plug>GoVSMDown',  mode = 'x' },
+      { '<M-Up>',      '<Plug>GoVSMUp',    mode = 'x' },
+      { '<M-Right>',   '<Plug>GoVSMRight', mode = 'x' },
+      { '<M-S-Left>',  '<Plug>GoNSDLeft' },
+      { '<M-S-Down>',  '<Plug>GoNSDDown' },
+      { '<M-S-Up>',    '<Plug>GoNSDUp' },
       { '<M-S-Right>', '<Plug>GoNSDRight' },
-      { '<M-S-Left>', '<Plug>GoVSDLeft', mode = 'x' },
-      { '<M-S-Down>', '<Plug>GoVSDDown', mode = 'x' },
-      { '<M-S-Up>', '<Plug>GoVSDUp', mode = 'x' },
+      { '<M-S-Left>',  '<Plug>GoVSDLeft',  mode = 'x' },
+      { '<M-S-Down>',  '<Plug>GoVSDDown',  mode = 'x' },
+      { '<M-S-Up>',    '<Plug>GoVSDUp',    mode = 'x' },
       { '<M-S-Right>', '<Plug>GoVSDRight', mode = 'x' }
     }
   },
@@ -194,15 +244,45 @@ return require('lazy').setup({
   {
     'nishigori/increment-activator', -- enhance to increment candidates U have defined
     config = function()
-      keymapN{
+      keymapN {
         ['-'] = { '<Plug>(increment-activator-decrement)', 'Decrement' },
         ['+'] = { '<Plug>(increment-activator-increment)', 'Increment' } }
     end
   },
 
-  'tpope/vim-surround', -- Delete/change/add parentheses/quotes/XML-tags/much more with ease
+  {
+    'kylechui/nvim-surround', -- Add/change/delete surrounding delimiter pairs with ease
+    opts = {
+      -- delimiters = {
+      --   pairs = {
+      --     ['c'] = { { '', '```', '' }, { '', '```', '' } },
+      --   },
+      -- },
+      surrounds = {
+        ['~'] = {
+          add = function()
+            return {
+              { '```' .. require('nvim-surround.config').get_input('Language: ') or '' .. '\n' },
+              { '\n```' },
+            }
+          end,
+          find = { '^```$', '^```$' },
+          delete = { '^```$', '^```$' },
+          change = {
+            target = { '^```$', '^```$' },
+            replacement = function()
+              return {
+                { require('nvim-surround.config').get_input('New language: ') or '' },
+                { '' },
+              }
+            end
+          }
+        }
+      }
+    }
+  },
 
-  'tpope/vim-repeat', -- Enable repeating supported plugin maps with .
+  'tpope/vim-repeat',   -- Enable repeating supported plugin maps with .
 
   {
     'numToStr/Comment.nvim', -- Smart and powerful comment plugin
@@ -233,94 +313,65 @@ return require('lazy').setup({
   },
 
   {
-    'hrsh7th/nvim-cmp', -- A completion plugin for neovim coded in Lua
+    'saghen/blink.cmp',
     dependencies = {
-      'onsails/lspkind.nvim', -- vscode-like pictograms for neovim lsp completion items
-      'octaltree/cmp-look', -- source for Linux look
-      'hrsh7th/cmp-nvim-lua', -- source for lua
-      'ray-x/cmp-treesitter', -- source for treesitter
-      'hrsh7th/cmp-nvim-lsp', -- source for neovim builtin LSP client  use 'hrsh7th/cmp-nvim-lsp'
-      'hrsh7th/cmp-buffer', -- source for buffer words
-      'hrsh7th/cmp-path' -- source for filesystem paths
+      'Kaiser-Yang/blink-cmp-dictionary',
+      'L3MON4D3/LuaSnip',
+      'rafamadriz/friendly-snippets'
     },
-    event = 'InsertEnter',
-    config = function()
-      local cmp = require('cmp')
-      -- local types = require('cmp.types')
-      -- local str = require('cmp.utils.str')
-      local lspkind = require('lspkind')
-      local luasnip = require('luasnip')
 
-      o.completeopt = { 'menu', 'noselect' }
+    version = '1.*',
+    ---@module 'blink.cmp'
+    ---@type blink.cmp.Config
+    opts = {
+      keymap = { preset = 'enter' },
 
-      cmp.setup({
-        mapping = {
-          ['<Up>'] = cmp.mapping.select_prev_item(),
-          ['<Down>'] = cmp.mapping.select_next_item(),
-          ['<S-Up>'] = cmp.mapping.scroll_docs(-4),
-          ['<S-Down>'] = cmp.mapping.scroll_docs(4),
-          ['<C-Space>'] = cmp.mapping.complete(),
-          ['<CR>'] = cmp.mapping.confirm({
-            behavior = cmp.ConfirmBehavior.Insert,
-            select = false
-          })
-        },
-        window = {
-          completion = cmp.config.window.bordered({ winhighlight = 'Normal:NormalFloat,FloatBorder:Normal,CursorLine:CmpCursorLine,Search:Search' }),
-          documentation = cmp.config.window.bordered()
-        },
-        formatting = {
-          fields = { 'menu', 'abbr', 'kind' },
-          format = lspkind.cmp_format({
-            mode = 'symbol_text',
-            before = function(entry, item)
-              local menu_icon = {
-                nvim_lsp = '',
-                treesitter = '',
-                buffer = '󰙏',
-                ultisnips = '',
-                path = '',
-                look = ''
-              }
-              item.menu = menu_icon[entry.source.name]
-              return item
-            end
-          })
-        },
-        snippet = { expand = function(args) luasnip.lsp_expand(args.body) end },
-        sources = {
-          { name = 'luasnip', max_item_count = 3 },
-          { name = 'nvim_lsp', max_item_count = 5 },
-          { name = 'treesitter', max_item_count = 5 },
-          {
-            name = 'buffer',
-            max_item_count = 5,
-            option = { get_bufnrs = function() return vim.api.nvim_list_bufs() end }
-          },
-          { name = 'nvim_lua', max_item_count = 5 },
-          {
-            name = 'look',
-            max_item_count = 3,
-            option = {
+      appearance = {
+        -- 'mono' (default) for 'Nerd Font Mono' or 'normal' for 'Nerd Font'
+        -- Adjusts spacing to ensure icons are aligned
+        nerd_font_variant = 'mono',
+      },
+
+      -- (Default) Only show the documentation popup when manually triggered
+      completion = {
+        documentation = { auto_show = true }
+      },
+
+      snippets = { preset = 'luasnip' },
+
+      -- Default list of enabled providers defined so that you can extend it
+      -- elsewhere in your config, without redefining it, due to `opts_extend`
+      sources = {
+        default = { 'lsp', 'path', 'snippets', 'buffer', 'dictionary', 'lazydev' },
+        providers = {
+          dictionary = {
+            module = 'blink-cmp-dictionary',
+            name = 'Dict',
+            min_keyword_length = 3,
+            opts = {
+              dictionary_files = { vim.fn.expand'~/.config/nvim/english-popular-word-list.txt' },
+              max_items = 3,
               convert_case = true,
               loud = true,
-              dict = '/Users/veged/.config/nvim/english-popular-word-list.txt'
             }
           },
-          { name = 'path', max_item_count = 3 }
-        },
-        completion = { completeopt = 'menu,noselect' },
-        confirmation = {
-          get_commit_characters = function(commit_characters)
-            return vim.tbl_filter(function(char) return char ~= ',' and char ~= '.' end, commit_characters)
-          end
+          lazydev = {
+            name = 'LazyDev',
+            module = 'lazydev.integrations.blink',
+            -- make lazydev completions top priority (see `:h blink.cmp`)
+            score_offset = 100,
+          },
         }
-      })
-    end
+      },
+
+      fuzzy = { implementation = 'prefer_rust_with_warning' }
+    },
+    opts_extend = { 'sources.default' }
   },
 
   {
     'L3MON4D3/LuaSnip', -- Snippet Engine for Neovim written in Lua
+    version = 'v2.*',
     dependencies = { 'rafamadriz/friendly-snippets' },
     build = 'make install_jsregexp',
     event = 'InsertEnter',
@@ -347,17 +398,13 @@ return require('lazy').setup({
 
       require('luasnip.loaders.from_vscode').lazy_load()
 
-      keymapI{
-        ['<Tab>'] = { function() return luasnip.expand_or_locally_jumpable() and '<Plug>luasnip-expand-or-jump' or '<Tab>' end, { expr = true } },
+      keymapI {
+        ['<Tab>'] = { function() return luasnip.expand_or_locally_jumpable() and '<Plug>luasnip-expand-or-jump' or
+          '<Tab>' end, { expr = true } },
         ['<S-Tab>'] = function() luasnip.jump(-1) end,
         ['<M-Tab>'] = function() if luasnip.choice_active() then require('luasnip.extras.select_choice')() end end
       }
     end
-  },
-  {
-    'saadparwaiz1/cmp_luasnip', -- A collection of luasnip snippets
-    dependencies = {'hrsh7th/nvim-cmp', 'L3MON4D3/LuaSnip'},
-    event = 'InsertEnter'
   },
 
   {
@@ -400,9 +447,9 @@ return require('lazy').setup({
       -- words = { enabled = true },
     },
     keys = {
-      { '<Leader>e', function() Snacks.explorer() end, desc = 'File Explorer' },
+      { '<Leader>e', function() Snacks.explorer() end,               desc = 'File Explorer' },
       { '<Leader>:', function() Snacks.picker.command_history() end, desc = 'Command History' },
-      { '<Leader>^', function() Snacks.picker.notifications() end, desc = 'Notification History' }
+      { '<Leader>^', function() Snacks.picker.notifications() end,   desc = 'Notification History' }
     },
     init = function()
       vim.api.nvim_create_autocmd('User', {
@@ -513,7 +560,7 @@ return require('lazy').setup({
         tabline = {
           lualine_a = {
             {
-              'buffers' ,
+              'buffers',
               use_mode_colors = true,
               symbols = { modified = ' 󰙏 ', alternate_file = '' }
             }
@@ -619,7 +666,7 @@ return require('lazy').setup({
   }, ]]
 
   {
-    'nvim-telescope/telescope.nvim', -- Find, Filter, Preview, Pick.
+    'nvim-telescope/telescope.nvim',        -- Find, Filter, Preview, Pick.
     branch = '0.1.x',
     dependencies = 'nvim-lua/plenary.nvim', -- All the lua functions I don't want to write twice.
     keys = { '<Leader>fc', '<Leader>ff', '<Leader>fg', '<Leader>f/', '<Leader>fb', '<Leader>f:', '<Leader>fh' },
@@ -633,7 +680,9 @@ return require('lazy').setup({
           ['/'] = { telescopeBuiltin.current_buffer_fuzzy_find, 'Current buffer fuzzy find' },
           b = { telescopeBuiltin.buffers, 'Buffers' },
           [':'] = { telescopeBuiltin.command_history, 'Command history' },
-          h = { telescopeBuiltin.help_tags, 'Help tags' } } })
+          h = { telescopeBuiltin.help_tags, 'Help tags' }
+        }
+      })
 
       require('telescope').setup {
         defaults = {
@@ -680,67 +729,67 @@ return require('lazy').setup({
         local U = require('catppuccin.utils.colors')
         return {
           -- Editor
-          ColorColumn = { bg = C.surface0 }, -- used for the columns set with 'colorcolumn'
-          Conceal = { fg = C.overlay1 }, -- placeholder characters substituted for concealed text (see 'conceallevel')
-          Cursor = { fg = C.base, bg = C.text }, -- character under the cursor
-          lCursor = { fg = C.base, bg = C.text }, -- the character under the cursor when |language-mapping| is used (see 'guicursor')
-          CursorIM = { fg = C.base, bg = C.text }, -- like Cursor, but used when in IME mode |CursorIM|
-          CursorColumn = { bg = C.surface0 }, -- Screen-column at the cursor, when 'cursorcolumn' is seC.
-          CursorLine = { bg = C.surface0 }, -- Screen-line at the cursor, when 'cursorline' is seC.  Low-priority if forecrust (ctermfg OR guifg) is not seC.
-          Directory = { fg = C.blue }, -- directory names (and other special names in listings)
-          EndOfBuffer = { fg = C.base }, -- filler lines (~) after the end of the buffer.  By default, this is highlighted like |hl-NonText|.
-          ErrorMsg = { fg = C.red, style = { 'bold', 'italic' } }, -- error messages on the command line
-          VertSplit = { fg = C.surface0, bg = C.crust }, -- the column separating vertically split windows
+          ColorColumn = { bg = C.surface0 },                                                -- used for the columns set with 'colorcolumn'
+          Conceal = { fg = C.overlay1 },                                                    -- placeholder characters substituted for concealed text (see 'conceallevel')
+          Cursor = { fg = C.base, bg = C.text },                                            -- character under the cursor
+          lCursor = { fg = C.base, bg = C.text },                                           -- the character under the cursor when |language-mapping| is used (see 'guicursor')
+          CursorIM = { fg = C.base, bg = C.text },                                          -- like Cursor, but used when in IME mode |CursorIM|
+          CursorColumn = { bg = C.surface0 },                                               -- Screen-column at the cursor, when 'cursorcolumn' is seC.
+          CursorLine = { bg = C.surface0 },                                                 -- Screen-line at the cursor, when 'cursorline' is seC.  Low-priority if forecrust (ctermfg OR guifg) is not seC.
+          Directory = { fg = C.blue },                                                      -- directory names (and other special names in listings)
+          EndOfBuffer = { fg = C.base },                                                    -- filler lines (~) after the end of the buffer.  By default, this is highlighted like |hl-NonText|.
+          ErrorMsg = { fg = C.red, style = { 'bold', 'italic' } },                          -- error messages on the command line
+          VertSplit = { fg = C.surface0, bg = C.crust },                                    -- the column separating vertically split windows
           Folded = { fg = C.blue, bg = O.transparent_background and C.none or C.surface1 }, -- line used for closed folds
-          FoldColumn = { fg = C.overlay0 }, -- 'foldcolumn'
-          SignColumn = { fg = C.surface1 }, -- column where |signs| are displayed
-          SignColumnSB = { bg = C.crust, fg = C.surface1 }, -- column where |signs| are displayed
-          Substitute = { bg = C.surface1, fg = U.vary_color({ latte = C.red }, C.pink) }, -- |:substitute| replacement text highlighting
-          LineNr = { fg = U.vary_color({ latte = C.base0 }, C.surface1) }, -- Line number for ':number' and ':#' commands, and when 'number' or 'relativenumber' option is seC.
-          CursorLineNr = { fg = C.lavender }, -- Like LineNr when 'cursorline' or 'relativenumber' is set for the cursor line. highlights the number in numberline.
-          MatchParen = { fg = C.peach, style = { 'bold' } }, -- The character under the cursor or just before it, if it is a paired bracket, and its match. |pi_paren.txt|
-          ModeMsg = { fg = C.text, style = { 'bold' } }, -- 'showmode' message (e.g., '-- INSERT -- ')
-          MsgArea = { fg = C.text }, -- Area for messages and cmdline
-          MsgSeparator = {}, -- Separator for scrolled messages, `msgsep` flag of 'display'
-          MoreMsg = { fg = C.teal }, -- |more-prompt|
-          NonText = { fg = C.overlay0 }, -- '@' at the end of the window, characters from 'showbreak' and other characters that do not really exist in the text (e.g., '>' displayed when a double-wide character doesn't fit at the end of the line). See also |hl-EndOfBuffer|.
-          Normal = { fg = C.text, bg = O.transparent_background and C.none or C.base }, -- normal text
+          FoldColumn = { fg = C.overlay0 },                                                 -- 'foldcolumn'
+          SignColumn = { fg = C.surface1 },                                                 -- column where |signs| are displayed
+          SignColumnSB = { bg = C.crust, fg = C.surface1 },                                 -- column where |signs| are displayed
+          Substitute = { bg = C.surface1, fg = U.vary_color({ latte = C.red }, C.pink) },   -- |:substitute| replacement text highlighting
+          LineNr = { fg = U.vary_color({ latte = C.base0 }, C.surface1) },                  -- Line number for ':number' and ':#' commands, and when 'number' or 'relativenumber' option is seC.
+          CursorLineNr = { fg = C.lavender },                                               -- Like LineNr when 'cursorline' or 'relativenumber' is set for the cursor line. highlights the number in numberline.
+          MatchParen = { fg = C.peach, style = { 'bold' } },                                -- The character under the cursor or just before it, if it is a paired bracket, and its match. |pi_paren.txt|
+          ModeMsg = { fg = C.text, style = { 'bold' } },                                    -- 'showmode' message (e.g., '-- INSERT -- ')
+          MsgArea = { fg = C.text },                                                        -- Area for messages and cmdline
+          MsgSeparator = {},                                                                -- Separator for scrolled messages, `msgsep` flag of 'display'
+          MoreMsg = { fg = C.teal },                                                        -- |more-prompt|
+          NonText = { fg = C.overlay0 },                                                    -- '@' at the end of the window, characters from 'showbreak' and other characters that do not really exist in the text (e.g., '>' displayed when a double-wide character doesn't fit at the end of the line). See also |hl-EndOfBuffer|.
+          Normal = { fg = C.text, bg = O.transparent_background and C.none or C.base },     -- normal text
           NormalNC = {
             fg = C.text,
             bg = (O.transparent_background and O.dim_inactive.enabled and C.dim)
-            or (O.dim_inactive.enabled and C.dim)
-            or (O.transparent_background and C.none)
-            or C.base,
-          }, -- normal text in non-current windows
-          NormalSB = { fg = C.text, bg = C.crust }, -- normal text in non-current windows
-          NormalFloat = { fg = C.text, bg = O.transparent_background and C.none or C.mantle }, -- Normal text in floating windows.
+                or (O.dim_inactive.enabled and C.dim)
+                or (O.transparent_background and C.none)
+                or C.base,
+          },                                                                                                           -- normal text in non-current windows
+          NormalSB = { fg = C.text, bg = C.crust },                                                                    -- normal text in non-current windows
+          NormalFloat = { fg = C.text, bg = O.transparent_background and C.none or C.mantle },                         -- Normal text in floating windows.
           FloatBorder = { fg = C.overlay2 },
           Pmenu = { bg = O.transparent_background and C.none or U.darken(C.surface0, 0.8, C.crust), fg = C.overlay2 }, -- Popup menu: normal item.
-          PmenuSel = { fg = C.text, bg = C.surface2, style = { 'bold' } }, -- Popup menu: selected item.
-          PmenuSbar = { bg = C.surface1 }, -- Popup menu: scrollbar.
-          PmenuThumb = { bg = C.overlay0 }, -- Popup menu: Thumb of the scrollbar.
-          Question = { fg = C.teal }, -- |hit-enter| prompt and yes/no questions
-          QuickFixLine = { bg = C.surface1, style = { 'bold' } }, -- Current |quickfix| item in the quickfix window. Combined with |hl-CursorLine| when the cursor is there.
-          Search = { bg = C.yellow, fg = C.mantle }, -- Last search pattern highlighting (see 'hlsearch').  Also used for similar items that need to stand ouC.
-          IncSearch = { bg = C.peach, fg = C.mantle }, -- 'incsearch' highlighting; also used for the text replaced with ':s///c'
-          CurSearch = { bg = C.pink, fg = C.mantle }, -- 'cursearch' highlighting: highlights the current search you're on differently
-          SpecialKey = { fg = C.text }, -- Unprintable characters: text displayed differently from what it really is.  But not 'listchars' textspace. |hl-Whitespace|
-          SpellBad = { sp = C.red, style = { 'undercurl' } }, -- Word that is not recognized by the spellchecker. |spell| Combined with the highlighting used otherwise.
-          SpellCap = { sp = C.yellow, style = { 'undercurl' } }, -- Word that should start with a capital. |spell| Combined with the highlighting used otherwise.
-          SpellLocal = { sp = C.blue, style = { 'undercurl' } }, -- Word that is recognized by the spellchecker as one that is used in another region. |spell| Combined with the highlighting used otherwise.
-          SpellRare = { sp = C.green, style = { 'undercurl' } }, -- Word that is recognized by the spellchecker as one that is hardly ever used.  |spell| Combined with the highlighting used otherwise.
-          StatusLine = { fg = C.text, bg = O.transparent_background and C.none or C.mantle }, -- status line of current window
-          StatusLineNC = { fg = C.surface1, bg = O.transparent_background and C.none or C.mantle }, -- status lines of not-current windows Note: if this is equal to 'StatusLine' Vim will use '^^^' in the status line of the current window.
-          TabLine = { bg = C.mantle, fg = C.surface1 }, -- tab pages line, not active tab page label
-          TabLineFill = { bg = C.black }, -- tab pages line, where there are no labels
-          TabLineSel = { fg = C.overlay2, bg = C.surface1 }, -- tab pages line, active tab page label
-          Title = { fg = C.text, style = { 'bold' } }, -- titles for output from ':set all', ':autocmd' etC.
-          Visual = { bg = C.surface1, style = { 'bold' } }, -- Visual mode selection
-          VisualNOS = { bg = C.surface1, style = { 'bold' } }, -- Visual mode selection when vim is 'Not Owning the Selection'.
-          WarningMsg = { fg = C.peach }, -- warning messages
-          Whitespace = { fg = C.surface1 }, -- 'nbsp', 'space', 'tab' and 'trail' in 'listchars'
+          PmenuSel = { fg = C.text, bg = C.surface2, style = { 'bold' } },                                             -- Popup menu: selected item.
+          PmenuSbar = { bg = C.surface1 },                                                                             -- Popup menu: scrollbar.
+          PmenuThumb = { bg = C.overlay0 },                                                                            -- Popup menu: Thumb of the scrollbar.
+          Question = { fg = C.teal },                                                                                  -- |hit-enter| prompt and yes/no questions
+          QuickFixLine = { bg = C.surface1, style = { 'bold' } },                                                      -- Current |quickfix| item in the quickfix window. Combined with |hl-CursorLine| when the cursor is there.
+          Search = { bg = C.yellow, fg = C.mantle },                                                                   -- Last search pattern highlighting (see 'hlsearch').  Also used for similar items that need to stand ouC.
+          IncSearch = { bg = C.peach, fg = C.mantle },                                                                 -- 'incsearch' highlighting; also used for the text replaced with ':s///c'
+          CurSearch = { bg = C.pink, fg = C.mantle },                                                                  -- 'cursearch' highlighting: highlights the current search you're on differently
+          SpecialKey = { fg = C.text },                                                                                -- Unprintable characters: text displayed differently from what it really is.  But not 'listchars' textspace. |hl-Whitespace|
+          SpellBad = { sp = C.red, style = { 'undercurl' } },                                                          -- Word that is not recognized by the spellchecker. |spell| Combined with the highlighting used otherwise.
+          SpellCap = { sp = C.yellow, style = { 'undercurl' } },                                                       -- Word that should start with a capital. |spell| Combined with the highlighting used otherwise.
+          SpellLocal = { sp = C.blue, style = { 'undercurl' } },                                                       -- Word that is recognized by the spellchecker as one that is used in another region. |spell| Combined with the highlighting used otherwise.
+          SpellRare = { sp = C.green, style = { 'undercurl' } },                                                       -- Word that is recognized by the spellchecker as one that is hardly ever used.  |spell| Combined with the highlighting used otherwise.
+          StatusLine = { fg = C.text, bg = O.transparent_background and C.none or C.mantle },                          -- status line of current window
+          StatusLineNC = { fg = C.surface1, bg = O.transparent_background and C.none or C.mantle },                    -- status lines of not-current windows Note: if this is equal to 'StatusLine' Vim will use '^^^' in the status line of the current window.
+          TabLine = { bg = C.mantle, fg = C.surface1 },                                                                -- tab pages line, not active tab page label
+          TabLineFill = { bg = C.black },                                                                              -- tab pages line, where there are no labels
+          TabLineSel = { fg = C.overlay2, bg = C.surface1 },                                                           -- tab pages line, active tab page label
+          Title = { fg = C.text, style = { 'bold' } },                                                                 -- titles for output from ':set all', ':autocmd' etC.
+          Visual = { bg = C.surface1, style = { 'bold' } },                                                            -- Visual mode selection
+          VisualNOS = { bg = C.surface1, style = { 'bold' } },                                                         -- Visual mode selection when vim is 'Not Owning the Selection'.
+          WarningMsg = { fg = C.peach },                                                                               -- warning messages
+          Whitespace = { fg = C.surface1 },                                                                            -- 'nbsp', 'space', 'tab' and 'trail' in 'listchars'
           ExtraWhitespace = { bg = C.red },
-          WildMenu = { bg = C.overlay0 }, -- current match in 'wildmenu' completion
+          WildMenu = { bg = C.overlay0 },                                                                              -- current match in 'wildmenu' completion
           WinBar = { fg = C.subtext0, bg = C.surface1 },
 
           healthError = { fg = C.red },
@@ -748,9 +797,9 @@ return require('lazy').setup({
           healthWarning = { fg = C.yellow },
 
           CmpCursorLine = { bg = C.surface0, style = { 'underline' } }, -- Highlight group for unmatched characters of each completion field.
-          CmpItemAbbr = {} , -- Highlight group for unmatched characters of each completion field.
-          CmpItemAbbrDeprecated = { strikethrough = true } , -- Highlight group for unmatched characters of each deprecated completion field.
-          CmpItemAbbrMatch = { bold = true } , -- Highlight group for matched characters of each completion field. Matched characters must form a substring of a field which share a starting position.
+          CmpItemAbbr = {},                                             -- Highlight group for unmatched characters of each completion field.
+          CmpItemAbbrDeprecated = { strikethrough = true },             -- Highlight group for unmatched characters of each deprecated completion field.
+          CmpItemAbbrMatch = { bold = true },                           -- Highlight group for matched characters of each completion field. Matched characters must form a substring of a field which share a starting position.
           -- CmpItemAbbrMatchFuzzy = { CmpItemAbbrMatch } , -- Highlight group for fuzzy-matched characters of each completion field.
           -- CmpItemKind = { NormalFloat, italic = true } , -- Highlight group for the kind of the field. NOTE: `kind` is a symbol after each completion option.
           -- CmpItemKindConstant = { TSConstant, italic = true } ,
@@ -770,20 +819,20 @@ return require('lazy').setup({
           -- CmpItemMenu = { NormalFloat } , -- The menu field's highlight group.
 
           -- Syntax
-          Comment = { fg = C.overlay0 }, -- just comments
+          Comment = { fg = C.overlay0 },                            -- just comments
           SpecialComment = { fg = C.overlay0, style = { 'bold' } }, -- special things inside a comment
-          Constant = { fg = C.text }, -- (preferred) any constant
+          Constant = { fg = C.text },                               -- (preferred) any constant
           ['@constant'] = { fg = C.text },
-          String = { fg = C.teal }, -- a string constant: 'this is a string'
-          ['@punctuation.string'] = { fg = C.sapphire }, -- a string constant: 'this is a string'
+          String = { fg = C.teal },                                 -- a string constant: 'this is a string'
+          ['@punctuation.string'] = { fg = C.sapphire },            -- a string constant: 'this is a string'
           ['@punctuation.string.bracket'] = { style = { 'bold' } }, -- a string constant: 'this is a string'
           ['@string.escape'] = { fg = C.teal, style = { 'bold' } },
           ['@string.regex'] = { fg = C.green },
           ['@punctuation.regex.bracket'] = { fg = C.green },
           Character = { fg = C.teal, style = { 'bold' } }, --  a character constant: 'c', '\n'
-          Number = { fg = C.peach }, --   a number constant: 234, 0xff
-          Float = { fg = C.peach }, --    a floating point constant: 2.3e10
-          Boolean = { fg = C.sapphire }, --  a boolean constant: TRUE, false
+          Number = { fg = C.peach },                       --   a number constant: 234, 0xff
+          Float = { fg = C.peach },                        --    a floating point constant: 2.3e10
+          Boolean = { fg = C.sapphire },                   --  a boolean constant: TRUE, false
           ['@punctuation.array'] = { fg = C.peach },
           ['@punctuation.object'] = { fg = C.sapphire },
           ['@punctuation.table'] = { fg = C.sapphire },
@@ -795,27 +844,27 @@ return require('lazy').setup({
           ['@method.builtin'] = { link = '@variable.builtin' },
           ['@constant.builtin'] = { fg = C.text, style = { 'bold' } },
           ['@parameter'] = { link = 'Identifier' }, -- For parameters of a function.
-          Function = { fg = C.text }, -- function name (also: methods for classes)
+          Function = { fg = C.text },               -- function name (also: methods for classes)
           ['@constructor'] = { fg = C.text },
           ['@property'] = { fg = C.text },
           ['@field'] = { fg = C.text },
           ['@method'] = { fg = C.text },
-          Keyword = { fg = C.blue, style = { 'bold', 'italic' } }, --  any other keyword
-          ['@keyword'] = { fg = C.blue, style = { 'bold', 'italic' } }, -- any other keyword
+          Keyword = { fg = C.blue, style = { 'bold', 'italic' } },                   --  any other keyword
+          ['@keyword'] = { fg = C.blue, style = { 'bold', 'italic' } },              -- any other keyword
           ['@keyword.declaration'] = { fg = C.green, style = { 'bold', 'italic' } }, -- Keywords used to define a variable/constant: `var`, `let` and `const` in JavaScript
           ['@operator.declaration'] = { fg = C.green, style = { 'italic' } },
-          ['@keyword.function'] = { fg = C.green, style = { 'bold', 'italic' } }, -- Keywords used to define a function: `function` in Lua, `def` and `lambda` in Python.
-          ['@punctuation.function'] = { fg = C.green }, -- Punctuation in function declarations.
+          ['@keyword.function'] = { fg = C.green, style = { 'bold', 'italic' } },    -- Keywords used to define a function: `function` in Lua, `def` and `lambda` in Python.
+          ['@punctuation.function'] = { fg = C.green },                              -- Punctuation in function declarations.
           ['@punctuation.function.special'] = { fg = C.green, style = { 'bold', 'italic' } },
           ['@keyword.class'] = { fg = C.green, style = { 'bold', 'italic' } },
           ['@punctuation.class'] = { fg = C.green },
-          Statement = { fg = C.blue, style = { 'bold', 'italic' } }, -- (preferred) any statement
+          Statement = { fg = C.blue, style = { 'bold', 'italic' } },       -- (preferred) any statement
           Conditional = { fg = C.sapphire, style = { 'bold', 'italic' } }, -- if, then, else, endif, switch, etC.
           ['@punctuation.conditional'] = { fg = C.sapphire },
-          Repeat = { fg = C.peach }, -- for, do, while, etC.
+          Repeat = { fg = C.peach },                                       -- for, do, while, etC.
           ['@punctuation.repeat'] = { fg = C.peach },
-          Label = { fg = C.sapphire, style = { 'bold', 'italic' } }, --    case, default, etC.
-          Operator = { fg = C.overlay1 }, -- 'sizeof', '+', '*', etC.
+          Label = { fg = C.sapphire, style = { 'bold', 'italic' } },       --    case, default, etC.
+          Operator = { fg = C.overlay1 },                                  -- 'sizeof', '+', '*', etC.
           ["@punctuation.keyword"] = { style = { 'italic' } },
           ['@keyword.operator'] = { fg = C.overlay1, style = { 'bold', 'italic' } },
           ['@keyword.with'] = { fg = C.green, style = { 'bold', 'italic' } },
@@ -824,37 +873,37 @@ return require('lazy').setup({
           ['@keyword.return'] = { fg = C.mauve, style = { 'bold', 'italic' } },
           ['@keyword.break'] = { link = '@keyword.return' },
           ['@keyword.continue'] = { link = '@keyword.return' },
-          Exception = { fg = C.red }, --  try, catch, throw
-          ['@exception'] = { fg = C.red }, --  try, catch, throw
+          Exception = { fg = C.red },                                            --  try, catch, throw
+          ['@exception'] = { fg = C.red },                                       --  try, catch, throw
           ['@keyword.exception'] = { fg = C.red, style = { 'bold', 'italic' } }, --  try, catch, throw
-          ['@punctuation.exception'] = { link = '@exception' }, --  try, catch, throw
+          ['@punctuation.exception'] = { link = '@exception' },                  --  try, catch, throw
           ['@keyword.debugger'] = { fg = C.red, style = { 'bold', 'italic' } },
 
-          PreProc = { fg = C.overlay1 }, -- (preferred) generic Preprocessor
-          Include = { fg = C.green }, --  preprocessor #include
-          Define = { fg = C.green }, -- preprocessor #define
-          Macro = { fg = C.green }, -- same as Define
-          PreCondit = { fg = C.sapphire }, -- preprocessor #if, #else, #endif, etc.
+          PreProc = { fg = C.overlay1 },                         -- (preferred) generic Preprocessor
+          Include = { fg = C.green },                            --  preprocessor #include
+          Define = { fg = C.green },                             -- preprocessor #define
+          Macro = { fg = C.green },                              -- same as Define
+          PreCondit = { fg = C.sapphire },                       -- preprocessor #if, #else, #endif, etc.
 
-          Type = { fg = C.text }, -- (preferred) int, long, char, etC.
-          StorageClass = { fg = C.sapphire }, -- static, register, volatile, etC.
-          Structure = { fg = C.teal }, --  struct, union, enum, etC.
-          Typedef = { link = 'Type' }, --  A typedef
+          Type = { fg = C.text },                                -- (preferred) int, long, char, etC.
+          StorageClass = { fg = C.sapphire },                    -- static, register, volatile, etC.
+          Structure = { fg = C.teal },                           --  struct, union, enum, etC.
+          Typedef = { link = 'Type' },                           --  A typedef
 
-          Special = { fg = C.sapphire }, -- (preferred) any special symbol
+          Special = { fg = C.sapphire },                         -- (preferred) any special symbol
           SpecialChar = { fg = C.sapphire, style = { 'bold' } }, -- special character in a constant
-          Tag = { link = 'Special' }, -- you can use CTRL-] on this
-          Delimiter = { fg = C.overlay2 }, -- character that needs attention
+          Tag = { link = 'Special' },                            -- you can use CTRL-] on this
+          Delimiter = { fg = C.overlay2 },                       -- character that needs attention
           -- Specialoverlay0= { }, -- special things inside a overlay0
-          Debug = { fg = C.red, style = { 'italic' } }, -- debugging statements
+          Debug = { fg = C.red, style = { 'italic' } },          -- debugging statements
 
-          Underlined = { style = { 'underline' } }, -- (preferred) text that stands out, HTML links
+          Underlined = { style = { 'underline' } },              -- (preferred) text that stands out, HTML links
           Bold = { style = { 'bold' } },
           Italic = { style = { 'italic' } },
           -- ('Ignore', below, may be invisible...)
           -- Ignore = { }, -- (preferred) left blank, hidden  |hl-Ignore|
 
-          Error = { fg = C.red }, -- (preferred) any erroneous construct
+          Error = { fg = C.red },                                    -- (preferred) any erroneous construct
           Todo = { bg = C.yellow, fg = C.base, style = { 'bold' } }, -- (preferred) anything that needs extra attention; mostly the keywords TODO FIXME and XXX
           qfLineNr = { fg = C.yellow },
           qfFileName = { fg = C.blue },
@@ -869,7 +918,7 @@ return require('lazy').setup({
 
           -- debugging
           debugPC = { bg = O.transparent_background and C.none or C.crust }, -- used for highlighting the current line in terminal-debug
-          debugBreakpoint = { bg = C.base, fg = C.overlay0 }, -- used for breakpoint colors in terminal-debug
+          debugBreakpoint = { bg = C.base, fg = C.overlay0 },                -- used for breakpoint colors in terminal-debug
           -- illuminate
           illuminatedWord = { bg = C.surface1 },
           illuminatedCurWord = { bg = C.surface1 },
@@ -882,10 +931,10 @@ return require('lazy').setup({
           diffFile = { fg = C.blue },
           diffLine = { fg = C.overlay0 },
           diffIndexLine = { fg = C.teal },
-          DiffAdd = { bg = U.darken(C.green, 0.4, C.base) }, -- diff mode: Added line |diff.txt|
+          DiffAdd = { bg = U.darken(C.green, 0.4, C.base) },    -- diff mode: Added line |diff.txt|
           DiffChange = { bg = U.darken(C.peach, 0.4, C.base) }, -- diff mode: Changed line |diff.txt|
-          DiffDelete = { bg = U.darken(C.red, 0.4, C.base) }, -- diff mode: Deleted line |diff.txt|
-          DiffText = { bg = U.darken(C.peach, 0.4, C.base) }, -- diff mode: Changed text within a changed line |diff.txt|
+          DiffDelete = { bg = U.darken(C.red, 0.4, C.base) },   -- diff mode: Deleted line |diff.txt|
+          DiffText = { bg = U.darken(C.peach, 0.4, C.base) },   -- diff mode: Changed text within a changed line |diff.txt|
           GitSignsChangeInline = { style = { 'underline' }, sp = U.darken(C.yellow, 0.4, C.base) },
           GitSignsAddInline = { bg = C.base, style = { 'underline' }, sp = U.darken(C.green, 0.4, C.base) },
           GitSignsDeleteInline = { bg = C.base, style = { 'underline' }, sp = U.darken(C.red, 0.4, C.base) },
@@ -954,16 +1003,14 @@ return require('lazy').setup({
   },
 
   {
-    'folke/neodev.nvim',
+    'folke/lazydev.nvim', -- Faster LuaLS setup for Neovim
     ft = 'lua',
     opts = {
       library = {
-        enabled = true,
-        runtime = true,
-        types = true,
-        plugins = true
+        -- Load luvit types when the `vim.uv` word is found
+        { path = '${3rd}/luv/library', words = { 'vim%.uv' } },
       },
-    }
+    },
   },
 
   {
@@ -1020,9 +1067,10 @@ return require('lazy').setup({
         persist = true,
       },
       claude = {
-        endpoint = 'https://api.eliza.yandex-team.ru/raw/anthropic',
+        endpoint = 'https://api.eliza.yandex.net/raw/anthropic',
         model = 'claude-3-7-sonnet-20250219',
         disable_tools = true,
+        -- prompt = 'Разговаривай на русском.',
         temperature = 0,
         max_tokens = 18192,
         timeout = 240000
@@ -1033,8 +1081,8 @@ return require('lazy').setup({
         auto_set_keymaps = true,
         auto_apply_diff_after_generation = false,
         support_paste_from_clipboard = false,
-        minimize_diff = true, -- Whether to remove unchanged lines when applying a code block
-        enable_token_counting = true, -- Whether to enable token counting. Default to true.
+        minimize_diff = true,                -- Whether to remove unchanged lines when applying a code block
+        enable_token_counting = true,        -- Whether to enable token counting. Default to true.
         enable_cursor_planning_mode = false, -- Whether to enable Cursor Planning Mode. Default to false.
       },
       mappings = {
@@ -1072,10 +1120,10 @@ return require('lazy').setup({
       hints = { enabled = false },
       windows = {
         position = 'right', -- the position of the sidebar
-        wrap = true, -- similar to vim.o.wrap
-        width = 40, -- default % based on available width
+        wrap = true,        -- similar to vim.o.wrap
+        width = 40,         -- default % based on available width
         sidebar_header = {
-          enabled = true, -- true, false to enable/disable the header
+          enabled = true,   -- true, false to enable/disable the header
           align = 'center', -- left, center, right for title
           rounded = true,
         },
@@ -1088,7 +1136,7 @@ return require('lazy').setup({
           start_insert = true, -- Start insert mode when opening the edit window
         },
         ask = {
-          floating = false, -- Open the 'AvanteAsk' prompt in a floating window
+          floating = false,    -- Open the 'AvanteAsk' prompt in a floating window
           start_insert = true, -- Start insert mode when opening the ask window
           border = 'rounded',
           ---@type 'ours' | 'theirs'
@@ -1123,12 +1171,11 @@ return require('lazy').setup({
       'nvim-lua/plenary.nvim',
       'MunifTanjim/nui.nvim',
       --- The below dependencies are optional,
-      'echasnovski/mini.pick', -- for file_selector provider mini.pick
+      'echasnovski/mini.pick',         -- for file_selector provider mini.pick
       'nvim-telescope/telescope.nvim', -- for file_selector provider telescope
-      'hrsh7th/nvim-cmp', -- autocompletion for avante commands and mentions
-      'ibhagwan/fzf-lua', -- for file_selector provider fzf
-      'nvim-tree/nvim-web-devicons', -- or echasnovski/mini.icons
-      'zbirenbaum/copilot.lua', -- for providers='copilot'
+      'hrsh7th/nvim-cmp',              -- autocompletion for avante commands and mentions
+      'ibhagwan/fzf-lua',              -- for file_selector provider fzf
+      'nvim-tree/nvim-web-devicons',   -- or echasnovski/mini.icons
       {
         -- support for image pasting
         'HakonHarnes/img-clip.nvim',
