@@ -57,3 +57,7 @@
 	prompt = false
 [include]
 	path = gitalias.txt
+[pull]
+	ff = only
+[init]
+	defaultBranch = main
