@@ -1,6 +1,3 @@
-# Amazon Q pre block. Keep at the top of this file.
-[[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.pre.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.pre.zsh"
-
 fpath+='/opt/homebrew/share/zsh/site-functions'
 source $(brew --prefix)/opt/antidote/share/antidote/antidote.zsh
 antidote load
@@ -172,19 +169,10 @@ current_vcs() {
     alias ci="$CURRENT_VCS commit"
     alias co='$CURRENT_VCS checkout'
     alias pu='$CURRENT_VCS push'
+    alias up='$CURRENT_VCS pull'
     alias br='$CURRENT_VCS branch'
     alias re='$CURRENT_VCS rebase'
     alias fe='$CURRENT_VCS fetch'
-    case "$CURRENT_VCS" in
-      git)
-        alias p='git pull main'
-        ;;
-      arc)
-        alias p='arc pull trunk'
-        ;;
-      *)
-        ;;
-    esac
   fi
 }
 
@@ -423,9 +411,6 @@ set-dark-or-light-mode() {
 }
 set-dark-or-light-mode
 
-# Amazon Q post block. Keep at the bottom of this file.
-[[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh"
-
 if [[ $ZSH_EVAL ]]
 then
   eval "$ZSH_EVAL"
@@ -440,6 +425,7 @@ export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
 export ANTHROPIC_API_KEY=$(keychain-environment-variable ANTHROPIC_API_KEY)
+export OPENROUTER_API_KEY=$(keychain-environment-variable OPENROUTER_API_KEY)
 
 # The next line updates PATH for CLI.
 if [ -f '/Users/veged/yandex-cloud/path.bash.inc' ]; then source '/Users/veged/yandex-cloud/path.bash.inc'; fi
