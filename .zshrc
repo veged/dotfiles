@@ -1,6 +1,32 @@
+if [[ -n $CURSOR_TRACE_ID || "$COMPOSER_NO_INTERACTION" == "1" ]]; then
+  PROMPT_EOL_MARK=""
+  precmd() { print -Pn "\e]133;D;%?\a" }
+  preexec() { print -Pn "\e]133;C;\a" }
+  return
+fi
+
 fpath+='/opt/homebrew/share/zsh/site-functions'
 source $(brew --prefix)/opt/antidote/share/antidote/antidote.zsh
 antidote load
+
+# bun
+[ -s ~/.bun/_bun ] && source ~/.bun/_bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+# pnpm
+export PNPM_HOME=~/.local/share/pnpm
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end
+
+# The next line updates PATH for YDB CLI.
+if [ -f ~/ydb/path.bash.inc ]; then source ~/ydb/path.bash.inc; fi
+
+# The next line updates PATH for Yandex Cloud Private CLI.
+if [ -f ~/ycp/path.bash.inc ]; then source ~/ycp/path.bash.inc; fi
 
 source <(cod init $$ zsh)
 
@@ -107,20 +133,25 @@ set-prompt() {
   local bottom_left=$(ZSH_PROMPT_BOTTOM_LEFT)
   local bottom_right=$(ZSH_PROMPT_BOTTOM_RIGHT)
 
-  local -i left_len=$(prompt-length ${top_left})
-  local -i right_len=$(prompt-length ${top_right} 9999)
-  local -i pad_len=$((COLUMNS - left_len - right_len - ${ZLE_RPROMPT_INDENT:-1}))
-  if (( pad_len > $((left_len + right_len)))); then
+  if [[ $TERM_PROGRAM == 'kiro' || $TERM_PROGRAM == 'vscode' || -n $CURSOR_AGENT || -n $VSCODE_SHELL_INTEGRATION ]]; then
     PROMPT=${top_left}' '${bottom_left}
-    RPROMPT=${bottom_right}${top_right}
+    RPROMPT=''
   else
-    if (( pad_len < 1 )); then
-      PROMPT=${top_left}$'\n'${bottom_left}
+    local -i left_len=$(prompt-length ${top_left})
+    local -i right_len=$(prompt-length ${top_right} 9999)
+    local -i pad_len=$((COLUMNS - left_len - right_len - ${ZLE_RPROMPT_INDENT:-1}))
+    if (( pad_len > $((left_len + right_len)))); then
+      PROMPT=${top_left}' '${bottom_left}
       RPROMPT=${bottom_right}${top_right}
     else
-      local pad=${(pl.$pad_len.. .)}
-      PROMPT=${top_left}${pad}${top_right}$'\n'${bottom_left}
-      RPROMPT=${bottom_right}
+      if (( pad_len < 1 )); then
+        PROMPT=${top_left}$'\n'${bottom_left}
+        RPROMPT=${bottom_right}${top_right}
+      else
+        local pad=${(pl.$pad_len.. .)}
+        PROMPT=${top_left}${pad}${top_right}$'\n'${bottom_left}
+        RPROMPT=${bottom_right}
+      fi
     fi
   fi
 }
@@ -163,6 +194,7 @@ alias st='echo "Not in any VCS folder!"'
 current_vcs() {
   if [[ $CURRENT_VCS != $1 ]]; then
     export CURRENT_VCS="$1"
+    alias cl="$CURRENT_VCS clone"
     alias st="$CURRENT_VCS status"
     alias di="$CURRENT_VCS diff"
     alias ad="$CURRENT_VCS add"
@@ -173,6 +205,7 @@ current_vcs() {
     alias br='$CURRENT_VCS branch'
     alias re='$CURRENT_VCS rebase'
     alias fe='$CURRENT_VCS fetch'
+    alias lo='$CURRENT_VCS log'
   fi
 }
 
@@ -376,7 +409,6 @@ zstyle ':fzf-tab:*' continuous-trigger 'space'
 zstyle ':fzf-tab:*' fzf-bindings 'tab:accept'
 zstyle ':fzf-tab:*' accept-line enter
 
-
 eval "$(zoxide init zsh)"
 
 source $HOME/.config/broot/launcher/bash/br
@@ -405,7 +437,7 @@ set-dark-or-light-mode() {
       esac
       export FZF_DEFAULT_OPTS="$FZF_DEFAULT_BASE_OPTS $FZF_DEFAULT_COLOR_OPTS"
       lsof -U -Fn | rg -o '/.*nvim.*' | xargs -L1 -r nvim --remote-send "<Esc><Esc>:set background=$mode<CR>" --server
-      [[ $TERM == 'xterm-kitty' ]] && kitty +kitten themes --reload-in=all $KITTY_THEME
+      # [[ $TERM == 'xterm-kitty' ]] && kitty +kitten themes --reload-in=all $KITTY_THEME
     fi
   } >/dev/null 2>&1
 }
@@ -417,19 +449,11 @@ then
   unset ZSH_EVAL
 fi
 
-# bun completions
-[ -s "/Users/veged/.bun/_bun" ] && source "/Users/veged/.bun/_bun"
-
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-
 export ANTHROPIC_API_KEY=$(keychain-environment-variable ANTHROPIC_API_KEY)
 export OPENROUTER_API_KEY=$(keychain-environment-variable OPENROUTER_API_KEY)
 
-# The next line updates PATH for CLI.
-if [ -f '/Users/veged/yandex-cloud/path.bash.inc' ]; then source '/Users/veged/yandex-cloud/path.bash.inc'; fi
+# yc
+if [ -f ~/yandex-cloud/path.bash.inc ]; then source ~/yandex-cloud/path.bash.inc; fi
+if [ -f ~/yandex-cloud/completion.zsh.inc ]; then source ~/yandex-cloud/completion.zsh.inc; fi
 
-# The next line enables shell command completion for yc.
-if [ -f '/Users/veged/yandex-cloud/completion.zsh.inc' ]; then source '/Users/veged/yandex-cloud/completion.zsh.inc'; fi
-
+[[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
