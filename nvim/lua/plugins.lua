@@ -1068,7 +1068,7 @@ return require('lazy').setup({
       },
       claude = {
         endpoint = 'https://api.eliza.yandex.net/raw/anthropic',
-        model = 'claude-3-7-sonnet-20250219',
+        model = 'claude-sonnet-4-5',
         disable_tools = true,
         -- prompt = 'Разговаривай на русском.',
         temperature = 0,
