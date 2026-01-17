@@ -51,17 +51,13 @@ return require('lazy').setup({
   {
     'neovim/nvim-lspconfig', -- Quickstart configurations for the Nvim LSP client
     dependencies = {
-      -- 'hrsh7th/cmp-nvim-lsp',
       'williamboman/mason.nvim',
       'williamboman/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim'
     },
     config = function()
-      local lspconfig = require('lspconfig')
-      local util = require('lspconfig/util')
-
-      lspconfig.typos_lsp.setup { init_options = { diagnosticSeverity = 'Warning' } }
-      lspconfig.html.setup {
+      vim.lsp.config('typos_lsp', { init_options = { diagnosticSeverity = 'Warning' } })
+      vim.lsp.config('html', {
         filetypes = { 'html' },
         init_options = {
           configurationSection = { 'html', 'javascript' },
@@ -78,11 +74,11 @@ return require('lazy').setup({
             }
           }
         }
-      }
-      lspconfig.cssls.setup {}
-      lspconfig.css_variables.setup {}
-      lspconfig.eslint.setup {
-        root_dir = util.root_pattern('package.json'),
+      })
+      vim.lsp.config('cssls', {})
+      vim.lsp.config('css_variables', {})
+      vim.lsp.config('eslint', {
+        root_markers = { 'package.json' },
         filetypes = { 'javascript', 'typescript', 'html', 'javascriptreact', 'typescriptreact' },
         codeAction = {
           disableRuleComment = { enable = true },
@@ -98,10 +94,10 @@ return require('lazy').setup({
             validate = 'on'
           }
         }
-      }
-      lspconfig.vtsls.setup {}
-      lspconfig.jsonls.setup {}
-      lspconfig.lua_ls.setup {
+      })
+      vim.lsp.config('vtsls', {})
+      vim.lsp.config('jsonls', {})
+      vim.lsp.config('lua_ls', {
         settings = {
           Lua = {
             runtime = { version = 'LuaJIT' },
@@ -138,7 +134,8 @@ return require('lazy').setup({
             telemetry = { enable = false }
           }
         }
-      }
+      })
+      vim.lsp.enable({ 'typos_lsp', 'html', 'cssls', 'css_variables', 'eslint', 'vtsls', 'jsonls', 'lua_ls' })
     end
   },
 
@@ -1061,19 +1058,23 @@ return require('lazy').setup({
       provider = 'claude',
       auto_suggestions_provider = 'claude',
       cursor_applying_provider = nil,
+      system_prompt = 'Разговаривай на русском.',
       cache_control = {
         enabled = true,
         ttl = 36000,
         persist = true,
       },
-      claude = {
-        endpoint = 'https://api.eliza.yandex.net/raw/anthropic',
-        model = 'claude-sonnet-4-5',
-        disable_tools = true,
-        -- prompt = 'Разговаривай на русском.',
-        temperature = 0,
-        max_tokens = 18192,
-        timeout = 240000
+      providers = {
+        claude = {
+          endpoint = 'https://api.eliza.yandex.net/raw/anthropic',
+          model = 'claude-sonnet-4-5',
+          disable_tools = true,
+          timeout = 240000,
+          extra_request_body = {
+            temperature = 0,
+            max_tokens = 18192,
+          },
+        },
       },
       behaviour = {
         auto_suggestions = false, -- Experimental stage
