@@ -1,6 +1,7 @@
 - defaults:
     link:
         relink: true
+        create: true
     brewfile:
         stdout: true
         stderr: true
@@ -15,9 +16,12 @@
     ~/.config/kitty: kitty
     ~/.config/ghostty: ghostty
     ~/.config/nvim: nvim
+    ~/.claude/CLAUDE.md: claude/CLAUDE.md
+    ~/.claude/settings.json: claude/settings.json
 
 - create:
     - ~/.config
+    - ~/.claude
 
 - shell:
     - [git submodule update --init --recursive, Installing submodules]
