@@ -9,19 +9,6 @@ fpath+='/opt/homebrew/share/zsh/site-functions'
 source $(brew --prefix)/opt/antidote/share/antidote/antidote.zsh
 antidote load
 
-# bun
-[ -s ~/.bun/_bun ] && source ~/.bun/_bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-
-# pnpm
-export PNPM_HOME=~/.local/share/pnpm
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac
-# pnpm end
-
 # The next line updates PATH for YDB CLI.
 if [ -f ~/ydb/path.bash.inc ]; then source ~/ydb/path.bash.inc; fi
 
@@ -69,6 +56,9 @@ alias ...='cd ../..'
 alias ↑='..'
 alias ↑↑='...'
 alias ←='cd -'
+alias rmd=rmdir
+mcd() { mkdir -p -- "$@" && cd -- "${@:$#}" }
+
 alias v='nvim -o'
 alias vc='v -O ~/.config/nvim/{init.lua,lua/plugins.lua}'
 alias vd='nvim -d'
