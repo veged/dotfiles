@@ -1,31 +1,30 @@
 - defaults:
     link:
-        relink: true
-        create: true
+      relink: true
+      create: true
     brewfile:
-        stdout: true
-        stderr: true
-        include: ['tap', 'brew', 'cask', 'mas']
-
-- link:
-    ~/.profile: .profile
-    ~/.zprofile: .zprofile
-    ~/.zshrc: .zshrc
-    ~/.zsh_plugins.txt: .zsh_plugins.txt
-    ~/.gitconfig: .gitconfig
-    ~/.config/kitty: kitty
-    ~/.config/ghostty: ghostty
-    ~/.config/nvim: nvim
-    ~/.claude/CLAUDE.md: claude/CLAUDE.md
-    ~/.claude/settings.json: claude/settings.json
+      stdout: true
+      stderr: true
+      include: ['tap', 'brew', 'cask', 'mas']
 
 - create:
-    - ~/.config
-    - ~/.claude
+  - ~/.config
+  - ~/.claude
+
+- link:
+    ~/:
+      glob: true
+      path: home/*
+      prefix: '.'
+    ~/.config/:
+      glob: true
+      path: config/*
+    ~/.claude/:
+      glob: true
+      path: claude/*
 
 - shell:
-    - [git submodule update --init --recursive, Installing submodules]
+  - [git submodule update --init --recursive, Installing submodules]
 
 - brewfile:
     file: Brewfile
-

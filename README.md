@@ -18,11 +18,11 @@ cd ~/dotfiles
 
 | Компонент | Путь | Описание |
 |-----------|------|----------|
-| **zsh** | `.zshrc`, `.zprofile`, `.zsh_plugins.txt` | Shell с antidote, fzf-tab, fast-syntax-highlighting |
-| **neovim** | `nvim/` | Редактор с Lua-конфигом |
-| **kitty** | `kitty/` | Терминал с Catppuccin темой |
-| **ghostty** | `ghostty/` | Альтернативный терминал |
-| **git** | `.gitconfig`, `gitalias.txt` | VCS с алиасами и nvimdiff |
+| **zsh** | `home/zshrc`, `home/zprofile` | Shell с antidote, fzf-tab, fast-syntax-highlighting |
+| **neovim** | `config/nvim/` | Редактор с Lua-конфигом |
+| **kitty** | `config/kitty/` | Терминал с Catppuccin темой |
+| **ghostty** | `config/ghostty/` | Альтернативный терминал |
+| **git** | `home/gitconfig`, `gitalias.txt` | VCS с алиасами и nvimdiff |
 | **claude** | `claude/` | Настройки Claude Code AI |
 
 ## CLI-инструменты
@@ -50,17 +50,23 @@ cd ~/dotfiles
 ```
 dotfiles/
 ├── install              # Точка входа
-├── install.conf.yaml    # Конфиг dotbot (симлинки, shell-команды)
+├── install.conf.yaml    # Конфиг dotbot
 ├── Brewfile             # Homebrew зависимости
-├── .zshrc               # Shell-конфиг
-├── .gitconfig           # Git-настройки
-├── nvim/                # Neovim (init.lua + плагины)
-├── kitty/               # Kitty терминал
-├── ghostty/             # Ghostty терминал
-└── claude/              # Claude Code AI
-    ├── CLAUDE.md        # Инструкции для AI
-    └── settings.json    # Настройки
+├── home/                # → ~/.*  (с добавлением точки)
+│   ├── zshrc
+│   ├── zprofile
+│   ├── gitconfig
+│   └── ...
+├── config/              # → ~/.config/*
+│   ├── kitty/
+│   ├── ghostty/
+│   └── nvim/
+└── claude/              # → ~/.claude/*
+    ├── CLAUDE.md
+    └── settings.json
 ```
+
+Добавление нового dotfile = положить файл в нужную папку.
 
 ## Для AI-ассистентов
 
