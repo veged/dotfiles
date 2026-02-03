@@ -1,19 +1,55 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install:*)",
-      "Bash(npm run build:*)",
-      "Bash(git -C /Users/veged/Documents/SimpleGitFS/.worktrees/tauri-migration status --short)",
-      "Bash(git -C /Users/veged/Documents/SimpleGitFS/.worktrees/tauri-migration status)",
-      "Bash(git checkout:*)",
-      "Bash(git pull:*)",
+      "Bash(ugrep:*)",
+      "Bash(fd:*)",
+      "Bash(sd:*)",
+      "Bash(bat:*)",
+      "Bash(eza:*)",
+      "Bash(z:*)",
+      "Bash(zoxide:*)",
+      "Bash(xh:*)",
+      "Bash(tldr:*)",
+      "Bash(jq:*)",
+      "Bash(yq:*)",
+      "Bash(fzf:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git blame:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
       "Bash(git stash:*)",
-      "Bash(git merge:*)"
+      "Bash(git checkout:*)",
+      "Bash(git switch:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git merge:*)",
+      "Bash(git rebase:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(git push:*)",
+      "Bash(npm install:*)",
+      "Bash(npm ci:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npm start:*)",
+      "Bash(npm build:*)",
+      "Bash(npm list:*)",
+      "Bash(npm ls:*)",
+      "Bash(npm outdated:*)",
+      "Bash(npm audit:*)",
+      "Bash(npm view:*)"
     ]
   },
   "model": "opus",
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true,
-    "rust-analyzer-lsp@claude-plugins-official": true
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "swift-lsp@claude-plugins-official": true
   }
 }
