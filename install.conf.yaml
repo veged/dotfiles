@@ -25,6 +25,4 @@
 
 - shell:
   - [git submodule update --init --recursive, Installing submodules]
-
-- brewfile:
-    file: Brewfile
+  - [brew bundle --file=Brewfile, Installing Homebrew packages]

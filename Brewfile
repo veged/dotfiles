@@ -1,8 +1,4 @@
-tap "homebrew/bundle"
-tap "homebrew/cask-fonts"
-tap "homebrew/cask-versions"
-tap "homebrew/services"
-tap "laishulu/macism"
+tap "laishulu/homebrew", "https://github.com/laishulu/homebrew-homebrew"
 tap "dracula/install"
 tap "yandex/arc", "https://arc-vcs.yandex-team.ru/homebrew-tap"
 
@@ -43,7 +39,7 @@ brew "s3cmd"
 brew "sd"
 brew "wget"
 brew "zoxide"
-brew "laishulu/macism/macism"
+brew "laishulu/homebrew/macism"
 brew "yandex/arc/arc-launcher"
 
 cask "chromium"
