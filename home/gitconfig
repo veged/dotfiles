@@ -21,6 +21,8 @@
 	editor = nvim
 	autocrlf = input
 	excludesfile = ~/.gitignore
+	precomposeunicode = true
+	quotepath = false
 [diff]
 	noprefix = true
 	tool = nvimdiff
