@@ -1,6 +1,6 @@
 [user]
 	name = Sergey Berezhnoy
-	email = veged@yandex-team.ru
+	email = veged@ya.ru
 [alias]
 	co = checkout
 	st = status
@@ -64,3 +64,11 @@
 	rebase = true
 [init]
 	defaultBranch = main
+[gitbutler]
+	aiOpenAIKeyOption = butlerAPI
+	aiOpenAICustomEndpoint = https://api.eliza.yandex.net/openai/v1/
+	aiOpenAIModelName = gpt-5
+	aiModelProvider = openai
+	aiAnthropicKeyOption = bringYourOwn
+[rebase]
+	autoStash = true
