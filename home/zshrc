@@ -416,18 +416,24 @@ set-dark-or-light-mode() {
           export BAT_THEME='Catppuccin Latte'
           export KITTY_THEME=Catppuccin-Latte
           export FZF_DEFAULT_COLOR_OPTS=$FZF_DEFAULT_COLOR_LIGHT_OPTS
-          fast-theme $(antidote path catppuccin/zsh-fsh)/themes/catppuccin-latte.ini
           ;;
         dark)
           export BAT_THEME='Catppuccin Mocha'
           export KITTY_THEME=Catppuccin-Mocha
           export FZF_DEFAULT_COLOR_OPTS=$FZF_DEFAULT_COLOR_DARK_OPTS
-          fast-theme $(antidote path catppuccin/zsh-fsh)/themes/catppuccin-mocha.ini
           ;;
       esac
       export FZF_DEFAULT_OPTS="$FZF_DEFAULT_BASE_OPTS $FZF_DEFAULT_COLOR_OPTS"
       lsof -U -Fn | rg -o '/.*nvim.*' | xargs -L1 -r nvim --remote-send "<Esc><Esc>:set background=$mode<CR>" --server
       # [[ $TERM == 'xterm-kitty' ]] && kitty +kitten themes --reload-in=all $KITTY_THEME
+      _FSH_THEME_APPLIED=''
+    fi
+    if [[ -z $_FSH_THEME_APPLIED ]] && (( $+functions[fast-theme] )); then
+      case "$DARK_OR_LIGHT_MODE" in
+        light) fast-theme XDG:catppuccin-latte ;;
+        dark)  fast-theme XDG:catppuccin-mocha ;;
+      esac
+      _FSH_THEME_APPLIED=1
     fi
   } >/dev/null 2>&1
 }
@@ -439,8 +445,13 @@ then
   unset ZSH_EVAL
 fi
 
-export ANTHROPIC_API_KEY=$(keychain-environment-variable ANTHROPIC_API_KEY)
 export OPENROUTER_API_KEY=$(keychain-environment-variable OPENROUTER_API_KEY)
+# export ANTHROPIC_BASE_URL="https://api.eliza.yandex.net/raw/anthropic"
+# export ANTHROPIC_AUTH_TOKEN=$(ya tool fetch-token -client-id "d1f988f246c44274b9fdef4feaaf8ad7" -client-secret "e865e4f30d3d4a4e945dd5304ab265dd")
+# export ANTHROPIC_BASE_URL="https://openrouter.ai/api"
+# export ANTHROPIC_AUTH_TOKEN="$OPENROUTER_API_KEY"
+# export ANTHROPIC_API_KEY=""
+export YA_WIKI_KEY=$(keychain-environment-variable YA_WIKI_KEY)
 
 # yc
 if [ -f ~/yandex-cloud/path.bash.inc ]; then source ~/yandex-cloud/path.bash.inc; fi
