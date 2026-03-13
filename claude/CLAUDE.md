@@ -11,12 +11,11 @@
 | grep | ugrep | `--bool 'a AND b'`, `-z3` fuzzy, `-I` skip binary |
 | find | fd | `-x cmd {}` parallel exec, `-e ext`, `-S +100k`, `--changed-within 7d` |
 | sed | sd | `-p` preview, `-s` literal (без regex), in-place по умолчанию |
-| cat | bat | syntax highlight, `--style=plain` |
 | ls | eza | `--tree`, `--git`, `-la` |
-| cd | zoxide | `z dir`, `zi` interactive |
 | curl | xh | auto exit codes (4=4xx, 5=5xx), нет --retry |
 | man | tldr | краткие примеры |
 | awk (JSON) | jq | `-s` slurp files, `-r` raw output |
+| Fetch, WebFetch (GitHub) | gh | `gh api repos/o/r/readme --jq '.content' \| base64 -d`, `gh pr view`, `gh issue view` |
 | — | yq | YAML/JSON/XML/CSV/TOML, `-i` in-place, `-o json` |
 | — | fzf | `fd \| fzf --preview 'bat {}'` |
 
