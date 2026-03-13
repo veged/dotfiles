@@ -663,17 +663,36 @@ return require('lazy').setup({
   }, ]]
 
   {
+    'dmtrKovalenko/fff.nvim', -- Fast fuzzy file finder with frecency ranking
+    build = function() require('fff.download').download_or_build_binary() end,
+    lazy = false,
+    opts = {},
+    keys = {
+      { '<Leader>ff', function() require('fff').find_files() end, desc = 'Find files (fff)' },
+      { '<Leader>fg', function() require('fff').live_grep() end, desc = 'Live grep (fff)' },
+      {
+        '<Leader>fz',
+        function() require('fff').live_grep({ grep = { modes = { 'fuzzy', 'plain' } } }) end,
+        desc = 'Fuzzy grep (fff)'
+      },
+      {
+        '<Leader>f*',
+        function() require('fff').live_grep({ query = vim.fn.expand('<cword>') }) end,
+        desc = 'Grep current word (fff)'
+      }
+    }
+  },
+
+  {
     'nvim-telescope/telescope.nvim',        -- Find, Filter, Preview, Pick.
     branch = '0.1.x',
     dependencies = 'nvim-lua/plenary.nvim', -- All the lua functions I don't want to write twice.
-    keys = { '<Leader>fc', '<Leader>ff', '<Leader>fg', '<Leader>f/', '<Leader>fb', '<Leader>f:', '<Leader>fh' },
+    keys = { '<Leader>fc', '<Leader>f/', '<Leader>fb', '<Leader>f:', '<Leader>fh' },
     config = function()
       local telescopeBuiltin = require('telescope.builtin')
       keymapN({
         ['<Leader>f'] = {
           c = { telescopeBuiltin.colorscheme, 'Find color scheme' },
-          f = { telescopeBuiltin.find_files, 'Find files' },
-          g = { telescopeBuiltin.live_grep, 'Live grep' },
           ['/'] = { telescopeBuiltin.current_buffer_fuzzy_find, 'Current buffer fuzzy find' },
           b = { telescopeBuiltin.buffers, 'Buffers' },
           [':'] = { telescopeBuiltin.command_history, 'Command history' },
@@ -683,17 +702,6 @@ return require('lazy').setup({
 
       require('telescope').setup {
         defaults = {
-          vimgrep_arguments = {
-            'rg',
-            '--color=never',
-            '--no-heading',
-            '--with-filename',
-            '--line-number',
-            '--column',
-            '--smart-case',
-            '--ignore-file',
-            '.gitignore'
-          },
           file_ignore_patterns = { 'node_modules' }
         },
         pickers = {
