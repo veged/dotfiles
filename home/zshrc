@@ -264,114 +264,6 @@ _fzf_comprun() {
   esac
 }
 
-# export FZF_DEFAULT_COMMAND="eza --icons=always --color=always -1da"
-# export FZF_ALT_C_COMMAND=$FZF_DEFAULT_COMMAND" --only-dirs"
-#
-# function _fd_base() {
-#   echo "! _fd_base !" $1 $2 >> /tmp/zsh.log
-#   echo "! _fd_base 1 !" ${1:-'.* .'} >> /tmp/zsh.log
-#   local -a opts
-#   [ $1 = 'dirs' ] && opts=('--type=d')
-#   echo "fd -0 --follow --hidden $opts --exact-depth=1 --format='{/}' -g '$2*' | xargs -0 eza --icons=always --color=always --no-quotes -1da" >> /tmp/zsh.log
-#   eval "fd -0 --follow --hidden $opts --exact-depth=1 --format='{/}' -g '$2*' | xargs -0 eza --icons=always --color=always --no-quotes -1da"
-# }
-#
-# function _fd_filter() {
-#   echo "! _fd_filter !" $1 + $2 >> /tmp/zsh.log
-#   # Special-case some of the usages
-#   case "$2" in
-#     '~'*)
-#       # Expand and then collapse `~` at the beginning of the search string and then re-check it
-#       _fd_filter "${1/#\~/$HOME}" $2
-#       ;;
-#     (../)##(..)#)
-#       # Parent dir only, handle manually as `dirname` fails to handle that correctly
-#       _fd_base $1 $2
-#       ;;
-#     *)
-#       # All the rest
-#       _fd_base $1 $2
-#       ;;
-#   esac
-# }
-#
-# function _fd_select() {
-#   echo "! _fd_select !" $1 $2 >> /tmp/zsh.log
-#   local -a opts=(--preview="bat -n --color=always --pager=never --line-range :300 {echo {+} | sed \"s/^. //\"}" --preview-window=right:70%)
-#   if [[ "$2" == 'dirs' ]]; then
-#     opts=(--preview='eza --tree --level=3 --color=always --icons {} | head -200' --preview-window=right:50%)
-#   fi
-#
-#   echo "! _fd_select opts !" $opts >> /tmp/zsh.log
-#   _fd_filter $1 $2 | fzf $opts \
-#     --ansi \
-#     --exit-0 \
-#     --layout=reverse --height=75% \
-#     --tiebreak=begin \
-#     --bind 'enter:execute(echo {+} | sed "s/^. //")+abort' \
-#     --query="$2"
-# }
-#
-# function _fd_execute() {
-#   # All through compadd
-#   #local result=("${(@f)$(_fd_filter $1 $2)}")
-#   #compadd -a -f result
-#
-#   # Display FZF manually with a hack to prevent multiple appearances of FZF (i.e. multiple calls to
-#   # _files and _cd) when cancelling the matching
-#   echo "! _fd_execute !" $_matcher_num $1 $2 >> /tmp/zsh.log
-#   if [[ $_matcher_num == 1 ]]; then
-#     local result=$(_fd_select $1 $2)
-#     echo "! _fd_execute result !" $result >> /tmp/zsh.log
-#     [ "$result" = '' ] || compadd -f -U -- "$result"
-#     return 0
-#   fi
-#   return 1
-# }
-#
-# # Save the original functions since we want them to run when executing `-command-` completion
-# autoload +X _files _cd
-# functions[_save_orig_files]=$functions[_files]
-# functions[_save_orig_cd]=$functions[_cd]
-#
-# function _files() {
-#   echo "! _files !" $LBUFFER >> /tmp/zsh.log
-#   if [[ $curcontext == ':complete:-command-:' ]]; then
-#     _save_orig_files $@
-#   else
-#     echo "! _files curcontext != :complete:-command-: !" ${(z)LBUFFER} >> /tmp/zsh.log
-#     local query=(${(z)LBUFFER})
-#     echo "! _files query !" $query >> /tmp/zsh.log
-#     [ "${LBUFFER[-1]}" = ' ' ] && query+=('')
-#     echo "! _files query[-1] !" $query[-1] >> /tmp/zsh.log
-#     _fd_execute 'files' "$query[-1]"
-#   fi
-# }
-# function _fzf_compgen_path() {
-#   echo "! _fzf_compgen_dir !" $1 >> /tmp/zsh.log
-#   _fs_base $1
-# }
-#
-# function _cd() {
-#   echo "! _cd !" $LBUFFER >> /tmp/zsh.log
-#   echo "! _cd curcontext !" $curcontext >> /tmp/zsh.log
-#   if [[ $curcontext == ':complete:-command-:' ]]; then
-#     _save_orig_cd $@
-#   else
-#     echo "! _cd curcontext != :complete:-command-: !" ${(z)LBUFFER} >> /tmp/zsh.log
-#     local query=(${(z)LBUFFER})
-#     echo "! _cd query !" $query >> /tmp/zsh.log
-#     [ "${LBUFFER[-1]}" = ' ' ] && query+=('')
-#     echo "! _cd query[-1] !" $query[-1] >> /tmp/zsh.log
-#     _fd_execute 'dirs' "$query[-1]"
-#   fi
-# }
-# function _fzf_compgen_dir() {
-#   echo "! _fzf_compgen_dir !" $1 >> /tmp/zsh.log
-#   _fd_base 'dirs' $1
-# }
-#
-
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 zstyle ':completion:*' menu no
 
@@ -424,7 +316,7 @@ set-dark-or-light-mode() {
           ;;
       esac
       export FZF_DEFAULT_OPTS="$FZF_DEFAULT_BASE_OPTS $FZF_DEFAULT_COLOR_OPTS"
-      lsof -U -Fn | rg -o '/.*nvim.*' | xargs -L1 -r nvim --remote-send "<Esc><Esc>:set background=$mode<CR>" --server &
+      { lsof -U -Fn 2>/dev/null | rg -o '/.*nvim.*' | xargs -L1 -r nvim --remote-send "<Esc><Esc>:set background=$mode<CR>" --server 2>/dev/null } &!
       # [[ $TERM == 'xterm-kitty' ]] && kitty +kitten themes --reload-in=all $KITTY_THEME
       _FSH_THEME_APPLIED=''
     fi
@@ -446,11 +338,6 @@ then
 fi
 
 export OPENROUTER_API_KEY=$(timeout 3 security find-generic-password -w -a ${USER} -D "environment variable" -s "OPENROUTER_API_KEY" 2>/dev/null || true)
-# export ANTHROPIC_BASE_URL="https://api.eliza.yandex.net/raw/anthropic"
-# export ANTHROPIC_AUTH_TOKEN=$(ya tool fetch-token -client-id "d1f988f246c44274b9fdef4feaaf8ad7" -client-secret "e865e4f30d3d4a4e945dd5304ab265dd")
-# export ANTHROPIC_BASE_URL="https://openrouter.ai/api"
-# export ANTHROPIC_AUTH_TOKEN="$OPENROUTER_API_KEY"
-# export ANTHROPIC_API_KEY=""
 export YA_WIKI_KEY=$(timeout 3 security find-generic-password -w -a ${USER} -D "environment variable" -s "YA_WIKI_KEY" 2>/dev/null || true)
 
 # yc

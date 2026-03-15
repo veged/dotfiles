@@ -2,3 +2,5 @@
 .DS_Store
 Brewfile.lock.json
 .claude/
+~/
+zsh-fsh/
