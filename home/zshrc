@@ -424,7 +424,7 @@ set-dark-or-light-mode() {
           ;;
       esac
       export FZF_DEFAULT_OPTS="$FZF_DEFAULT_BASE_OPTS $FZF_DEFAULT_COLOR_OPTS"
-      lsof -U -Fn | rg -o '/.*nvim.*' | xargs -L1 -r nvim --remote-send "<Esc><Esc>:set background=$mode<CR>" --server
+      lsof -U -Fn | rg -o '/.*nvim.*' | xargs -L1 -r nvim --remote-send "<Esc><Esc>:set background=$mode<CR>" --server &
       # [[ $TERM == 'xterm-kitty' ]] && kitty +kitten themes --reload-in=all $KITTY_THEME
       _FSH_THEME_APPLIED=''
     fi
@@ -445,13 +445,13 @@ then
   unset ZSH_EVAL
 fi
 
-export OPENROUTER_API_KEY=$(keychain-environment-variable OPENROUTER_API_KEY)
+export OPENROUTER_API_KEY=$(timeout 3 security find-generic-password -w -a ${USER} -D "environment variable" -s "OPENROUTER_API_KEY" 2>/dev/null || true)
 # export ANTHROPIC_BASE_URL="https://api.eliza.yandex.net/raw/anthropic"
 # export ANTHROPIC_AUTH_TOKEN=$(ya tool fetch-token -client-id "d1f988f246c44274b9fdef4feaaf8ad7" -client-secret "e865e4f30d3d4a4e945dd5304ab265dd")
 # export ANTHROPIC_BASE_URL="https://openrouter.ai/api"
 # export ANTHROPIC_AUTH_TOKEN="$OPENROUTER_API_KEY"
 # export ANTHROPIC_API_KEY=""
-export YA_WIKI_KEY=$(keychain-environment-variable YA_WIKI_KEY)
+export YA_WIKI_KEY=$(timeout 3 security find-generic-password -w -a ${USER} -D "environment variable" -s "YA_WIKI_KEY" 2>/dev/null || true)
 
 # yc
 if [ -f ~/yandex-cloud/path.bash.inc ]; then source ~/yandex-cloud/path.bash.inc; fi

@@ -91,12 +91,45 @@
       "WebFetch(domain:developer.mozilla.org)",
       "WebFetch(domain:docs.python.org)",
       "WebFetch(domain:doc.rust-lang.org)",
-      "WebFetch(domain:pkg.go.dev)"
+      "WebFetch(domain:pkg.go.dev)",
+      "Bash(npx eslint:*)",
+      "WebFetch(domain:sourcecraft.dev)",
+      "WebFetch(domain:rust-lang.github.io)",
+      "Bash(gh api:*)",
+      "Bash(gh search code:*)",
+      "Bash(docker image ls:*)",
+      "Bash(grep:*)",
+      "Bash(docker manifest inspect:*)",
+      "Bash(docker run:*)",
+      "Bash(rustup run stable cargo fmt:*)",
+      "Bash(rustup run stable cargo clippy:*)",
+      "WebFetch(domain:yandex.ru)",
+      "Bash(./node_modules/.bin/vitest run --reporter=verbose)",
+      "Bash(./node_modules/.bin/vitest run --config ./vitest.config.ts --reporter=verbose)",
+      "Bash(npx vite --port 4174 --host 127.0.0.1)",
+      "Bash(curl -s http://127.0.0.1:4174/src/main.tsx)",
+      "Bash(node --test scripts/*.test.mjs)",
+      "Read(//Users/veged/.claude/plugins/cache/claude-plugins-official/superpowers/4.3.1/skills/subagent-driven-development/**)",
+      "Bash(git ls-tree -r HEAD checks/course-hub/)",
+      "Bash(git ls-tree -r ae83db8 checks/course-hub/)",
+      "Bash(for file:*)",
+      "Bash(do grep:*)",
+      "Bash(for skill:*)",
+      "Bash(do file=\"/Users/veged/Documents/HRumi/check-frontend/lib/skills/$skill.yaml\" echo \"=== $skill ===\" grep \"^  [a-z-]*:\" \"$file\")",
+      "Read(//aspect:/ {aspect=$0} /loaded_by:/ {if \\(aspect\\) {getline; if \\($0 !~ /^\\\\s*\\\\[\\\\]/**)",
+      "Bash(for breaker:*)",
+      "Bash(do yq:*)"
+    ],
+    "additionalDirectories": [
+      "/Users/veged/Documents/HRumi/check-frontend/.tmp-repro-course-hub"
     ]
   },
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true,
     "rust-analyzer-lsp@claude-plugins-official": true,
-    "swift-lsp@claude-plugins-official": true
+    "swift-lsp@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "lua-lsp@claude-plugins-official": true
   }
 }
