@@ -33,14 +33,7 @@ vim.opt.listchars = { tab = '⋗⋅', trail = '·', nbsp = '∷', extends = '※
 o.spell = false
 o.spelllang = 'ru_yo,en_us'
 o.spelloptions = 'camel,noplainbuffer'
---[[ keymapN(
-  '<Leader>?',
-  function()
-    o.spell = not o.spell
-    print('󰓆  Spell checking ' .. (o.spell and 'enabled' or 'disabled'))
-  end,
-  'Toggle spell checking'
-) ]]
+
 
 -- Search and replace
 o.ignorecase = true
@@ -84,23 +77,7 @@ keymapV{
   [C'c'] = { '"+y', 'Copy to system clipboard' },
   [C'x'] = { '"+d', 'Cut to system clipboard' } }
 
--- Toggle mouse
 o.mouse = ''
---[[ keymapN(
-  '<Leader>m',
-  function()
-    if o.mouse == 'a' then
-      o.mouse = ''
-      print('󰍾  Mouse usage disabled')
-    else
-      o.mouse = 'a'
-      print('󰍽  Mouse usage enabled')
-    end
-  end,
-  'Toggle mouse') ]]
-
--- Toggle cursor crosshair
--- keymapN('<Leader>c', Cmd'set cursorline! cursorcolumn!', 'Toggle cursor crosshair')
 
 -- Toggle line numbers
 keymapN(
@@ -151,13 +128,8 @@ o.signcolumn = 'yes'
 
 o.foldenable = false
 o.foldmethod = 'expr'
-o.foldexpr = 'nvim_treesitter#foldexpr()'
+o.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
 
-keymapN{
-  ['-'] = { C'x', 'Decrement' },
-  ['+'] = { C'a', 'Increment' } }
-
-g.skip_ts_context_commentstring_module = true
 g.python3_host_prog = '/Users/veged/.local/share/virtualenvs/veged-vne2RedP/bin/python'
 
 -- Nano typograph
@@ -196,7 +168,7 @@ autocmd('LspAttach', function(args)
         d = { buf.definition, 'Go to definition' },
         i = { buf.implementation, 'Go to implementation' },
         t = { buf.type_definition, 'Go to type definition' },
-        r = { buf.references, 'Go to feferences' } },
+        r = { buf.references, 'Go to references' } },
       ['<Leader>'] = {
         h = { buf.hover, 'Hover' },
         H = { buf.signature_help, 'Signature help' },

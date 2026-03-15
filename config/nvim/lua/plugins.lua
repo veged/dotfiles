@@ -1,7 +1,7 @@
 o = vim.opt
 
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
-if not vim.loop.fs_stat(lazypath) then
+if not vim.uv.fs_stat(lazypath) then
   vim.fn.system({
     'git',
     'clone',
@@ -28,24 +28,7 @@ return require('lazy').setup({
 
   {
     'williamboman/mason-lspconfig.nvim',
-    opts = {
-      ensure_installed = {
-        -- 'clangd',
-        -- 'cpptools',
-        -- 'css-lsp',
-        -- 'css-variables-language-server',
-        -- 'cssmodules-language-server',
-        -- 'eslint-lsp',
-        -- 'eslint_d',
-        -- 'html-lsp',
-        -- 'json-lsp',
-        -- 'lua-language-server',
-        -- 'luacheck',
-        -- 'luaformatter',
-        -- 'typos-lsp',
-        -- 'vtsls'
-      },
-    },
+    opts = {},
   },
 
   {
@@ -53,7 +36,6 @@ return require('lazy').setup({
     dependencies = {
       'williamboman/mason.nvim',
       'williamboman/mason-lspconfig.nvim',
-      'WhoIsSethDaniel/mason-tool-installer.nvim'
     },
     config = function()
       vim.lsp.config('typos_lsp', { init_options = { diagnosticSeverity = 'Warning' } })
@@ -142,11 +124,7 @@ return require('lazy').setup({
   {
     'nvim-treesitter/nvim-treesitter', -- Nvim Treesitter configurations and abstraction layer
     build = ':TSUpdate',
-    config = function()
-      -- g.skip_ts_default_groups = true
-      -- require('nvim-treesitter.highlight').set_custom_captures(treesitter_custom_captures)
-
-      require 'nvim-treesitter.configs'.setup {
+    config = function()      require 'nvim-treesitter.configs'.setup {
         ensure_installed = { 'html', 'css', 'javascript', 'typescript', 'json', 'lua' },
         auto_install = true,
         highlight = {
@@ -201,18 +179,11 @@ return require('lazy').setup({
             swap_previous = { ['<Leader>P'] = '@parameter.inner' }
           }
         },
-        playground = { enable = true }
+
       }
 
       vim.treesitter.language.register('bash', 'zsh')
     end
-  },
-
-  -- 'nvim-treesitter/nvim-treesitter-textobjects', -- Syntax aware text-objects, select, move, swap, and peek support
-
-  {
-    'nvim-treesitter/playground', -- Treesitter playground integrated into Neovim
-    cmd = 'TSPlaygroundToggle'
   },
 
   {
@@ -249,13 +220,7 @@ return require('lazy').setup({
 
   {
     'kylechui/nvim-surround', -- Add/change/delete surrounding delimiter pairs with ease
-    opts = {
-      -- delimiters = {
-      --   pairs = {
-      --     ['c'] = { { '', '```', '' }, { '', '```', '' } },
-      --   },
-      -- },
-      surrounds = {
+    opts = {      surrounds = {
         ['~'] = {
           add = function()
             return {
@@ -290,7 +255,7 @@ return require('lazy').setup({
     },
     lazy = true
   },
-  'JoosepAlviste/nvim-ts-context-commentstring', -- Neovim treesitter plugin for setting the commentstring based on the cursor location in a file
+
 
   {
     'windwp/nvim-autopairs', -- A super powerful autopair plugin for Neovim that supports multiple characters
@@ -390,8 +355,6 @@ return require('lazy').setup({
 
       luasnip.filetype_extend('html', { 'javascript' })
       luasnip.filetype_extend('javascript', { 'typescript' })
-      -- luasnip.filetype_extend('javascriptreact', { 'html' })
-      -- luasnip.filetype_extend('typescriptreact', { 'html' })
 
       require('luasnip.loaders.from_vscode').lazy_load()
 
@@ -419,8 +382,6 @@ return require('lazy').setup({
       quickfile = { enabled = true },
       bigfile = { enabled = true },
       image = { enabled = true },
-      -- dashboard = { enabled = true },
-      -- indent = { enabled = true },
       explorer = { enabled = true },
       input = { enabled = true },
       picker = {
@@ -434,14 +395,10 @@ return require('lazy').setup({
         },
       },
       notifier = {
-        enabled = true,
-        top_down = false
+        enabled = false,
       },
-      -- scope = { enabled = true },
-      -- scroll = { enabled = true },
       statuscolumn = { enabled = true },
       git = { enabled = true },
-      -- words = { enabled = true },
     },
     keys = {
       { '<Leader>e', function() Snacks.explorer() end,               desc = 'File Explorer' },
@@ -476,11 +433,10 @@ return require('lazy').setup({
     event = 'VeryLazy',
     opts = {
       lsp = {
-        -- override markdown rendering so that **cmp** and other plugins use **Treesitter**
         override = {
           ['vim.lsp.util.convert_input_to_markdown_lines'] = true,
           ['vim.lsp.util.stylize_markdown'] = true,
-          ['cmp.entry.get_documentation'] = true, -- requires hrsh7th/nvim-cmp
+
         },
       },
       presets = {
@@ -540,7 +496,6 @@ return require('lazy').setup({
                 'nvim_workspace_diagnostic'
               },
               symbols = { error = ' ', warn = ' ', info = ' ', hint = ' ' },
-              -- on_click = function() vim.cmd('TroubleToggle') end
             }
           },
           lualine_y = { 'filetype' },
@@ -571,20 +526,11 @@ return require('lazy').setup({
               'tabs',
               use_mode_colors = true,
             }
-            -- {
-            --   function()
-            --     local h = io.popen('defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources')
-            --     local r = h:read('*a'):match('"KeyboardLayout Name" = (.+);'):gsub('%W', ''):sub(1, 2):lower()
-            --     h:close()
-            --     return ({ us = 'ENG', ru = 'РУС' })[r]
-            --   end,
-            --   icon = ''
-            -- }
           }
         },
         winbar = {},
         inactive_winbar = {},
-        extensions = { 'quickfix', 'nvim-tree' }
+        extensions = { 'quickfix' }
       })
     end
   },
@@ -603,64 +549,8 @@ return require('lazy').setup({
       o.timeout = true
       o.timeoutlen = 400
     end,
-    opts = {
-      -- operators = {
-      --   ['<Leader>/'] = 'Comment line',
-      --   ['<Leader>*'] = 'Comment block'
-      -- }
-    }
+    opts = {}
   },
-
-  --[[ {
-    'nvim-tree/nvim-tree.lua', -- A file explorer tree for neovim written in lua
-    dependencies = 'nvim-tree/nvim-web-devicons', -- Adds file type icons to Vim plugins
-    cmd = 'NvimTreeToggle',
-    event = 'BufReadPre',
-    keys = {
-      { '<Leader>t', '<Cmd>NvimTreeToggle<CR>', desc = 'NvimTree' }
-    },
-    opts = {
-      disable_netrw = true,
-      hijack_netrw = true,
-      hijack_cursor = true,
-      sync_root_with_cwd = true,
-      reload_on_bufenter = true,
-      view = {
-        side = 'right',
-        centralize_selection = false,
-        width = '15%',
-        signcolumn = 'yes'
-      },
-      renderer = {
-        add_trailing = true,
-        group_empty = true,
-        highlight_git = true,
-        highlight_opened_files = 'all',
-        special_files = {},
-        symlink_destination = true,
-        icons = {
-          git_placement = 'signcolumn',
-          show = {
-            file = true,
-            folder = false,
-            folder_arrow = false,
-            git = true,
-          },
-        }
-      },
-      update_focused_file = { enable = true },
-      git = { ignore = false },
-      filesystem_watchers = { enable = false },
-      actions = {
-        use_system_clipboard = true,
-        open_file = {
-          quit_on_open = false,
-          resize_window = true,
-          window_picker = { chars = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ' }
-        }
-      }
-    }
-  }, ]]
 
   {
     'dmtrKovalenko/fff.nvim', -- Fast fuzzy file finder with frecency ranking
@@ -804,24 +694,7 @@ return require('lazy').setup({
           CmpCursorLine = { bg = C.surface0, style = { 'underline' } }, -- Highlight group for unmatched characters of each completion field.
           CmpItemAbbr = {},                                             -- Highlight group for unmatched characters of each completion field.
           CmpItemAbbrDeprecated = { strikethrough = true },             -- Highlight group for unmatched characters of each deprecated completion field.
-          CmpItemAbbrMatch = { bold = true },                           -- Highlight group for matched characters of each completion field. Matched characters must form a substring of a field which share a starting position.
-          -- CmpItemAbbrMatchFuzzy = { CmpItemAbbrMatch } , -- Highlight group for fuzzy-matched characters of each completion field.
-          -- CmpItemKind = { NormalFloat, italic = true } , -- Highlight group for the kind of the field. NOTE: `kind` is a symbol after each completion option.
-          -- CmpItemKindConstant = { TSConstant, italic = true } ,
-          -- CmpItemKindConstructor { TSConstructor, italic = true },
-          -- CmpItemKindFunction = { fg = TSKeywordFunction.fg, italic = true },
-          -- CmpItemKindClass = { fg = TSType.fg, italic = true },
-          -- CmpItemKindKeyword = { fg = TSKeyword.fg, italic = true },
-          -- CmpItemKindField = { italic = true },
-          -- CmpItemKindProperty = { TSProperty, italic = true },
-          -- CmpItemKindMethod = { TSMethod, italic = true },
-          -- CmpItemKindOperator = { TSOperator, italic = true },
-          -- CmpItemKindText = { CmpItemKind, italic = true },
-          -- CmpItemKindVariable = { fg = TSKeywordVarLetConst.fg, italic = true },
-          -- CmpItemKindEnum = { CmpItemKindVariable, italic = true },
-          -- CmpItemKindEnumMember = { CmpItemKindVariable, italic = true },
-          -- CmpItemKindSnippet = { fg = TSKeywordReturn.fg, italic = true },
-          -- CmpItemMenu = { NormalFloat } , -- The menu field's highlight group.
+          CmpItemAbbrMatch = { bold = true },
 
           -- Syntax
           Comment = { fg = C.overlay0 },                            -- just comments
@@ -898,28 +771,17 @@ return require('lazy').setup({
           Special = { fg = C.sapphire },                         -- (preferred) any special symbol
           SpecialChar = { fg = C.sapphire, style = { 'bold' } }, -- special character in a constant
           Tag = { link = 'Special' },                            -- you can use CTRL-] on this
-          Delimiter = { fg = C.overlay2 },                       -- character that needs attention
-          -- Specialoverlay0= { }, -- special things inside a overlay0
-          Debug = { fg = C.red, style = { 'italic' } },          -- debugging statements
+          Delimiter = { fg = C.overlay2 },
+          Debug = { fg = C.red, style = { 'italic' } },
 
           Underlined = { style = { 'underline' } },              -- (preferred) text that stands out, HTML links
           Bold = { style = { 'bold' } },
           Italic = { style = { 'italic' } },
-          -- ('Ignore', below, may be invisible...)
-          -- Ignore = { }, -- (preferred) left blank, hidden  |hl-Ignore|
 
-          Error = { fg = C.red },                                    -- (preferred) any erroneous construct
+          Error = { fg = C.red },
           Todo = { bg = C.yellow, fg = C.base, style = { 'bold' } }, -- (preferred) anything that needs extra attention; mostly the keywords TODO FIXME and XXX
           qfLineNr = { fg = C.yellow },
           qfFileName = { fg = C.blue },
-          -- htmlH1 = { fg = C.pink, style = { 'bold' } },
-          -- htmlH2 = { fg = C.blue, style = { 'bold' } },
-          -- mkdHeading = { fg = C.peach, style = { 'bold' } },
-          -- mkdCode = { bg = C.terminal_black, fg = C.text },
-          -- mkdCodeDelimiter = { bg = C.base, fg = C.text },
-          -- mkdCodeStart = { fg = C.flamingo, style = { 'bold' } },
-          -- mkdCodeEnd = { fg = C.flamingo, style = { 'bold' } },
-          -- mkdLink = { fg = C.blue, style = { 'underline' } },
 
           -- debugging
           debugPC = { bg = O.transparent_background and C.none or C.crust }, -- used for highlighting the current line in terminal-debug
@@ -1035,7 +897,6 @@ return require('lazy').setup({
           return require('codecompanion.adapters').extend('anthropic', {
             name = 'custom',
             url = 'http://api.eliza.yandex.net/anthropic/v1/messages',
-            -- env = { api_key = 'SOY_TOKEN' },
             schema = {
               model = { default = 'claude-3-7-sonnet-20250219' }
             }
@@ -1044,7 +905,6 @@ return require('lazy').setup({
         custom_deepseek = function()
           return require('codecompanion.adapters').extend('openai_compatible', {
             url = 'http://api.eliza.yandex.net/together/v1/chat/completions',
-            -- env = { api_key = 'SOY_TOKEN' },
             schema = {
               model = { default = 'deepseek-ai/deepseek-r1' },
             },
@@ -1171,9 +1031,7 @@ return require('lazy').setup({
         throttle = 600,
       }
     },
-    -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
     build = 'make',
-    -- build = 'powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false' -- for windows
     dependencies = {
       'nvim-treesitter/nvim-treesitter',
       'stevearc/dressing.nvim',
