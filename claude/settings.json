@@ -118,10 +118,13 @@
       "Bash(do file=\"/Users/veged/Documents/HRumi/check-frontend/lib/skills/$skill.yaml\" echo \"=== $skill ===\" grep \"^  [a-z-]*:\" \"$file\")",
       "Read(//aspect:/ {aspect=$0} /loaded_by:/ {if \\(aspect\\) {getline; if \\($0 !~ /^\\\\s*\\\\[\\\\]/**)",
       "Bash(for breaker:*)",
-      "Bash(do yq:*)"
+      "Bash(do yq:*)",
+      "Read(//tmp/**)",
+      "Read(//private/tmp/**)"
     ],
     "additionalDirectories": [
-      "/Users/veged/Documents/HRumi/check-frontend/.tmp-repro-course-hub"
+      "/Users/veged/Documents/HRumi/check-frontend/.tmp-repro-course-hub",
+      "/private/tmp"
     ]
   },
   "enabledPlugins": {
