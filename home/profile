@@ -1,12 +1,25 @@
-eval "$(/opt/homebrew/bin/brew shellenv)"
+# Кешированный eval: source из файла, пересоздаёт если нет кеша
+# Сброс: rm ~/.cache/shell-eval/*
+_cached_eval() {
+  local cache=${XDG_CACHE_HOME:-$HOME/.cache}/shell-eval/$1; shift
+  if [[ -s $cache ]]; then
+    source "$cache"
+  else
+    mkdir -p "${cache:h}"
+    "$@" > "$cache"
+    source "$cache"
+  fi
+}
 
-export GOROOT="$(brew --prefix golang)/libexec"
+_cached_eval brew-shellenv /opt/homebrew/bin/brew shellenv
+
+export GOROOT="$HOMEBREW_PREFIX/opt/go/libexec"
 
 eval "$(fnm env --use-on-cd)"
 
 export PATH=$HOME/.local/bin:$GOROOT/bin:./node_modules/.bin:$HOME/arcadia:$PATH
 
-export NODE_EXTRA_CA_CERTS=~/.ssl/YandexInternalCA.pem
+export NODE_EXTRA_CA_CERTS=~/.ssl/YandexInternalRootCA.crt
 
 export XDG_CONFIG_HOME=$HOME/.config
 export XDG_DATA_HOME=$HOME/.local/share
@@ -38,3 +51,4 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 # pnpm end
+

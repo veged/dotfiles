@@ -1,1 +1,7 @@
+if [[ ! -o interactive ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+  export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.bun/bin:./node_modules/.bin:$PATH"
+  return
+fi
+
 source ~/.profile

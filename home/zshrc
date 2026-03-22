@@ -5,8 +5,10 @@ if [[ -n $CURSOR_TRACE_ID || "$COMPOSER_NO_INTERACTION" == "1" ]]; then
   return
 fi
 
-fpath+='/opt/homebrew/share/zsh/site-functions'
-source $(brew --prefix)/opt/antidote/share/antidote/antidote.zsh
+(( $+functions[_cached_eval] )) || source ~/.profile
+
+fpath+="$HOMEBREW_PREFIX/share/zsh/site-functions"
+source $HOMEBREW_PREFIX/opt/antidote/share/antidote/antidote.zsh
 antidote load
 
 # The next line updates PATH for YDB CLI.
@@ -15,10 +17,12 @@ if [ -f ~/ydb/path.bash.inc ]; then source ~/ydb/path.bash.inc; fi
 # The next line updates PATH for Yandex Cloud Private CLI.
 if [ -f ~/ycp/path.bash.inc ]; then source ~/ycp/path.bash.inc; fi
 
-source <(cod init $$ zsh)
-
 [[ $TERM_PROGRAM == 'iTerm.app' ]] && source ~/.iterm2_shell_integration.zsh
-[[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
+if [[ "$TERM_PROGRAM" == "vscode" ]]; then
+  local _vscode_si=${XDG_CACHE_HOME:-$HOME/.cache}/vscode-shell-integration-path
+  [[ -s $_vscode_si ]] || code --locate-shell-integration-path zsh > $_vscode_si 2>/dev/null
+  [[ -s $_vscode_si ]] && . "$(<$_vscode_si)"
+fi
 
 setopt hist_ignore_all_dups append_history hist_ignore_space
 
@@ -123,7 +127,7 @@ set-prompt() {
   local bottom_left=$(ZSH_PROMPT_BOTTOM_LEFT)
   local bottom_right=$(ZSH_PROMPT_BOTTOM_RIGHT)
 
-  if [[ $TERM_PROGRAM == 'kiro' || $TERM_PROGRAM == 'vscode' || -n $CURSOR_AGENT || -n $VSCODE_SHELL_INTEGRATION ]]; then
+  if [[ $TERM_PROGRAM == 'vscode' || -n $CURSOR_AGENT || -n $VSCODE_SHELL_INTEGRATION ]]; then
     PROMPT=${top_left}' '${bottom_left}
     RPROMPT=''
   else
@@ -222,7 +226,7 @@ add-zsh-hook precmd set-prompt
 add-zsh-hook precmd set-title
 
 # FZF
-eval "$(fzf --zsh)"
+_cached_eval fzf-zsh fzf --zsh
 
 export FZF_DEFAULT_COLOR_LIGHT_OPTS=" \
   --color=fg:-1,fg+:#d0d0d0,bg:-1,bg+:#7c7f93 \
@@ -291,7 +295,7 @@ zstyle ':fzf-tab:*' continuous-trigger 'space'
 zstyle ':fzf-tab:*' fzf-bindings 'tab:accept'
 zstyle ':fzf-tab:*' accept-line enter
 
-eval "$(zoxide init zsh)"
+_cached_eval zoxide-zsh zoxide init zsh
 
 source $HOME/.config/broot/launcher/bash/br
 
@@ -318,14 +322,14 @@ set-dark-or-light-mode() {
       export FZF_DEFAULT_OPTS="$FZF_DEFAULT_BASE_OPTS $FZF_DEFAULT_COLOR_OPTS"
       { lsof -U -Fn 2>/dev/null | rg -o '/.*nvim.*' | xargs -L1 -r nvim --remote-send "<Esc><Esc>:set background=$mode<CR>" --server 2>/dev/null } &!
       # [[ $TERM == 'xterm-kitty' ]] && kitty +kitten themes --reload-in=all $KITTY_THEME
-      _FSH_THEME_APPLIED=''
+      _FSH_THEME_APPLIED='switched'
     fi
-    if [[ -z $_FSH_THEME_APPLIED ]] && (( $+functions[fast-theme] )); then
+    if [[ $_FSH_THEME_APPLIED != $DARK_OR_LIGHT_MODE ]] && (( $+functions[fast-theme] )); then
       case "$DARK_OR_LIGHT_MODE" in
         light) fast-theme XDG:catppuccin-latte ;;
         dark)  fast-theme XDG:catppuccin-mocha ;;
       esac
-      _FSH_THEME_APPLIED=1
+      _FSH_THEME_APPLIED=$DARK_OR_LIGHT_MODE
     fi
   } >/dev/null 2>&1
 }
@@ -337,11 +341,27 @@ then
   unset ZSH_EVAL
 fi
 
-export OPENROUTER_API_KEY=$(timeout 3 security find-generic-password -w -a ${USER} -D "environment variable" -s "OPENROUTER_API_KEY" 2>/dev/null || true)
-export YA_WIKI_KEY=$(timeout 3 security find-generic-password -w -a ${USER} -D "environment variable" -s "YA_WIKI_KEY" 2>/dev/null || true)
+# Токены: читаем кеш + фоново обновляем
+() {
+  local dir=${XDG_CACHE_HOME:-$HOME/.cache}/tokens
+  mkdir -p "$dir"
+  for name in OPENROUTER_API_KEY YA_WIKI_KEY ELIZA_TOKEN; do
+    [[ -s "$dir/$name" ]] && export "$name"="$(<"$dir/$name")"
+  done
+  {
+    security find-generic-password -w -a ${USER} -D "environment variable" -s "OPENROUTER_API_KEY" 2>/dev/null > "$dir/OPENROUTER_API_KEY"
+    security find-generic-password -w -a ${USER} -D "environment variable" -s "YA_WIKI_KEY" 2>/dev/null > "$dir/YA_WIKI_KEY"
+    ya tool fetch-token -client-id 'd1f988f246c44274b9fdef4feaaf8ad7' -client-secret 'e865e4f30d3d4a4e945dd5304ab265dd' > "$dir/ELIZA_TOKEN" 2>/dev/null
+  } &!
+}
+
+export OPENCODE_ELIZA_AUTH_ALL_PROVIDERS=true
 
 # yc
 if [ -f ~/yandex-cloud/path.bash.inc ]; then source ~/yandex-cloud/path.bash.inc; fi
-if [ -f ~/yandex-cloud/completion.zsh.inc ]; then source ~/yandex-cloud/completion.zsh.inc; fi
-
-[[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
+# yc completion — отложенная загрузка (157K строк, ~0.6 сек)
+yc() {
+  unfunction yc
+  [ -f ~/yandex-cloud/completion.zsh.inc ] && source ~/yandex-cloud/completion.zsh.inc
+  yc "$@"
+}
