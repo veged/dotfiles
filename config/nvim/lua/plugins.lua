@@ -16,7 +16,7 @@ o.rtp:prepend(lazypath)
 autocmd('VimEnter', function(data)
   if vim.fn.isdirectory(data.file) == 1 then
     vim.cmd.cd(data.file)
-    require('nvim-tree.api').tree.open()
+    Snacks.explorer()
   end
 end)
 
@@ -123,9 +123,10 @@ return require('lazy').setup({
 
   {
     'nvim-treesitter/nvim-treesitter', -- Nvim Treesitter configurations and abstraction layer
+    branch = 'master',
     build = ':TSUpdate',
     config = function()      require 'nvim-treesitter.configs'.setup {
-        ensure_installed = { 'html', 'css', 'javascript', 'typescript', 'json', 'lua' },
+        ensure_installed = { 'html', 'css', 'javascript', 'typescript', 'tsx', 'json', 'lua' },
         auto_install = true,
         highlight = {
           enable = true,
@@ -278,6 +279,7 @@ return require('lazy').setup({
     'saghen/blink.cmp',
     dependencies = {
       'Kaiser-Yang/blink-cmp-dictionary',
+      'Kaiser-Yang/blink-cmp-avante',
       'L3MON4D3/LuaSnip',
       'rafamadriz/friendly-snippets'
     },
@@ -304,7 +306,7 @@ return require('lazy').setup({
       -- Default list of enabled providers defined so that you can extend it
       -- elsewhere in your config, without redefining it, due to `opts_extend`
       sources = {
-        default = { 'lsp', 'path', 'snippets', 'buffer', 'dictionary', 'lazydev' },
+        default = { 'lsp', 'path', 'snippets', 'buffer', 'dictionary', 'lazydev', 'avante' },
         providers = {
           dictionary = {
             module = 'blink-cmp-dictionary',
@@ -322,6 +324,10 @@ return require('lazy').setup({
             module = 'lazydev.integrations.blink',
             -- make lazydev completions top priority (see `:h blink.cmp`)
             score_offset = 100,
+          },
+          avante = {
+            module = 'blink-cmp-avante',
+            name = 'Avante',
           },
         }
       },
@@ -367,10 +373,6 @@ return require('lazy').setup({
     end
   },
 
-  {
-    'troydm/zoomwintab.vim', -- zoom current window
-    keys = { '<C-w>o', '<C-w><C-o>' }
-  },
 
   {
     'folke/snacks.nvim',
@@ -409,6 +411,7 @@ return require('lazy').setup({
       vim.api.nvim_create_autocmd('User', {
         pattern = 'VeryLazy',
         callback = function()
+          Snacks.toggle.zen():map('<C-w>o')
           Snacks.toggle.option('spell', { name = 'Spelling' }):map('<Leader>?')
           Snacks.toggle.new({
             name = 'Mouse',
@@ -574,31 +577,13 @@ return require('lazy').setup({
   },
 
   {
-    'nvim-telescope/telescope.nvim',        -- Find, Filter, Preview, Pick.
-    branch = '0.1.x',
-    dependencies = 'nvim-lua/plenary.nvim', -- All the lua functions I don't want to write twice.
-    keys = { '<Leader>fc', '<Leader>f/', '<Leader>fb', '<Leader>f:', '<Leader>fh' },
-    config = function()
-      local telescopeBuiltin = require('telescope.builtin')
-      keymapN({
-        ['<Leader>f'] = {
-          c = { telescopeBuiltin.colorscheme, 'Find color scheme' },
-          ['/'] = { telescopeBuiltin.current_buffer_fuzzy_find, 'Current buffer fuzzy find' },
-          b = { telescopeBuiltin.buffers, 'Buffers' },
-          [':'] = { telescopeBuiltin.command_history, 'Command history' },
-          h = { telescopeBuiltin.help_tags, 'Help tags' }
-        }
-      })
-
-      require('telescope').setup {
-        defaults = {
-          file_ignore_patterns = { 'node_modules' }
-        },
-        pickers = {
-          colorscheme = { enable_preview = true }
-        }
-      }
-    end
+    'folke/snacks.nvim', -- Snacks.picker keymaps (registered separately from main snacks config)
+    keys = {
+      { '<Leader>fc', function() Snacks.picker.colorschemes() end,              desc = 'Find color scheme' },
+      { '<Leader>f/', function() Snacks.picker.lines() end,                     desc = 'Current buffer fuzzy find' },
+      { '<Leader>fb', function() Snacks.picker.buffers() end,                   desc = 'Buffers' },
+      { '<Leader>fh', function() Snacks.picker.help() end,                      desc = 'Help tags' }
+    }
   },
 
   {
@@ -837,12 +822,8 @@ return require('lazy').setup({
     ft = 'diff'
   },
 
-  'norcalli/nvim-colorizer.lua', -- A high-performance color highlighter
+  { 'catgoose/nvim-colorizer.lua', event = 'BufReadPre', opts = {} }, -- A high-performance color highlighter
 
-  {
-    'moll/vim-node', -- Tools and environment to make Vim superb for developing with Node.js
-    ft = { 'javascript', 'typescript', 'typescriptreact' }
-  },
 
   {
     'yioneko/nvim-vtsls', -- Plugin to help utilize capabilities of vtsls
@@ -859,15 +840,6 @@ return require('lazy').setup({
     ft = 'mjml'
   },
 
-  {
-    'euclidianAce/BetterLua.vim', -- Better Lua syntax highlighting
-    ft = 'lua'
-  },
-
-  {
-    'andrejlevkovitch/vim-lua-format', -- Lua vim formatter supported by LuaFormatter
-    ft = 'lua'
-  },
 
   {
     'folke/lazydev.nvim', -- Faster LuaLS setup for Neovim
@@ -882,7 +854,8 @@ return require('lazy').setup({
 
   {
     'olimorris/codecompanion.nvim',
-    config = {
+    cmd = { 'CodeCompanion', 'CodeCompanionChat', 'CodeCompanionActions' },
+    opts = {
       strategies = {
         cmd = { adapter = 'custom_anthropic', language = 'ru' },
         chat = { adapter = 'custom_anthropic', language = 'ru' },
@@ -898,7 +871,7 @@ return require('lazy').setup({
             name = 'custom',
             url = 'http://api.eliza.yandex.net/anthropic/v1/messages',
             schema = {
-              model = { default = 'claude-3-7-sonnet-20250219' }
+              model = { default = 'claude-sonnet-4-6' }
             }
           })
         end,
@@ -925,6 +898,7 @@ return require('lazy').setup({
     opts = {
       provider = 'claude',
       auto_suggestions_provider = 'claude',
+      file_selector = { provider = 'snacks' },
       cursor_applying_provider = nil,
       system_prompt = 'Разговаривай на русском.',
       cache_control = {
@@ -935,7 +909,7 @@ return require('lazy').setup({
       providers = {
         claude = {
           endpoint = 'https://api.eliza.yandex.net/raw/anthropic',
-          model = 'claude-sonnet-4-5',
+          model = 'claude-sonnet-4-6',
           disable_tools = true,
           timeout = 240000,
           extra_request_body = {
@@ -1038,10 +1012,7 @@ return require('lazy').setup({
       'nvim-lua/plenary.nvim',
       'MunifTanjim/nui.nvim',
       --- The below dependencies are optional,
-      'echasnovski/mini.pick',         -- for file_selector provider mini.pick
-      'nvim-telescope/telescope.nvim', -- for file_selector provider telescope
-      'hrsh7th/nvim-cmp',              -- autocompletion for avante commands and mentions
-      'ibhagwan/fzf-lua',              -- for file_selector provider fzf
+      'Kaiser-Yang/blink-cmp-avante',   -- autocompletion for avante commands and mentions
       'nvim-tree/nvim-web-devicons',   -- or echasnovski/mini.icons
       {
         -- support for image pasting
