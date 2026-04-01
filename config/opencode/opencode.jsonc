@@ -1,0 +1,280 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["oh-my-opencode"],
+  "instructions": ["~/.claude/personal-programming-principles.md"],
+  "provider": {
+    "eliza-anthropic": {
+      "name": "Eliza Anthropic",
+      "npm": "@ai-sdk/anthropic",
+      "options": {
+        "baseURL": "https://ELIZA_API_HOST/raw/anthropic/v1",
+        "apiKey": "{env:ELIZA_TOKEN}"
+      },
+      "models": {
+        "claude-opus-4-6": {
+          "name": "Claude Opus 4.6",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": {
+            "output": 64000,
+            "context": 200000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        },
+        "claude-sonnet-4-6": {
+          "name": "Claude Sonnet 4.6",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": {
+            "output": 64000,
+            "context": 200000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        },
+        "claude-haiku-4-5": {
+          "name": "Claude Haiku 4.5",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": {
+            "output": 64000,
+            "context": 200000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        }
+      }
+    },
+    "glm-4-7": {
+      "name": "Eliza GLM 4.7 (internal)",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "https://ELIZA_API_HOST/raw/internal/glm-4-7/v1",
+        "apiKey": "{env:ELIZA_TOKEN}"
+      },
+      "models": {
+        "glm-4-7": {
+          "name": "GLM 4.7 (internal)",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": {
+            "output": 128000,
+            "context": 200000
+          },
+          "modalities": {
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        }
+      }
+    },
+    "kimi-2-5": {
+      "name": "Eliza Kimi 2.5 (internal BETA)",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "https://ELIZA_API_HOST/raw/internal/kimi-k2-5/v1",
+        "apiKey": "{env:ELIZA_TOKEN}"
+      },
+      "models": {
+        "kimi-k2-5": {
+          "name": "Kimi 2.5 (internal BETA)",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": {
+            "output": 128000,
+            "context": 256000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "video"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        }
+      }
+    },
+    "minimax-2-1": {
+      "name": "Eliza MiniMax M2.1 (internal BETA)",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "https://ELIZA_API_HOST/raw/internal/mini-max-m2-1/v1",
+        "apiKey": "{env:ELIZA_TOKEN}"
+      },
+      "models": {
+        "minimax-2-1": {
+          "name": "MiniMax M2.1 (internal BETA)",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": {
+            "output": 128000,
+            "context": 200000
+          },
+          "modalities": {
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        }
+      }
+    },
+    "eliza-openai": {
+      "name": "Eliza OpenAI",
+      "npm": "@ai-sdk/openai",
+      "options": {
+        "baseURL": "https://ELIZA_API_HOST/openai/v1",
+        "apiKey": "{env:ELIZA_TOKEN}"
+      },
+      "models": {
+        "gpt-5.4": {
+          "name": "GPT 5.4",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": {
+            "output": 32768,
+            "context": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        },
+        "gpt-5.3-codex": {
+          "name": "GPT 5.3 Codex",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": {
+            "output": 32768,
+            "context": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        },
+        "gpt-5.2": {
+          "name": "GPT 5.2",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": {
+            "output": 32768,
+            "context": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        },
+        "gpt-5.2-codex": {
+          "name": "GPT 5.2 Codex",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": {
+            "output": 32768,
+            "context": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        }
+      }
+    },
+    "openrouter": {
+      "name": "Eliza OpenRouter",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "https://ELIZA_API_HOST/openrouter/v1/",
+        "apiKey": "{env:ELIZA_TOKEN}"
+      }
+    }
+  },
+  "mcp": {
+    // --- yandex_mcp_store (devtools server) ---
+    // NOTE: opencode MCP поддерживает только local (command) и remote (url) серверы.
+    // yandex_mcp_store серверы (devtools, wiki, tasklets, bilim, yaart, tracker_mcp,
+    // infractl, deepagent, intrasearch, monium_mcp, yt, abc, warden, staff_api_mcp,
+    // idp, femida_mcp) нужно настраивать как local или remote.
+    // Ниже — remote MCP серверы из секции generic:
+
+    "context7": {
+      "enabled": false,
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "websearch": {
+      "enabled": false,
+      "type": "remote",
+      "url": "https://mcp.exa.ai"
+    },
+    "grep_app": {
+      "enabled": false,
+      "type": "remote",
+      "url": "https://mcp.grep.app"
+    },
+    "playwright": {
+      "enabled": false,
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    }
+  }
+}

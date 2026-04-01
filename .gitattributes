@@ -1,0 +1,3 @@
+config/opencode/opencode.jsonc filter=eliza-url
+config/nvim/lua/plugins.lua filter=eliza-url
+home/gitconfig filter=eliza-url

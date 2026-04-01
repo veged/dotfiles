@@ -345,13 +345,14 @@ fi
 () {
   local dir=${XDG_CACHE_HOME:-$HOME/.cache}/tokens
   mkdir -p "$dir"
-  for name in OPENROUTER_API_KEY YA_WIKI_KEY ELIZA_TOKEN; do
+  for name in OPENROUTER_API_KEY YA_WIKI_KEY ELIZA_TOKEN ELIZA_API_HOST; do
     [[ -s "$dir/$name" ]] && export "$name"="$(<"$dir/$name")"
   done
   {
     security find-generic-password -w -a ${USER} -D "environment variable" -s "OPENROUTER_API_KEY" 2>/dev/null > "$dir/OPENROUTER_API_KEY"
     security find-generic-password -w -a ${USER} -D "environment variable" -s "YA_WIKI_KEY" 2>/dev/null > "$dir/YA_WIKI_KEY"
     ya tool fetch-token -client-id 'd1f988f246c44274b9fdef4feaaf8ad7' -client-secret 'e865e4f30d3d4a4e945dd5304ab265dd' > "$dir/ELIZA_TOKEN" 2>/dev/null
+    security find-generic-password -w -a ${USER} -D "environment variable" -s "ELIZA_API_HOST" 2>/dev/null > "$dir/ELIZA_API_HOST"
   } &!
 }
 

@@ -66,7 +66,7 @@
 	defaultBranch = main
 [gitbutler]
 	aiOpenAIKeyOption = butlerAPI
-	aiOpenAICustomEndpoint = https://api.eliza.yandex.net/openai/v1/
+	aiOpenAICustomEndpoint = https://ELIZA_API_HOST/openai/v1/
 	aiOpenAIModelName = gpt-5
 	aiModelProvider = openai
 	aiAnthropicKeyOption = bringYourOwn

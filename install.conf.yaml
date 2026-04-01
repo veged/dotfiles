@@ -26,3 +26,4 @@
 - shell:
   - [git submodule update --init --recursive, Installing submodules]
   - [brew bundle --file=Brewfile, Installing Homebrew packages]
+  - ["git config filter.eliza-url.clean 'sd -s \"$ELIZA_API_HOST\" \"ELIZA_API_HOST\" -f -' && git config filter.eliza-url.smudge 'sd -s \"ELIZA_API_HOST\" \"$ELIZA_API_HOST\" -f -'", Configuring git clean/smudge filter for internal URLs]

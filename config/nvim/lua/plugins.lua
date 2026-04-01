@@ -869,7 +869,7 @@ return require('lazy').setup({
         custom_anthropic = function()
           return require('codecompanion.adapters').extend('anthropic', {
             name = 'custom',
-            url = 'http://api.eliza.yandex.net/anthropic/v1/messages',
+            url = 'http://ELIZA_API_HOST/anthropic/v1/messages',
             schema = {
               model = { default = 'claude-sonnet-4-6' }
             }
@@ -877,7 +877,7 @@ return require('lazy').setup({
         end,
         custom_deepseek = function()
           return require('codecompanion.adapters').extend('openai_compatible', {
-            url = 'http://api.eliza.yandex.net/together/v1/chat/completions',
+            url = 'http://ELIZA_API_HOST/together/v1/chat/completions',
             schema = {
               model = { default = 'deepseek-ai/deepseek-r1' },
             },
@@ -908,7 +908,7 @@ return require('lazy').setup({
       },
       providers = {
         claude = {
-          endpoint = 'https://api.eliza.yandex.net/raw/anthropic',
+          endpoint = 'https://ELIZA_API_HOST/raw/anthropic',
           model = 'claude-sonnet-4-6',
           disable_tools = true,
           timeout = 240000,
