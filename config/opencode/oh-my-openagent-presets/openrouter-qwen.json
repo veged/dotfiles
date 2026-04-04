@@ -1,0 +1,93 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/master/assets/oh-my-openagent.schema.json",
+  "agents": {
+    "hephaestus": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.3
+    },
+    "oracle": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.1
+    },
+    "librarian": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.3
+    },
+    "explore": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.2
+    },
+    "multimodal-looker": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.6
+    },
+    "prometheus": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.7
+    },
+    "metis": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.8
+    },
+    "momus": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.1
+    },
+    "atlas": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.4
+    },
+    "sisyphus-junior": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.6
+    },
+    "sisyphus": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.6
+    }
+  },
+  "categories": {
+    "visual-engineering": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.7
+    },
+    "ultrabrain": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.6
+    },
+    "deep": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.6
+    },
+    "artistry": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.8
+    },
+    "quick": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.3
+    },
+    "unspecified-low": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.8
+    },
+    "unspecified-high": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.7
+    },
+    "writing": {
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "temperature": 0.7
+    }
+  },
+  "background_task": {
+    "defaultConcurrency": 4,
+    "providerConcurrency": {
+      "openrouter": 4
+    }
+  },
+  "tmux": {
+    "enabled": true,
+    "layout": "main-vertical"
+  }
+}

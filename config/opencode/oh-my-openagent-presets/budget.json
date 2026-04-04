@@ -1,0 +1,95 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/master/assets/oh-my-openagent.schema.json",
+  "agents": {
+    "hephaestus": {
+      "model": "glm-4-7/glm-4-7",
+      "temperature": 0.3
+    },
+    "oracle": {
+      "model": "kimi-2-5/kimi-k2-5",
+      "temperature": 0.1
+    },
+    "librarian": {
+      "model": "glm-4-7/glm-4-7",
+      "temperature": 0.3
+    },
+    "explore": {
+      "model": "glm-4-7/glm-4-7",
+      "temperature": 0.2
+    },
+    "multimodal-looker": {
+      "model": "kimi-2-5/kimi-k2-5",
+      "temperature": 0.6
+    },
+    "prometheus": {
+      "model": "minimax-2-1/minimax-2-1",
+      "temperature": 0.7
+    },
+    "metis": {
+      "model": "kimi-2-5/kimi-k2-5",
+      "temperature": 0.8
+    },
+    "momus": {
+      "model": "glm-4-7/glm-4-7",
+      "temperature": 0.1
+    },
+    "atlas": {
+      "model": "minimax-2-1/minimax-2-1",
+      "temperature": 0.4
+    },
+    "sisyphus-junior": {
+      "model": "minimax-2-1/minimax-2-1",
+      "temperature": 0.6
+    },
+    "sisyphus": {
+      "model": "kimi-2-5/kimi-k2-5",
+      "temperature": 0.6
+    }
+  },
+  "categories": {
+    "visual-engineering": {
+      "model": "minimax-2-1/minimax-2-1",
+      "temperature": 0.7
+    },
+    "ultrabrain": {
+      "model": "kimi-2-5/kimi-k2-5",
+      "temperature": 0.6
+    },
+    "deep": {
+      "model": "minimax-2-1/minimax-2-1",
+      "temperature": 0.6
+    },
+    "artistry": {
+      "model": "kimi-2-5/kimi-k2-5",
+      "temperature": 0.8
+    },
+    "quick": {
+      "model": "glm-4-7/glm-4-7",
+      "temperature": 0.3
+    },
+    "unspecified-low": {
+      "model": "glm-4-7/glm-4-7",
+      "temperature": 0.8
+    },
+    "unspecified-high": {
+      "model": "minimax-2-1/minimax-2-1",
+      "temperature": 0.7
+    },
+    "writing": {
+      "model": "minimax-2-1/minimax-2-1",
+      "temperature": 0.7
+    }
+  },
+  "background_task": {
+    "defaultConcurrency": 4,
+    "providerConcurrency": {
+      "glm-4-7": 4,
+      "kimi-2-5": 4,
+      "minimax-2-1": 4
+    }
+  },
+  "tmux": {
+    "enabled": true,
+    "layout": "main-vertical"
+  }
+}
