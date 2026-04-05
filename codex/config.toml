@@ -1,0 +1,18 @@
+personality = "pragmatic"
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
+
+[features]
+multi_agent = true
+
+[plugins."github@openai-curated"]
+enabled = true
+
+[plugins."build-ios-apps@openai-curated"]
+enabled = true
+
+[plugins."build-web-apps@openai-curated"]
+enabled = true
+
+[plugins."google-drive@openai-curated"]
+enabled = true

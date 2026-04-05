@@ -1,7 +1,12 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "plugin": ["oh-my-openagent"],
-  "instructions": ["~/.claude/personal-programming-principles.md"],
+  "instructions": [
+    "~/.agents/instructions/engineering.md",
+    "~/.agents/instructions/language.md",
+    "~/.agents/instructions/search.md",
+    "~/.agents/instructions/cli.md"
+  ],
   "provider": {
     "eliza-anthropic": {
       "name": "Eliza Anthropic",

@@ -10,6 +10,9 @@
 - create:
   - ~/.config
   - ~/.claude
+  - ~/.codex
+  - ~/.agents
+  - ~/.agents/instructions
 
 - link:
     ~/:
@@ -22,6 +25,17 @@
     ~/.claude/:
       glob: true
       path: claude/*
+    ~/.codex/AGENTS.md:
+      path: codex/AGENTS.md
+    ~/.codex/config.toml:
+      path: codex/config.toml
+    ~/.agents/instructions/:
+      glob: true
+      path: ai/instructions/*
+    ~/.cursor/commands:
+      path: ai/commands
+    ~/.claude/commands:
+      path: ai/commands
 
 - shell:
   - [git submodule update --init --recursive, Installing submodules]

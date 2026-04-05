@@ -18,12 +18,15 @@ cd ~/dotfiles
 
 | Компонент | Путь | Описание |
 |-----------|------|----------|
-| **zsh** | `home/zshrc`, `home/zprofile` | Shell с antidote, fzf-tab, fast-syntax-highlighting |
+| **zsh** | `home/zshrc`, `home/zprofile` | Оболочка zsh с antidote, fzf-tab и fast-syntax-highlighting |
 | **neovim** | `config/nvim/` | Редактор с Lua-конфигом |
 | **kitty** | `config/kitty/` | Терминал с Catppuccin темой |
 | **ghostty** | `config/ghostty/` | Альтернативный терминал |
 | **git** | `home/gitconfig`, `gitalias.txt` | VCS с алиасами и nvimdiff |
-| **claude** | `claude/` | Настройки Claude Code AI |
+| **claude** | `claude/` | Настройки Claude Code |
+| **codex** | `codex/` | Настройки OpenAI Codex |
+| **ai** | `ai/` | Общие инструкции и команды для AI-инструментов |
+| **opencode** | `config/opencode/` | Настройки OpenCode |
 
 ## CLI-инструменты
 
@@ -31,14 +34,14 @@ cd ~/dotfiles
 
 | Классика | Замена | Почему |
 |----------|--------|--------|
-| `grep` | `ugrep` | Fuzzy-поиск, булевы запросы |
+| `grep` | `ugrep` | Нечеткий поиск, булевы запросы |
 | `find` | `fd` | Параллелизм, простой синтаксис |
-| `sed` | `sd` | Preview-режим, литералы |
+| `sed` | `sd` | Режим предпросмотра, литеральные замены |
 | `cat` | `bat` | Подсветка синтаксиса |
-| `ls` | `eza` | Иконки, tree-вывод, git-статус |
+| `ls` | `eza` | Иконки, древовидный вывод, статус Git |
 | `cd` | `zoxide` | Умная навигация по истории |
-| `awk` (JSON) | `jq` | Slurp, raw output, группировка |
-| — | `yq` | YAML/JSON/XML/CSV/TOML, in-place |
+| `awk` (JSON) | `jq` | Чтение нескольких файлов сразу, сырой вывод, группировка |
+| — | `yq` | YAML/JSON/XML/CSV/TOML, редактирование на месте |
 
 ## Особенности zsh
 
@@ -62,13 +65,34 @@ dotfiles/
 ├── config/              # → ~/.config/*
 │   ├── kitty/
 │   ├── ghostty/
-│   └── nvim/
+│   ├── nvim/
+│   └── opencode/
+├── ai/
+│   ├── instructions/
+│   └── commands/
+├── codex/
+│   ├── AGENTS.md
+│   └── config.toml
 └── claude/              # → ~/.claude/*
     ├── CLAUDE.md
     └── settings.json
 ```
 
-Добавление нового dotfile = положить файл в нужную папку.
+Чтобы добавить новый файл конфигурации, достаточно положить его в нужную папку.
+
+## AI-конфиги
+
+Схема для AI-инструментов устроена так:
+
+- `dotfiles/ai/` — канонический источник общих инструкций и команд
+- `~/.agents/instructions` — рабочий слой общих Markdown-инструкций
+- `~/.claude/CLAUDE.md` — тонкая обертка, импортирующая общие файлы инструкций
+- `~/.codex/AGENTS.md` и `~/.codex/config.toml` — слой адаптации Codex из `dotfiles/codex/`
+- `~/.config/opencode/opencode.jsonc` — тонкий адаптер на те же общие файлы инструкций
+- `~/.cursor/commands` и `~/.claude/commands` — общие команды из `ai/commands`
+
+Для проектных инструкций общий канонический формат — `AGENTS.md`.
+Если конкретный инструмент понимает `CLAUDE.md`, лучше делать тонкую обертку поверх `AGENTS.md` или общего слоя инструкций, а не дублировать содержимое.
 
 ## Для AI-ассистентов
 
@@ -76,8 +100,8 @@ dotfiles/
 
 1. **Стиль кода**: Конфиги минималистичны, без избыточных комментариев
 2. **Язык**: Общение на русском, код и конфиги на английском
-3. **CLI**: Предпочтение современным инструментам (fd, eza, bat, sd, jq, yq) — см. таблицу выше
-4. **Shell**: zsh с antidote для управления плагинами
+3. **CLI**: Предпочтение современным инструментам (`fd`, `eza`, `bat`, `sd`, `jq`, `yq`) — см. таблицу выше
+4. **Оболочка**: zsh с antidote для управления плагинами
 5. **Редактор**: neovim с Lua-конфигурацией
 6. **Тема**: Catppuccin (Latte/Mocha) с автопереключением по системной теме macOS
 
