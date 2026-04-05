@@ -36,8 +36,13 @@
       path: ai/commands
     ~/.claude/commands:
       path: ai/commands
+    ~/.remarkrc.json:
+      path: tools/remark/remarkrc.json
+    ~/.local/bin/remark:
+      path: scripts/remark
 
 - shell:
   - [git submodule update --init --recursive, Installing submodules]
   - [brew bundle --file=Brewfile, Installing Homebrew packages]
+  - [./scripts/install-remark, Installing remark toolchain]
   - ["git config filter.eliza-url.clean 'sd -s \"$ELIZA_API_HOST\" \"ELIZA_API_HOST\" -f -' && git config filter.eliza-url.smudge 'sd -s \"ELIZA_API_HOST\" \"$ELIZA_API_HOST\" -f -'", Configuring git clean/smudge filter for internal URLs]

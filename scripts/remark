@@ -1,0 +1,16 @@
+#!/usr/bin/env zsh
+
+set -eu
+set -o pipefail
+
+repo_root=${0:A:h:h}
+tool_dir=$repo_root/tools/remark
+cli=$tool_dir/node_modules/.bin/remark
+config=$tool_dir/remarkrc.json
+
+if [[ ! -x $cli ]]; then
+  print -u2 "remark is not installed yet. Run: $repo_root/scripts/install-remark"
+  exit 1
+fi
+
+exec "$cli" --rc-path "$config" "$@"

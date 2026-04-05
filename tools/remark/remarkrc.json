@@ -1,14 +1,23 @@
 {
   "settings": {
-    "tablePipeAlign": true
+    "tablePipeAlign": true,
+    "rule": "-"
   },
   "plugins": [
     "remark-gfm",
     "remark-preset-lint-consistent",
     "remark-preset-lint-recommended",
     [
+      "remark-lint-rule-style",
+      "---"
+    ],
+    [
       "remark-lint-list-item-indent",
       "one"
+    ],
+    [
+      "remark-lint-table-cell-padding",
+      "padded"
     ],
     "remark-lint-final-newline"
   ]

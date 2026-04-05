@@ -1,0 +1,9 @@
+#!/usr/bin/env zsh
+
+set -eu
+set -o pipefail
+
+repo_root=${0:A:h:h}
+tool_dir=$repo_root/tools/remark
+
+npm install --prefix "$tool_dir"

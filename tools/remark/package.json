@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "dependencies": {
+    "remark-cli": "12.0.1",
+    "remark-gfm": "4.0.1",
+    "remark-lint-final-newline": "3.0.1",
+    "remark-lint-list-item-indent": "4.0.1",
+    "remark-lint-rule-style": "4.0.1",
+    "remark-lint-table-cell-padding": "5.1.1",
+    "remark-preset-lint-consistent": "6.0.1",
+    "remark-preset-lint-recommended": "7.0.1"
+  }
+}

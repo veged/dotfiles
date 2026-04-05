@@ -4,3 +4,4 @@ Brewfile.lock.json
 .claude/
 ~/
 zsh-fsh/
+tools/remark/node_modules/
