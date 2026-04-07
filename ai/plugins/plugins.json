@@ -1,0 +1,7 @@
+{
+  "anthropics": {
+    "source": "anthropics/skills",
+    "skills": "frontend-design"
+  },
+  "impeccable": "pbakaus/impeccable"
+}

@@ -17,6 +17,12 @@ enabled = true
 [plugins."google-drive@openai-curated"]
 enabled = true
 
+[plugins."anthropics@dotfiles-local"]
+enabled = true
+
+[plugins."impeccable@dotfiles-local"]
+enabled = true
+
 [mcp_servers.sourcecraft]
 url = "https://api.sourcecraft.tech/mcp"
 bearer_token_env_var = "SOURCECRAFT_PAT"

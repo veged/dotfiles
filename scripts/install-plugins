@@ -1,0 +1,191 @@
+#!/usr/bin/env zsh
+
+emulate -LR zsh
+set -euo pipefail
+
+repo_root=${0:A:h:h}
+SCRIPT_NAME=install-plugins
+source "$repo_root/scripts/lib/install-common.zsh"
+
+plugins_path="$repo_root/ai/plugins/plugins.json"
+plugins_dir="$HOME/plugins"
+agents_plugins_dir="$HOME/.agents/plugins"
+marketplace_path="$agents_plugins_dir/marketplace.json"
+force=0
+marketplace_name="dotfiles-local"
+marketplace_display_name="Dotfiles Local"
+
+usage() {
+  cat <<'EOF'
+Usage: ./scripts/install-plugins [--force]
+
+Builds local Codex plugin wrappers from ai/plugins/plugins.json into ~/plugins
+and writes ~/.agents/plugins/marketplace.json.
+
+Options:
+  --force  Rebuild local plugins from sources before syncing.
+EOF
+}
+
+while (( $# > 0 )); do
+  case "$1" in
+    --force)
+      force=1
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    *)
+      die "install-plugins: unknown argument: $1"
+      ;;
+  esac
+  shift
+done
+
+require_commands jq npx fd
+
+mkdir -p "$plugins_dir" "$agents_plugins_dir"
+
+tmpdir=$(make_tmpdir dotfiles-plugins)
+trap 'rm -rf "$tmpdir"' EXIT
+
+build_plugin_manifest() {
+  local plugin_name=$1
+  local plugin_source=$2
+  local plugin_dir=$3
+
+  jq -n \
+    --arg name "$plugin_name" \
+    --arg source "$plugin_source" \
+    --arg description "Local namespaced wrapper for skills from $plugin_source" \
+    '{
+      name: $name,
+      version: "0.1.0",
+      description: $description,
+      repository: $source,
+      skills: "./skills/",
+      interface: {
+        displayName: $name,
+        shortDescription: $description,
+        developerName: $name,
+        category: "Coding",
+        capabilities: ["Read", "Write"]
+      }
+    }' > "$plugin_dir/.codex-plugin/plugin.json"
+}
+
+plugin_entries=("${(@f)$(jq -c 'to_entries[]' "$plugins_path")}")
+typeset -Ua managed_names
+managed_names=()
+marketplace_plugins='[]'
+plugin_index=0
+
+for entry in "${plugin_entries[@]}"; do
+  plugin_name=$(jq -r '.key' <<<"$entry")
+  plugin_skills=()
+  install_all=0
+  plugin_dir="$plugins_dir/$plugin_name"
+  stage_dir="$tmpdir/plugin-$plugin_index"
+  ((plugin_index += 1))
+  mkdir -p "$stage_dir"
+
+  case "$(jq -r '.value | type' <<<"$entry")" in
+    string)
+      plugin_source=$(normalize_source "$(jq -r '.value' <<<"$entry")")
+      install_all=1
+      ;;
+    object)
+      plugin_source_spec=$(jq -er '.value.source' <<<"$entry" 2>/dev/null) || die "install-plugins: missing source for plugin: $plugin_name"
+      plugin_source=$(normalize_source "$plugin_source_spec")
+      case "$(jq -r 'if .value.skills == null then "null" else (.value.skills | type) end' <<<"$entry")" in
+        null)
+          install_all=1
+          ;;
+        string)
+          value=$(jq -r '.value.skills' <<<"$entry")
+          if [[ $value == "*" ]]; then
+            install_all=1
+          else
+            plugin_skills=("$value")
+          fi
+          ;;
+        array)
+          plugin_skills=("${(@f)$(jq -r '.value.skills[]' <<<"$entry")}")
+          ;;
+        *)
+          die "install-plugins: invalid skills spec for plugin: $plugin_name"
+          ;;
+      esac
+      ;;
+    *)
+      die "install-plugins: invalid spec for plugin: $plugin_name"
+      ;;
+  esac
+
+  needs_install=$force
+  if (( ! needs_install )); then
+    if [[ ! -f "$plugin_dir/.codex-plugin/plugin.json" || ! -d "$plugin_dir/skills" ]]; then
+      needs_install=1
+    elif (( install_all )); then
+      skill_count=$(fd -td -d 1 . "$plugin_dir/skills" | wc -l | tr -d ' ')
+      [[ "$skill_count" == "0" ]] && needs_install=1
+    else
+      for skill_name in "${plugin_skills[@]}"; do
+        [[ -d "$plugin_dir/skills/$skill_name" ]] || needs_install=1
+        (( needs_install )) && break
+      done
+    fi
+  fi
+
+  if (( needs_install )); then
+    print "install-plugins: fetching: $plugin_source"
+    stage_skills "$stage_dir" "$plugin_source" "${plugin_skills[@]}"
+
+    rm -rf "$plugin_dir"
+    mkdir -p "$plugin_dir/.codex-plugin" "$plugin_dir/skills"
+
+    staged_paths=("${(@f)$(staged_skill_paths "$stage_dir")}")
+    (( ${#staged_paths[@]} )) || die "install-plugins: no skills staged for plugin: $plugin_name"
+
+    for skill_path in "${staged_paths[@]}"; do
+      replace_dir "$plugin_dir/skills/${skill_path:t}" "$skill_path"
+    done
+
+    build_plugin_manifest "$plugin_name" "$plugin_source" "$plugin_dir"
+  else
+    print "install-plugins: already present: $plugin_name"
+  fi
+
+  managed_names+=("$plugin_name")
+  marketplace_plugins=$(jq \
+    --arg name "$plugin_name" \
+    '. + [{
+      name: $name,
+      source: {
+        source: "local",
+        path: ("./plugins/" + $name)
+      },
+      policy: {
+        installation: "INSTALLED_BY_DEFAULT",
+        authentication: "ON_INSTALL"
+      },
+      category: "Coding"
+    }]' <<<"$marketplace_plugins")
+done
+
+prune_dir_except "$plugins_dir" "${managed_names[@]}"
+
+jq -n \
+  --arg name "$marketplace_name" \
+  --arg display_name "$marketplace_display_name" \
+  --argjson plugins "$marketplace_plugins" \
+  '{
+    name: $name,
+    interface: {
+      displayName: $display_name
+    },
+    plugins: $plugins
+  }' > "$marketplace_path"
+
+print "install-plugins: synced ${#managed_names[@]} plugins"

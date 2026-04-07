@@ -1,9 +1,14 @@
 #!/usr/bin/env zsh
 
-set -eu
-set -o pipefail
+emulate -LR zsh
+set -euo pipefail
 
 repo_root=${0:A:h:h}
-tool_dir=$repo_root/tools/remark
+SCRIPT_NAME=install-remark
+source "$repo_root/scripts/lib/install-common.zsh"
+
+tool_dir="$repo_root/tools/remark"
+
+require_commands npm
 
 npm install --prefix "$tool_dir"

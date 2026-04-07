@@ -1,16 +1,31 @@
 # Архитектура AI-конфигов
 
-`~/dotfiles` — канонический источник.
+`~/dotfiles` — канонический источник AI-конфигурации. Рабочие артефакты раскладываются в домашний каталог.
 
-Рабочие слои:
+## Слои
 
-- `~/.agents/instructions` — общие файлы инструкций для инструментов, которые умеют читать обычный Markdown.
-- `~/.claude/CLAUDE.md` — тонкая обертка Claude, импортирующая общие инструкции.
-- `~/.claude/settings.json` — канонический статический конфиг Claude Code.
-- `~/.claude.json` — runtime state Claude Code; не канонизируем в `dotfiles`.
-- `~/.config/opencode/opencode.jsonc` — адаптер OpenCode, указывающий на общие инструкции.
-- `~/.cursor/mcp.json` — канонический MCP-конфиг Cursor; секреты приходят из env (`SOURCECRAFT_PAT`, `SOURCECRAFT_ENTERPRISE_PAT`).
-- `~/.cursor/commands` / `~/.claude/commands` — общие команды из `ai/commands`.
+* `~/.agents/instructions` — общие файлы инструкций для инструментов, которые умеют читать обычный Markdown
+* `ai/skills/skills.json` — канонический реестр общих навыков
+* `ai/plugins/plugins.json` — канонический реестр локальных плагинов Codex
+* `~/.agents/skills` — общий слой навыков, который синхронизирует `./scripts/install-skills`
+* `~/plugins` — локальные плагины Codex, которые собирает `./scripts/install-plugins`
+* `~/.agents/plugins/marketplace.json` — локальный каталог плагинов Codex
+* `~/.claude/CLAUDE.md` — тонкая обёртка Claude, которая импортирует общие инструкции
+* `~/.claude/skills` — зеркало общего слоя навыков симлинками
+* `~/.claude/settings.json` — канонический статический конфиг Claude Code
+* `~/.claude.json` — рабочее состояние Claude Code; в `dotfiles` не канонизируется
+* `~/.config/opencode/opencode.jsonc` — адаптер OpenCode на общие инструкции
+* `~/.cursor/mcp.json` — канонический MCP-конфиг Cursor; секреты приходят из переменных окружения `SOURCECRAFT_PAT` и `SOURCECRAFT_ENTERPRISE_PAT`
+* `~/.cursor/commands` и `~/.claude/commands` — общие команды из `ai/commands`
 
-Для общих проектных инструкций предпочтителен `AGENTS.md`.
-Если инструмент это поддерживает, специализированные обертки могут импортировать `AGENTS.md` или ссылаться на него.
+## Форматы реестров
+
+* `ai/skills/skills.json` — словарь `source -> "*" | "skill" | ["skills"]`
+* `ai/plugins/plugins.json` — словарь `plugin-name -> "source" | { source, skills }`
+* GitHub-источники можно задавать в короткой форме `owner/repo` или `owner/repo/tree/...`
+
+## Общие инструкции
+
+Для проектных инструкций предпочтителен `AGENTS.md`.
+
+Если инструмент поддерживает собственный формат, вроде `CLAUDE.md`, лучше импортировать общий слой или ссылаться на него, а не дублировать текст.
