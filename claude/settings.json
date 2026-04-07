@@ -145,7 +145,8 @@
       "Read(//Users/veged/dotfiles/claude/**)",
       "WebSearch",
       "Skill(update-config)",
-      "Skill(update-config:*)"
+      "Skill(update-config:*)",
+      "mcp__fff__multi_grep"
     ],
     "additionalDirectories": [
       "/private/tmp"
@@ -161,6 +162,15 @@
     "gopls-lsp@claude-plugins-official": true,
     "github@claude-plugins-official": true,
     "context7@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true
+    "typescript-lsp@claude-plugins-official": true,
+    "visual-explainer@visual-explainer-marketplace": true
+  },
+  "extraKnownMarketplaces": {
+    "visual-explainer-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "nicobailon/visual-explainer"
+      }
+    }
   }
 }

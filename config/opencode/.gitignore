@@ -1,5 +1,6 @@
 node_modules/
 bun.lock
+package-lock.json
 package.json
 *.bak
 *.crt
