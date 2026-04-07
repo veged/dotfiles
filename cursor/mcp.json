@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "bunx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ]
+    },
+    "sourcecraft": {
+      "type": "streamable-http",
+      "url": "https://api.sourcecraft.tech/mcp",
+      "disabled": false,
+      "headers": {
+        "Authorization": "Bearer ${env:SOURCECRAFT_PAT}"
+      },
+      "disabledTools": [],
+      "timeout": 60,
+      "alwaysAllow": []
+    },
+    "sourcecraft-enterprise": {
+      "type": "streamable-http",
+      "url": "https://public-api.o.cloud.yandex.net/mcp",
+      "disabled": false,
+      "headers": {
+        "Authorization": "Bearer ${env:SOURCECRAFT_ENTERPRISE_PAT}"
+      },
+      "disabledTools": [],
+      "timeout": 60,
+      "alwaysAllow": []
+    }
+  }
+}

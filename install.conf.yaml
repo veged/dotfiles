@@ -32,6 +32,8 @@
     ~/.agents/instructions/:
       glob: true
       path: ai/instructions/*
+    ~/.cursor/mcp.json:
+      path: cursor/mcp.json
     ~/.cursor/commands:
       path: ai/commands
     ~/.claude/commands:

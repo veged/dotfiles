@@ -278,6 +278,15 @@
       "type": "remote",
       "url": "https://mcp.grep.app"
     },
+    "sourcecraft": {
+      "enabled": true,
+      "type": "remote",
+      "url": "https://api.sourcecraft.tech/mcp",
+      "headers": {
+        "Authorization": "Bearer {env:SOURCECRAFT_PAT}"
+      },
+      "timeout": 60000
+    },
     "playwright": {
       "enabled": false,
       "type": "local",
