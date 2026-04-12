@@ -19,9 +19,9 @@
 
 ## Рабочие каталоги
 
-* `~/plugins/<plugin-name>` — собранный локальный плагин для Codex
+* `~/.codex/plugins/dotfiles-local/<plugin-name>` — собранный локальный плагин для Codex
 * `~/.agents/plugins/marketplace.json` — локальный каталог плагинов
-* `~/.codex/config.toml` — включает нужные идентификаторы плагинов вида `plugin-name@dotfiles-local`
+* `~/.codex/config.toml` — хранит состояние уже установленных плагинов, но не заменяет установку
 
 ## Установка
 
@@ -31,3 +31,12 @@
 ```
 
 `--force` пересобирает локальные плагины из `plugins.json`, а не только добирает недостающие.
+
+После bootstrap plugin ещё нужно установить в Codex:
+
+1. открыть `Plugins` или вызвать `/plugins`
+2. выбрать marketplace `Dotfiles Local`
+3. установить нужный plugin
+4. начать новый thread и вызывать plugin через `@`, например `@impeccable`
+
+`/impeccable` не обязана появляться, потому что plugin не равен slash-команде.

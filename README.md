@@ -92,7 +92,7 @@ dotfiles/
 * `dotfiles/ai/plugins/plugins.json` — канонический реестр локальных плагинов Codex
 * `~/.agents/instructions` — рабочий слой общих Markdown-инструкций
 * `~/.agents/skills` — канонический общий слой навыков, который собирает `./scripts/install-skills`
-* `~/plugins` — локальные плагины Codex, которые собирает `./scripts/install-plugins`
+* `~/.codex/plugins/dotfiles-local` — локальные bundle-ы плагинов Codex, которые собирает `./scripts/install-plugins`
 * `~/.agents/plugins/marketplace.json` — локальный каталог плагинов Codex
 * `~/.claude/CLAUDE.md` — тонкая обёртка, которая импортирует общие инструкции
 * `~/.claude/skills` — зеркало общего слоя навыков симлинками
@@ -105,6 +105,8 @@ dotfiles/
 * `ai/skills/skills.json` — словарь `source -> "*" | "skill" | ["skills"]`
 * `ai/plugins/plugins.json` — словарь `plugin-name -> "source" | { source, skills }`
 * для GitHub-источников можно использовать короткую форму `owner/repo` вместо полного `https://github.com/owner/repo`
+
+`./scripts/install-plugins` только публикует personal marketplace и локальные bundle-ы. Сам plugin затем ставится через `Plugins` или `/plugins` и вызывается через `@plugin-name`, а не через slash-команду вида `/impeccable`.
 
 Если инструмент поддерживает общий формат проектных инструкций, предпочтителен `AGENTS.md`. Если инструмент ожидает собственный файл вроде `CLAUDE.md`, лучше делать тонкую обёртку над общим слоем, а не дублировать содержимое.
 

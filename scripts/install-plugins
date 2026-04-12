@@ -8,7 +8,8 @@ SCRIPT_NAME=install-plugins
 source "$repo_root/scripts/lib/install-common.zsh"
 
 plugins_path="$repo_root/ai/plugins/plugins.json"
-plugins_dir="$HOME/plugins"
+plugins_root_dir="$HOME/.codex/plugins"
+plugins_dir="$plugins_root_dir/dotfiles-local"
 agents_plugins_dir="$HOME/.agents/plugins"
 marketplace_path="$agents_plugins_dir/marketplace.json"
 force=0
@@ -19,8 +20,8 @@ usage() {
   cat <<'EOF'
 Usage: ./scripts/install-plugins [--force]
 
-Builds local Codex plugin wrappers from ai/plugins/plugins.json into ~/plugins
-and writes ~/.agents/plugins/marketplace.json.
+Builds local Codex plugin wrappers from ai/plugins/plugins.json into
+~/.codex/plugins and writes ~/.agents/plugins/marketplace.json.
 
 Options:
   --force  Rebuild local plugins from sources before syncing.
@@ -45,7 +46,7 @@ done
 
 require_commands jq npx fd
 
-mkdir -p "$plugins_dir" "$agents_plugins_dir"
+mkdir -p "$plugins_root_dir" "$plugins_root_dir/cache" "$plugins_dir" "$agents_plugins_dir"
 
 tmpdir=$(make_tmpdir dotfiles-plugins)
 trap 'rm -rf "$tmpdir"' EXIT
@@ -73,6 +74,16 @@ build_plugin_manifest() {
         capabilities: ["Read", "Write"]
       }
     }' > "$plugin_dir/.codex-plugin/plugin.json"
+}
+
+prune_legacy_root_plugins() {
+  local plugin_name legacy_dir
+
+  for plugin_name in "$@"; do
+    legacy_dir="$plugins_root_dir/$plugin_name"
+    [[ -e "$legacy_dir" ]] || continue
+    rm -rf "$legacy_dir"
+  done
 }
 
 plugin_entries=("${(@f)$(jq -c 'to_entries[]' "$plugins_path")}")
@@ -164,10 +175,10 @@ for entry in "${plugin_entries[@]}"; do
       name: $name,
       source: {
         source: "local",
-        path: ("./plugins/" + $name)
+        path: ("./.codex/plugins/dotfiles-local/" + $name)
       },
       policy: {
-        installation: "INSTALLED_BY_DEFAULT",
+        installation: "AVAILABLE",
         authentication: "ON_INSTALL"
       },
       category: "Coding"
@@ -175,6 +186,7 @@ for entry in "${plugin_entries[@]}"; do
 done
 
 prune_dir_except "$plugins_dir" "${managed_names[@]}"
+prune_legacy_root_plugins "${managed_names[@]}"
 
 jq -n \
   --arg name "$marketplace_name" \

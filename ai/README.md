@@ -8,7 +8,7 @@
 * `ai/skills/skills.json` — канонический реестр общих навыков
 * `ai/plugins/plugins.json` — канонический реестр локальных плагинов Codex
 * `~/.agents/skills` — общий слой навыков, который синхронизирует `./scripts/install-skills`
-* `~/plugins` — локальные плагины Codex, которые собирает `./scripts/install-plugins`
+* `~/.codex/plugins/dotfiles-local` — локальные bundle-ы плагинов Codex, которые собирает `./scripts/install-plugins`
 * `~/.agents/plugins/marketplace.json` — локальный каталог плагинов Codex
 * `~/.claude/CLAUDE.md` — тонкая обёртка Claude, которая импортирует общие инструкции
 * `~/.claude/skills` — зеркало общего слоя навыков симлинками
@@ -23,6 +23,12 @@
 * `ai/skills/skills.json` — словарь `source -> "*" | "skill" | ["skills"]`
 * `ai/plugins/plugins.json` — словарь `plugin-name -> "source" | { source, skills }`
 * GitHub-источники можно задавать в короткой форме `owner/repo` или `owner/repo/tree/...`
+
+## Установка плагинов Codex
+
+`./scripts/install-plugins` только собирает локальные bundle-ы и personal marketplace.
+
+Сама установка делается через `Plugins` или `/plugins`, после чего plugin вызывается через `@plugin-name`. Slash-команда вида `/impeccable` появляться не обязана.
 
 ## Общие инструкции
 

@@ -16,7 +16,7 @@
   - ~/.agents/instructions
   - ~/.agents/skills
   - ~/.agents/plugins
-  - ~/plugins
+  - ~/.codex/plugins
 
 - link:
     ~/:

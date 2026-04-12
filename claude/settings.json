@@ -146,7 +146,11 @@
       "WebSearch",
       "Skill(update-config)",
       "Skill(update-config:*)",
-      "mcp__fff__multi_grep"
+      "mcp__fff__multi_grep",
+      "mcp__sourcecraft__GetMyProfile",
+      "mcp__sourcecraft__GetOrganization",
+      "mcp__sourcecraft__CreateRepository",
+      "Bash(git init:*)"
     ],
     "additionalDirectories": [
       "/private/tmp"

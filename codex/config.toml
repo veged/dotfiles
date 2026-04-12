@@ -26,3 +26,51 @@ enabled = true
 [mcp_servers.sourcecraft]
 url = "https://api.sourcecraft.tech/mcp"
 bearer_token_env_var = "SOURCECRAFT_PAT"
+
+[mcp_servers.sourcecraft.tools.GetCubeLogs]
+approval_mode = "approve"
+
+[mcp_servers.sourcecraft.tools.GetRun]
+approval_mode = "approve"
+
+[apps.connector_76869538009648d5b282a4bb21c3d157.tools.github_add_comment_to_issue]
+approval_mode = "approve"
+
+[[skills.config]]
+name = "build-ios-apps:swiftui-liquid-glass"
+enabled = false
+
+[[skills.config]]
+name = "build-ios-apps:ios-debugger-agent"
+enabled = false
+
+[[skills.config]]
+name = "build-ios-apps:ios-app-intents"
+enabled = false
+
+[[skills.config]]
+name = "build-ios-apps:swiftui-performance-audit"
+enabled = false
+
+[[skills.config]]
+name = "build-ios-apps:swiftui-ui-patterns"
+enabled = false
+
+[[skills.config]]
+name = "build-ios-apps:swiftui-view-refactor"
+enabled = false
+
+[[skills.config]]
+name = "build-web-apps:deploy-to-vercel"
+enabled = false
+
+[[skills.config]]
+name = "build-web-apps:supabase-postgres-best-practices"
+enabled = false
+
+[[skills.config]]
+name = "build-web-apps:stripe-best-practices"
+enabled = false
+
+[projects."/Users/veged/Documents/TED-ai-and-programming"]
+trust_level = "trusted"
