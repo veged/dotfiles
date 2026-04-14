@@ -27,10 +27,12 @@
 
 ```bash
 ./scripts/install-plugins
-./scripts/install-plugins --force
+./scripts/install-plugins --update
 ```
 
-`--force` пересобирает локальные плагины из `plugins.json`, а не только добирает недостающие.
+`--update` пересобирает локальные плагины из `plugins.json`, а не только добирает недостающие.
+
+`--force` оставлен как алиас для обратной совместимости.
 
 После bootstrap plugin ещё нужно установить в Codex:
 

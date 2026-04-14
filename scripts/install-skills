@@ -14,18 +14,21 @@ force=0
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/install-skills [--force]
+Usage: ./scripts/install-skills [--update|--force]
 
 Installs missing shared skills from ai/skills/skills.json into ~/.agents/skills
 and mirrors them into ~/.claude/skills.
 
 Options:
-  --force  Reinstall external skills from sources before syncing.
+  --update, --force  Reinstall external skills from sources before syncing.
 EOF
 }
 
 while (( $# > 0 )); do
   case "$1" in
+    --update|--refresh)
+      force=1
+      ;;
     --force)
       force=1
       ;;

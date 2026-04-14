@@ -74,3 +74,9 @@ enabled = false
 
 [projects."/Users/veged/Documents/TED-ai-and-programming"]
 trust_level = "trusted"
+
+[projects."/Users/veged/Documents/ai-for-junior"]
+trust_level = "trusted"
+
+[projects."/Users/veged/dotfiles"]
+trust_level = "trusted"

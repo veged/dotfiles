@@ -28,6 +28,8 @@
 
 `./scripts/install-plugins` только собирает локальные bundle-ы и personal marketplace.
 
+Чтобы обновить содержимое plugins из upstream-источников, используй `./scripts/install-plugins --update`.
+
 Сама установка делается через `Plugins` или `/plugins`, после чего plugin вызывается через `@plugin-name`. Slash-команда вида `/impeccable` появляться не обязана.
 
 ## Общие инструкции

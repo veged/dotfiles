@@ -27,7 +27,9 @@
 
 ```bash
 ./scripts/install-skills
-./scripts/install-skills --force
+./scripts/install-skills --update
 ```
 
-`--force` переустанавливает навыки из `skills.json`, а не только добирает недостающие.
+`--update` переустанавливает навыки из `skills.json`, а не только добирает недостающие.
+
+`--force` оставлен как алиас для обратной совместимости.

@@ -344,7 +344,7 @@ fi
 # Токены: читаем кеш + фоново обновляем
 () {
   local dir=${XDG_CACHE_HOME:-$HOME/.cache}/tokens
-  local keychain_names='OPENROUTER_API_KEY YA_WIKI_KEY ELIZA_API_HOST SOURCECRAFT_PAT SOURCECRAFT_ENTERPRISE_PAT'
+  local -a keychain_names=(OPENROUTER_API_KEY YA_WIKI_KEY ELIZA_API_HOST SOURCECRAFT_PAT SOURCECRAFT_ENTERPRISE_PAT)
   local file
   local name
 
@@ -356,7 +356,7 @@ fi
   }
 
   mkdir -p "$dir"
-  for file in ${^=keychain_names/#/$dir/}(N); do
+  for file in ${^keychain_names/#/$dir/}(N); do
     export "${file:t}"="$(<"$file")"
   done
   [[ -s "$dir/ELIZA_TOKEN" ]] && export ELIZA_TOKEN="$(<"$dir/ELIZA_TOKEN")"

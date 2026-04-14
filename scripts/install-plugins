@@ -18,18 +18,21 @@ marketplace_display_name="Dotfiles Local"
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/install-plugins [--force]
+Usage: ./scripts/install-plugins [--update|--force]
 
 Builds local Codex plugin wrappers from ai/plugins/plugins.json into
 ~/.codex/plugins and writes ~/.agents/plugins/marketplace.json.
 
 Options:
-  --force  Rebuild local plugins from sources before syncing.
+  --update, --force  Rebuild local plugins from sources before syncing.
 EOF
 }
 
 while (( $# > 0 )); do
   case "$1" in
+    --update|--refresh)
+      force=1
+      ;;
     --force)
       force=1
       ;;
