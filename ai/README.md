@@ -5,7 +5,8 @@
 ## Слои
 
 * `~/.agents/instructions` — общие файлы инструкций для инструментов, которые умеют читать обычный Markdown
-* `ai/skills/skills.json` — канонический реестр общих навыков
+* `ai/skills/*` — локальные skill-пакеты в формате Agent Skills
+* `ai/skills/skills.json` — внешние зависимости общих навыков
 * `ai/plugins/plugins.json` — канонический реестр локальных плагинов Codex
 * `~/.agents/skills` — общий слой навыков, который синхронизирует `./scripts/install-skills`
 * `~/.codex/plugins/dotfiles-local` — локальные bundle-ы плагинов Codex, которые собирает `./scripts/install-plugins`
@@ -16,11 +17,10 @@
 * `~/.claude.json` — рабочее состояние Claude Code; в `dotfiles` не канонизируется
 * `~/.config/opencode/opencode.jsonc` — адаптер OpenCode на общие инструкции
 * `~/.cursor/mcp.json` — канонический MCP-конфиг Cursor; секреты приходят из переменных окружения `SOURCECRAFT_PAT` и `SOURCECRAFT_ENTERPRISE_PAT`
-* `~/.cursor/commands` и `~/.claude/commands` — общие команды из `ai/commands`
 
 ## Форматы реестров
 
-* `ai/skills/skills.json` — словарь `source -> "*" | "skill" | ["skills"]`
+* `ai/skills/skills.json` — словарь `source -> "*" | "skill" | ["skills"]` для внешних skill-зависимостей
 * `ai/plugins/plugins.json` — словарь `plugin-name -> "source" | { source, skills }`
 * GitHub-источники можно задавать в короткой форме `owner/repo` или `owner/repo/tree/...`
 

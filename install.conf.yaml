@@ -38,10 +38,6 @@
       path: ai/instructions/*
     ~/.cursor/mcp.json:
       path: cursor/mcp.json
-    ~/.cursor/commands:
-      path: ai/commands
-    ~/.claude/commands:
-      path: ai/commands
     ~/.remarkrc.json:
       path: tools/remark/remarkrc.json
     ~/.local/bin/remark:

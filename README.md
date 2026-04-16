@@ -70,7 +70,6 @@ dotfiles/
 │   └── opencode/
 ├── ai/
 │   ├── instructions/
-│   ├── commands/
 │   ├── skills/
 │   └── plugins/
 ├── codex/
@@ -87,8 +86,9 @@ dotfiles/
 
 Для AI-инструментов репозиторий разделяет канонический слой в `dotfiles` и рабочие слои в домашнем каталоге:
 
-* `dotfiles/ai/` — канонический источник общих инструкций, команд, навыков и плагинов
-* `dotfiles/ai/skills/skills.json` — канонический реестр общих навыков
+* `dotfiles/ai/` — канонический источник общих инструкций, навыков и плагинов
+* `dotfiles/ai/skills/*` — локальные skill-пакеты в формате Agent Skills
+* `dotfiles/ai/skills/skills.json` — внешние зависимости общих навыков
 * `dotfiles/ai/plugins/plugins.json` — канонический реестр локальных плагинов Codex
 * `~/.agents/instructions` — рабочий слой общих Markdown-инструкций
 * `~/.agents/skills` — канонический общий слой навыков, который собирает `./scripts/install-skills`
@@ -98,11 +98,10 @@ dotfiles/
 * `~/.claude/skills` — зеркало общего слоя навыков симлинками
 * `~/.codex/AGENTS.md` и `~/.codex/config.toml` — слой адаптации Codex из `dotfiles/codex/`
 * `~/.config/opencode/opencode.jsonc` — адаптер OpenCode на те же общие инструкции
-* `~/.cursor/commands` и `~/.claude/commands` — общие команды из `ai/commands`
 
 Реестры описаны в минимальной форме:
 
-* `ai/skills/skills.json` — словарь `source -> "*" | "skill" | ["skills"]`
+* `ai/skills/skills.json` — словарь `source -> "*" | "skill" | ["skills"]` для внешних skill-зависимостей
 * `ai/plugins/plugins.json` — словарь `plugin-name -> "source" | { source, skills }`
 * для GitHub-источников можно использовать короткую форму `owner/repo` вместо полного `https://github.com/owner/repo`
 

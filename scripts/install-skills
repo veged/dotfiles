@@ -7,7 +7,8 @@ repo_root=${0:A:h:h}
 SCRIPT_NAME=install-skills
 source "$repo_root/scripts/lib/install-common.zsh"
 
-skills_path="$repo_root/ai/skills/skills.json"
+skills_root="$repo_root/ai/skills"
+registry_path="$skills_root/skills.json"
 canonical_dir="$HOME/.agents/skills"
 claude_dir="$HOME/.claude/skills"
 force=0
@@ -16,8 +17,8 @@ usage() {
   cat <<'EOF'
 Usage: ./scripts/install-skills [--update|--force]
 
-Installs missing shared skills from ai/skills/skills.json into ~/.agents/skills
-and mirrors them into ~/.claude/skills.
+Syncs local skill packages from ai/skills/* and external skill dependencies from
+ai/skills/skills.json into ~/.agents/skills, then mirrors them into ~/.claude/skills.
 
 Options:
   --update, --force  Reinstall external skills from sources before syncing.
@@ -50,79 +51,115 @@ mkdir -p "$canonical_dir" "$claude_dir"
 tmpdir=$(make_tmpdir dotfiles-skills)
 trap 'rm -rf "$tmpdir"' EXIT
 
-skill_entries=("${(@f)$(jq -c 'to_entries[]' "$skills_path")}")
+typeset -A local_skill_dirs external_skill_sources
 typeset -Ua managed_names
 managed_names=()
 source_index=0
 
-for entry in "${skill_entries[@]}"; do
-  source=$(normalize_source "$(jq -r '.key' <<<"$entry")")
-  install_all=0
-  selected_skills=()
-  stage_dir="$tmpdir/source-$source_index"
-  ((source_index += 1))
-  mkdir -p "$stage_dir"
+register_external_skill() {
+  local name=$1
+  local source=$2
 
-  case "$(jq -r '.value | type' <<<"$entry")" in
-    string)
-      value=$(jq -r '.value' <<<"$entry")
-      if [[ $value == "*" ]]; then
-        install_all=1
-      else
-        selected_skills=("$value")
-      fi
-      ;;
-    array)
-      selected_skills=("${(@f)$(jq -r '.value[]' <<<"$entry")}")
-      ;;
-    *)
-      die "install-skills: invalid spec for source: $source"
-      ;;
-  esac
+  [[ -n "$name" ]] || die "install-skills: empty external skill name from source: $source"
 
-  requested_names=("${selected_skills[@]}")
-  (( install_all || ${#requested_names[@]} )) || die "install-skills: empty skill list for source: $source"
+  if [[ -n ${local_skill_dirs[$name]-} ]]; then
+    die "install-skills: skill name conflict: external skill '$name' from $source conflicts with local skill at ${local_skill_dirs[$name]}"
+  fi
 
-  needs_install=$force
-  if (( install_all )); then
-    needs_install=1
-  elif (( ! needs_install )); then
+  if [[ -n ${external_skill_sources[$name]-} ]]; then
+    die "install-skills: skill name conflict: external skill '$name' from $source conflicts with ${external_skill_sources[$name]}"
+  fi
+
+  external_skill_sources[$name]=$source
+}
+
+for skill_dir in "$skills_root"/*(N/); do
+  [[ -f "$skill_dir/SKILL.md" ]] || continue
+
+  name=${skill_dir:t}
+  local_skill_dirs[$name]=$skill_dir
+  replace_dir "$canonical_dir/$name" "$skill_dir"
+  managed_names+=("$name")
+done
+
+if [[ -f "$registry_path" ]]; then
+  skill_entries=("${(@f)$(jq -c 'to_entries[]' "$registry_path")}")
+
+  for entry in "${skill_entries[@]}"; do
+    source=$(normalize_source "$(jq -r '.key' <<<"$entry")")
+    install_all=0
+    selected_skills=()
+    stage_dir="$tmpdir/source-$source_index"
+    ((source_index += 1))
+    mkdir -p "$stage_dir"
+
+    case "$(jq -r '.value | type' <<<"$entry")" in
+      string)
+        value=$(jq -r '.value' <<<"$entry")
+        if [[ $value == "*" ]]; then
+          install_all=1
+        else
+          selected_skills=("$value")
+        fi
+        ;;
+      array)
+        selected_skills=("${(@f)$(jq -r '.value[]' <<<"$entry")}")
+        ;;
+      *)
+        die "install-skills: invalid spec for source: $source"
+        ;;
+    esac
+
+    requested_names=("${selected_skills[@]}")
+    (( install_all || ${#requested_names[@]} )) || die "install-skills: empty skill list for source: $source"
+
+    if (( install_all )); then
+      print "install-skills: fetching: $source"
+      stage_skills "$stage_dir" "$source" "${selected_skills[@]}"
+
+      staged_paths=("${(@f)$(staged_skill_paths "$stage_dir")}")
+      (( ${#staged_paths[@]} )) || die "install-skills: no skills staged for source: $source"
+
+      for skill_path in "${staged_paths[@]}"; do
+        name=${skill_path:t}
+        register_external_skill "$name" "$source"
+        replace_dir "$canonical_dir/$name" "$skill_path"
+        managed_names+=("$name")
+      done
+      continue
+    fi
+
     for name in "${requested_names[@]}"; do
-      target="$canonical_dir/$name"
-      if [[ ! -d "$target" || -L "$target" ]]; then
-        needs_install=1
-        break
-      fi
+      register_external_skill "$name" "$source"
     done
-  fi
 
-  if (( ! needs_install )); then
-    managed_names+=("${requested_names[@]}")
-    print "install-skills: already present: $source"
-    continue
-  fi
+    needs_install=$force
+    if (( ! needs_install )); then
+      for name in "${requested_names[@]}"; do
+        target="$canonical_dir/$name"
+        if [[ ! -d "$target" || -L "$target" ]]; then
+          needs_install=1
+          break
+        fi
+      done
+    fi
 
-  print "install-skills: fetching: $source"
-  stage_skills "$stage_dir" "$source" "${selected_skills[@]}"
+    if (( ! needs_install )); then
+      managed_names+=("${requested_names[@]}")
+      print "install-skills: already present: $source"
+      continue
+    fi
 
-  if (( install_all )); then
-    staged_paths=("${(@f)$(staged_skill_paths "$stage_dir")}")
-    (( ${#staged_paths[@]} )) || die "install-skills: no skills staged for source: $source"
+    print "install-skills: fetching: $source"
+    stage_skills "$stage_dir" "$source" "${selected_skills[@]}"
 
-    for skill_path in "${staged_paths[@]}"; do
-      name=${skill_path:t}
-      replace_dir "$canonical_dir/$name" "$skill_path"
+    for name in "${requested_names[@]}"; do
+      [[ -d "$stage_dir/.agents/skills/$name" ]] || die "install-skills: staged skill not found: $source#$name"
+      replace_dir "$canonical_dir/$name" "$stage_dir/.agents/skills/$name"
       managed_names+=("$name")
     done
-    continue
-  fi
-
-  for name in "${requested_names[@]}"; do
-    [[ -d "$stage_dir/.agents/skills/$name" ]] || die "install-skills: staged skill not found: $source#$name"
-    replace_dir "$canonical_dir/$name" "$stage_dir/.agents/skills/$name"
-    managed_names+=("$name")
   done
-done
+fi
 
 prune_dir_except "$canonical_dir" "${managed_names[@]}"
 prune_dir_except "$claude_dir" "${managed_names[@]}"
