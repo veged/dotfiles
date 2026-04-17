@@ -1,0 +1,105 @@
+{
+  "fff": {
+    "enabled": true,
+    "transport": "local",
+    "command": "/Users/veged/.local/bin/fff-mcp",
+    "args": [],
+    "install": {
+      "kind": "command",
+      "argv": [
+        "/bin/sh",
+        "-lc",
+        "tmp=\"$(mktemp)\" && gh api repos/dmtrKovalenko/fff.nvim/contents/install-mcp.sh --jq '.content' | base64 -d > \"$tmp\" && bash \"$tmp\" && rm -f \"$tmp\""
+      ],
+      "check_path": "/Users/veged/.local/bin/fff-mcp"
+    },
+    "clients": {
+      "claude": {
+        "allow_tools": [
+          "mcp__fff__find_files",
+          "mcp__fff__grep",
+          "mcp__fff__multi_grep"
+        ]
+      }
+    }
+  },
+  "sourcecraft": {
+    "enabled": true,
+    "transport": "remote",
+    "url": "https://api.sourcecraft.tech/mcp",
+    "auth": {
+      "type": "bearer_env",
+      "env": "SOURCECRAFT_PAT"
+    },
+    "clients": {
+      "claude": {
+        "allow_tools": [
+          "mcp__sourcecraft__GetMyProfile",
+          "mcp__sourcecraft__GetOrganization",
+          "mcp__sourcecraft__CreateRepository"
+        ]
+      },
+      "cursor": {
+        "type": "streamable-http",
+        "timeout": 60,
+        "disabledTools": [],
+        "alwaysAllow": []
+      },
+      "codex": {
+        "tool_approvals": {
+          "GetCubeLogs": "approve",
+          "GetRun": "approve"
+        }
+      },
+      "opencode": {
+        "type": "remote",
+        "timeout": 60000
+      }
+    }
+  },
+  "sourcecraft-enterprise": {
+    "enabled": false,
+    "transport": "remote",
+    "url": "https://public-api.o.cloud.yandex.net/mcp",
+    "auth": {
+      "type": "bearer_env",
+      "env": "SOURCECRAFT_ENTERPRISE_PAT"
+    },
+    "clients": {
+      "cursor": {
+        "type": "streamable-http",
+        "timeout": 60,
+        "disabledTools": [],
+        "alwaysAllow": []
+      }
+    }
+  },
+  "context7": {
+    "enabled": false,
+    "transport": "local",
+    "command": "bunx",
+    "args": [
+      "-y",
+      "@upstash/context7-mcp@latest"
+    ]
+  },
+  "websearch": {
+    "enabled": false,
+    "transport": "remote",
+    "url": "https://mcp.exa.ai"
+  },
+  "grep_app": {
+    "enabled": false,
+    "transport": "remote",
+    "url": "https://mcp.grep.app"
+  },
+  "playwright": {
+    "enabled": false,
+    "transport": "local",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@playwright/mcp@latest"
+    ]
+  }
+}

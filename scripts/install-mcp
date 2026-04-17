@@ -1,0 +1,76 @@
+#!/usr/bin/env zsh
+
+emulate -LR zsh
+set -euo pipefail
+
+repo_root=${0:A:h:h}
+SCRIPT_NAME=install-mcp
+source "$repo_root/scripts/lib/install-common.zsh"
+
+manifest_path="$repo_root/ai/mcp.json"
+cursor_dir="$HOME/.cursor"
+cursor_manifest_path="$cursor_dir/mcp.json"
+
+while (( $# > 0 )); do
+  case "$1" in
+    --sync-only)
+      ;;
+    *)
+      die "install-mcp: unknown argument: $1"
+      ;;
+  esac
+  shift
+done
+
+require_commands jq
+[[ -f "$manifest_path" ]] || die "install-mcp: missing manifest: $manifest_path"
+
+mkdir -p "$cursor_dir"
+
+jq '
+  def cursor_base($server):
+    {
+      type: "streamable-http",
+      url: $server.url,
+      disabled: ($server.enabled | not),
+      headers: (
+        $server.auth // {} |
+        if .type == "bearer_env" then
+          {Authorization: ("Bearer ${env:" + .env + "}")}
+        else
+          {}
+        end
+      ),
+      disabledTools: (($server.clients // {} | .cursor // {} | .disabledTools) // []),
+      timeout: (($server.clients // {} | .cursor // {} | .timeout) // 60),
+      alwaysAllow: (($server.clients // {} | .cursor // {} | .alwaysAllow) // [])
+    };
+
+  def render_server($name; $server):
+    if $server.transport == "local" then
+      {
+        key: $name,
+        value: {
+          command: $server.command,
+          args: ($server.args // [])
+        }
+      }
+    elif $server.transport == "remote" then
+      {
+        key: $name,
+        value: cursor_base($server)
+      }
+    else
+      error("install-mcp: unsupported transport for " + $name)
+    end;
+
+  {
+    mcpServers: (
+      to_entries
+      | map(render_server(.key; .value))
+      | from_entries
+    )
+  }
+' "$manifest_path" > "$cursor_manifest_path"
+
+print "install-mcp: synced ~/.cursor/mcp.json"
