@@ -11,6 +11,8 @@ fixture_root="$tmp_root/repo"
 home_dir="$tmp_root/home"
 bad_fixture_root="$tmp_root/bad-repo"
 bad_home_dir="$tmp_root/bad-home"
+duplicate_marker_fixture_root="$tmp_root/duplicate-marker-repo"
+duplicate_marker_home_dir="$tmp_root/duplicate-marker-home"
 
 mkdir -p \
   "$fixture_root/ai" \
@@ -22,7 +24,12 @@ mkdir -p \
   "$bad_fixture_root/codex" \
   "$bad_fixture_root/scripts/lib" \
   "$bad_fixture_root/scripts/tests" \
-  "$bad_home_dir"
+  "$bad_home_dir" \
+  "$duplicate_marker_fixture_root/ai" \
+  "$duplicate_marker_fixture_root/codex" \
+  "$duplicate_marker_fixture_root/scripts/lib" \
+  "$duplicate_marker_fixture_root/scripts/tests" \
+  "$duplicate_marker_home_dir"
 
 cp "$repo_root/scripts/install-mcp" "$fixture_root/scripts/install-mcp"
 cp "$repo_root/scripts/lib/install-common.zsh" "$fixture_root/scripts/lib/install-common.zsh"
@@ -32,12 +39,21 @@ cp "$repo_root/scripts/install-mcp" "$bad_fixture_root/scripts/install-mcp"
 cp "$repo_root/scripts/lib/install-common.zsh" "$bad_fixture_root/scripts/lib/install-common.zsh"
 cp "$repo_root/ai/mcp.json" "$bad_fixture_root/ai/mcp.json"
 cp "$repo_root/codex/.config.template.toml" "$bad_fixture_root/codex/.config.template.toml"
+cp "$repo_root/scripts/install-mcp" "$duplicate_marker_fixture_root/scripts/install-mcp"
+cp "$repo_root/scripts/lib/install-common.zsh" "$duplicate_marker_fixture_root/scripts/lib/install-common.zsh"
+cp "$repo_root/ai/mcp.json" "$duplicate_marker_fixture_root/ai/mcp.json"
+cp "$repo_root/codex/.config.template.toml" "$duplicate_marker_fixture_root/codex/.config.template.toml"
 
 jq '.sourcecraft.clients.cursor.type = "sse"' "$fixture_root/ai/mcp.json" > "$fixture_root/ai/mcp.json.tmp"
 mv "$fixture_root/ai/mcp.json.tmp" "$fixture_root/ai/mcp.json"
 
 jq '.fff.install.check_path = "/tmp/fff-mcp-mismatch"' "$bad_fixture_root/ai/mcp.json" > "$bad_fixture_root/ai/mcp.json.tmp"
 mv "$bad_fixture_root/ai/mcp.json.tmp" "$bad_fixture_root/ai/mcp.json"
+
+cat >> "$duplicate_marker_fixture_root/codex/.config.template.toml" <<'EOF'
+
+# __MCP_SERVERS__
+EOF
 
 cursor_manifest_path="$home_dir/.cursor/mcp.json"
 codex_config_path="$home_dir/.codex/config.toml"
@@ -63,10 +79,25 @@ grep -Fq 'command = "/Users/veged/.local/bin/fff-mcp"' "$codex_config_path" || f
 grep -Fq '[mcp_servers.sourcecraft]' "$codex_config_path" || fail "missing sourcecraft codex block"
 grep -Fq 'bearer_token_env_var = "SOURCECRAFT_PAT"' "$codex_config_path" || fail "missing sourcecraft bearer token env"
 grep -Fq '[mcp_servers.sourcecraft.tools.GetCubeLogs]' "$codex_config_path" || fail "missing sourcecraft tool approvals"
-grep -Fq 'approval_mode = "approve"' "$codex_config_path" || fail "missing codex approval mode"
+awk '
+  $0 == "[mcp_servers.sourcecraft.tools.GetCubeLogs]" { in_block = 1; next }
+  /^\[/ && in_block { exit !found }
+  in_block && $0 == "approval_mode = \"approve\"" { found = 1 }
+  END { exit !(in_block && found) }
+' "$codex_config_path" || fail "missing GetCubeLogs approval mode in codex output"
+if grep -Fq '[mcp_servers.context7]' "$codex_config_path"; then
+  fail "context7 must be absent from codex output"
+fi
+if grep -Fq '[mcp_servers.playwright]' "$codex_config_path"; then
+  fail "playwright must be absent from codex output"
+fi
 
 if HOME="$bad_home_dir" zsh "$bad_fixture_root/scripts/install-mcp" --sync-only >/dev/null 2>&1; then
   fail "expected install-mcp to reject mismatched fff install.check_path"
+fi
+
+if HOME="$duplicate_marker_home_dir" zsh "$duplicate_marker_fixture_root/scripts/install-mcp" --sync-only >/dev/null 2>&1; then
+  fail "expected install-mcp to reject duplicate codex marker"
 fi
 
 print "test-install-mcp: cursor and codex sync ok"

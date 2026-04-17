@@ -89,8 +89,12 @@ jq '
   }
 ' "$manifest_path" > "$cursor_manifest_path"
 
-if ! grep -Fqx '# __MCP_SERVERS__' "$codex_template_path"; then
+codex_marker_count=$(grep -Fxc '# __MCP_SERVERS__' "$codex_template_path" || true)
+if [[ "$codex_marker_count" -eq 0 ]]; then
   die "install-mcp: missing codex marker in template: $codex_template_path"
+fi
+if [[ "$codex_marker_count" -ne 1 ]]; then
+  die "install-mcp: expected exactly one codex marker in template: $codex_template_path"
 fi
 
 codex_fragment_path=$(mktemp "${TMPDIR:-/tmp}/codex-mcp.XXXXXX")
