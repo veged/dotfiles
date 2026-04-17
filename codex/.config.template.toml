@@ -23,15 +23,10 @@ enabled = true
 [plugins."impeccable@dotfiles-local"]
 enabled = true
 
-[mcp_servers.sourcecraft]
-url = "https://api.sourcecraft.tech/mcp"
-bearer_token_env_var = "SOURCECRAFT_PAT"
+[plugins."mblode@dotfiles-local"]
+enabled = true
 
-[mcp_servers.sourcecraft.tools.GetCubeLogs]
-approval_mode = "approve"
-
-[mcp_servers.sourcecraft.tools.GetRun]
-approval_mode = "approve"
+# __MCP_SERVERS__
 
 [apps.connector_76869538009648d5b282a4bb21c3d157.tools.github_add_comment_to_issue]
 approval_mode = "approve"
@@ -80,3 +75,14 @@ trust_level = "trusted"
 
 [projects."/Users/veged/dotfiles"]
 trust_level = "trusted"
+
+[projects."/Users/veged/Documents/slidev-theme-practicum"]
+trust_level = "trusted"
+
+[projects."/Users/veged/Documents/Playground"]
+trust_level = "trusted"
+
+[marketplaces.openai-bundled]
+last_updated = "2026-04-17T17:40:16Z"
+source_type = "local"
+source = "/Users/veged/.codex/.tmp/bundled-marketplaces/openai-bundled"
