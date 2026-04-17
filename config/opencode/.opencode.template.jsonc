@@ -13,7 +13,7 @@
       "name": "Eliza Anthropic",
       "npm": "@ai-sdk/anthropic",
       "options": {
-        "baseURL": "https://ELIZA_API_HOST/raw/anthropic/v1",
+        "baseURL": "https://api.eliza.yandex.net/raw/anthropic/v1",
         "apiKey": "{env:ELIZA_TOKEN}"
       },
       "models": {
@@ -80,7 +80,7 @@
       "name": "Eliza GLM 4.7 (internal)",
       "npm": "@ai-sdk/openai-compatible",
       "options": {
-        "baseURL": "https://ELIZA_API_HOST/raw/internal/glm-4-7/v1",
+        "baseURL": "https://api.eliza.yandex.net/raw/internal/glm-4-7/v1",
         "apiKey": "{env:ELIZA_TOKEN}"
       },
       "models": {
@@ -107,7 +107,7 @@
       "name": "Eliza Kimi 2.5 (internal BETA)",
       "npm": "@ai-sdk/openai-compatible",
       "options": {
-        "baseURL": "https://ELIZA_API_HOST/raw/internal/kimi-k2-5/v1",
+        "baseURL": "https://api.eliza.yandex.net/raw/internal/kimi-k2-5/v1",
         "apiKey": "{env:ELIZA_TOKEN}"
       },
       "models": {
@@ -136,7 +136,7 @@
       "name": "Eliza MiniMax M2.1 (internal BETA)",
       "npm": "@ai-sdk/openai-compatible",
       "options": {
-        "baseURL": "https://ELIZA_API_HOST/raw/internal/mini-max-m2-1/v1",
+        "baseURL": "https://api.eliza.yandex.net/raw/internal/mini-max-m2-1/v1",
         "apiKey": "{env:ELIZA_TOKEN}"
       },
       "models": {
@@ -163,7 +163,7 @@
       "name": "Eliza OpenAI",
       "npm": "@ai-sdk/openai",
       "options": {
-        "baseURL": "https://ELIZA_API_HOST/openai/v1",
+        "baseURL": "https://api.eliza.yandex.net/openai/v1",
         "apiKey": "{env:ELIZA_TOKEN}"
       },
       "models": {
@@ -245,7 +245,7 @@
       "name": "Eliza OpenRouter",
       "npm": "@ai-sdk/openai-compatible",
       "options": {
-        "baseURL": "https://ELIZA_API_HOST/openrouter/v1/",
+        "baseURL": "https://api.eliza.yandex.net/openrouter/v1/",
         "apiKey": "{env:ELIZA_TOKEN}"
       }
     },
@@ -255,46 +255,5 @@
       "options": { "baseURL": "https://openrouter.ai/api/v1" }
     }
   },
-  "mcp": {
-    // --- yandex_mcp_store (devtools server) ---
-    // NOTE: opencode MCP поддерживает только local (command) и remote (url) серверы.
-    // yandex_mcp_store серверы (devtools, wiki, tasklets, bilim, yaart, tracker_mcp,
-    // infractl, deepagent, intrasearch, monium_mcp, yt, abc, warden, staff_api_mcp,
-    // idp, femida_mcp) нужно настраивать как local или remote.
-    // Ниже — remote MCP серверы из секции generic:
-
-    "context7": {
-      "enabled": false,
-      "type": "remote",
-      "url": "https://mcp.context7.com/mcp"
-    },
-    "websearch": {
-      "enabled": false,
-      "type": "remote",
-      "url": "https://mcp.exa.ai"
-    },
-    "grep_app": {
-      "enabled": false,
-      "type": "remote",
-      "url": "https://mcp.grep.app"
-    },
-    "sourcecraft": {
-      "enabled": true,
-      "type": "remote",
-      "url": "https://api.sourcecraft.tech/mcp",
-      "headers": {
-        "Authorization": "Bearer {env:SOURCECRAFT_PAT}"
-      },
-      "timeout": 60000
-    },
-    "playwright": {
-      "enabled": false,
-      "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "@playwright/mcp@latest"
-      ]
-    }
-  }
+  "mcp": __MCP_JSON__
 }

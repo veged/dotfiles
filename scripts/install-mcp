@@ -13,6 +13,9 @@ cursor_manifest_path="$cursor_dir/mcp.json"
 codex_dir="$HOME/.codex"
 codex_template_path="$repo_root/codex/.config.template.toml"
 codex_config_path="$codex_dir/config.toml"
+opencode_dir="$HOME/.config/opencode"
+opencode_template_path="$repo_root/config/opencode/.opencode.template.jsonc"
+opencode_config_path="$opencode_dir/opencode.jsonc"
 
 while (( $# > 0 )); do
   case "$1" in
@@ -28,9 +31,11 @@ done
 require_commands jq
 [[ -f "$manifest_path" ]] || die "install-mcp: missing manifest: $manifest_path"
 [[ -f "$codex_template_path" ]] || die "install-mcp: missing codex template: $codex_template_path"
+[[ -f "$opencode_template_path" ]] || die "install-mcp: missing opencode template: $opencode_template_path"
 
 mkdir -p "$cursor_dir"
 mkdir -p "$codex_dir"
+mkdir -p "$opencode_dir"
 
 jq '
   to_entries[]
@@ -166,5 +171,84 @@ awk -v fragment_path="$codex_fragment_path" '
 
 rm -f "$codex_fragment_path"
 
+opencode_marker_count=$(grep -Fc '"mcp": __MCP_JSON__' "$opencode_template_path" || true)
+if [[ "$opencode_marker_count" -eq 0 ]]; then
+  die "install-mcp: missing opencode marker in template: $opencode_template_path"
+fi
+if [[ "$opencode_marker_count" -ne 1 ]]; then
+  die "install-mcp: expected exactly one opencode marker in template: $opencode_template_path"
+fi
+
+opencode_fragment_path=$(mktemp "${TMPDIR:-/tmp}/opencode-mcp.XXXXXX")
+
+jq '
+  def opencode_local($server):
+    {
+      enabled: $server.enabled,
+      type: "local",
+      command: ([$server.command] + ($server.args // []))
+    };
+
+  def opencode_remote($server):
+    {
+      enabled: $server.enabled,
+      type: (($server.clients // {} | .opencode // {} | .type) // "remote"),
+      url: $server.url
+    }
+    + (
+        $server.auth // {} |
+        if .type == "bearer_env" then
+          {headers: {Authorization: ("Bearer {env:" + .env + "}")}}
+        else
+          {}
+        end
+      )
+    + (
+        ($server.clients // {} | .opencode // {})
+        | if has("timeout") then
+            {timeout: .timeout}
+          else
+            {}
+          end
+      );
+
+  {
+    mcp: (
+      to_entries
+      | map(
+          if .value.transport == "local" then
+            {
+              key: .key,
+              value: opencode_local(.value)
+            }
+          elif .value.transport == "remote" then
+            {
+              key: .key,
+              value: opencode_remote(.value)
+            }
+          else
+            error("install-mcp: unsupported transport for " + .key)
+          end
+        )
+      | from_entries
+    )
+  }.mcp
+' "$manifest_path" | awk '{ print "  " $0 }' > "$opencode_fragment_path"
+
+awk -v fragment_path="$opencode_fragment_path" '
+  index($0, "\"mcp\": __MCP_JSON__") {
+    print "  \"mcp\": "
+    while ((getline line < fragment_path) > 0) {
+      print line
+    }
+    close(fragment_path)
+    next
+  }
+  { print }
+' "$opencode_template_path" > "$opencode_config_path"
+
+rm -f "$opencode_fragment_path"
+
 print "install-mcp: synced ~/.cursor/mcp.json"
 print "install-mcp: synced ~/.codex/config.toml"
+print "install-mcp: synced ~/.config/opencode/opencode.jsonc"
