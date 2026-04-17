@@ -28,9 +28,19 @@ require_commands jq
 mkdir -p "$cursor_dir"
 
 jq '
+  to_entries[]
+  | select(.value.transport == "local" and ((.value.install // {}) | has("check_path")))
+  | if .value.command != .value.install.check_path then
+      error("install-mcp: install.check_path must match command for " + .key)
+    else
+      empty
+    end
+' "$manifest_path" >/dev/null
+
+jq '
   def cursor_base($server):
     {
-      type: "streamable-http",
+      type: (($server.clients // {} | .cursor // {} | .type) // "streamable-http"),
       url: $server.url,
       disabled: ($server.enabled | not),
       headers: (
@@ -52,7 +62,8 @@ jq '
         key: $name,
         value: {
           command: $server.command,
-          args: ($server.args // [])
+          args: ($server.args // []),
+          disabled: ($server.enabled | not)
         }
       }
     elif $server.transport == "remote" then
