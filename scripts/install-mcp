@@ -233,14 +233,33 @@ jq '
       | from_entries
     )
   }.mcp
-' "$manifest_path" | awk '{ print "  " $0 }' > "$opencode_fragment_path"
+' "$manifest_path" > "$opencode_fragment_path"
 
 awk -v fragment_path="$opencode_fragment_path" '
-  index($0, "\"mcp\": __MCP_JSON__") {
-    print "  \"mcp\": "
+  {
+    marker = "__MCP_JSON__"
+  }
+
+  match($0, marker) {
+    prefix = substr($0, 1, RSTART - 1)
+    suffix = substr($0, RSTART + RLENGTH)
+    wrote_fragment = 0
+
     while ((getline line < fragment_path) > 0) {
-      print line
+      if (!wrote_fragment) {
+        printf "%s%s", prefix, line
+        wrote_fragment = 1
+      } else {
+        printf "\n%s", line
+      }
     }
+
+    if (!wrote_fragment) {
+      print prefix suffix
+    } else {
+      printf "%s\n", suffix
+    }
+
     close(fragment_path)
     next
   }

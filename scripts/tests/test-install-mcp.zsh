@@ -13,6 +13,8 @@ bad_fixture_root="$tmp_root/bad-repo"
 bad_home_dir="$tmp_root/bad-home"
 duplicate_marker_fixture_root="$tmp_root/duplicate-marker-repo"
 duplicate_marker_home_dir="$tmp_root/duplicate-marker-home"
+opencode_duplicate_marker_fixture_root="$tmp_root/opencode-duplicate-marker-repo"
+opencode_duplicate_marker_home_dir="$tmp_root/opencode-duplicate-marker-home"
 
 mkdir -p \
   "$fixture_root/ai" \
@@ -32,7 +34,13 @@ mkdir -p \
   "$duplicate_marker_fixture_root/codex" \
   "$duplicate_marker_fixture_root/scripts/lib" \
   "$duplicate_marker_fixture_root/scripts/tests" \
-  "$duplicate_marker_home_dir"
+  "$duplicate_marker_home_dir" \
+  "$opencode_duplicate_marker_fixture_root/ai" \
+  "$opencode_duplicate_marker_fixture_root/config/opencode" \
+  "$opencode_duplicate_marker_fixture_root/codex" \
+  "$opencode_duplicate_marker_fixture_root/scripts/lib" \
+  "$opencode_duplicate_marker_fixture_root/scripts/tests" \
+  "$opencode_duplicate_marker_home_dir"
 
 cp "$repo_root/scripts/install-mcp" "$fixture_root/scripts/install-mcp"
 cp "$repo_root/scripts/lib/install-common.zsh" "$fixture_root/scripts/lib/install-common.zsh"
@@ -49,6 +57,11 @@ cp "$repo_root/scripts/lib/install-common.zsh" "$duplicate_marker_fixture_root/s
 cp "$repo_root/ai/mcp.json" "$duplicate_marker_fixture_root/ai/mcp.json"
 cp "$repo_root/config/opencode/.opencode.template.jsonc" "$duplicate_marker_fixture_root/config/opencode/.opencode.template.jsonc"
 cp "$repo_root/codex/.config.template.toml" "$duplicate_marker_fixture_root/codex/.config.template.toml"
+cp "$repo_root/scripts/install-mcp" "$opencode_duplicate_marker_fixture_root/scripts/install-mcp"
+cp "$repo_root/scripts/lib/install-common.zsh" "$opencode_duplicate_marker_fixture_root/scripts/lib/install-common.zsh"
+cp "$repo_root/ai/mcp.json" "$opencode_duplicate_marker_fixture_root/ai/mcp.json"
+cp "$repo_root/config/opencode/.opencode.template.jsonc" "$opencode_duplicate_marker_fixture_root/config/opencode/.opencode.template.jsonc"
+cp "$repo_root/codex/.config.template.toml" "$opencode_duplicate_marker_fixture_root/codex/.config.template.toml"
 
 jq '.sourcecraft.clients.cursor.type = "sse"' "$fixture_root/ai/mcp.json" > "$fixture_root/ai/mcp.json.tmp"
 mv "$fixture_root/ai/mcp.json.tmp" "$fixture_root/ai/mcp.json"
@@ -59,6 +72,10 @@ mv "$bad_fixture_root/ai/mcp.json.tmp" "$bad_fixture_root/ai/mcp.json"
 cat >> "$duplicate_marker_fixture_root/codex/.config.template.toml" <<'EOF'
 
 # __MCP_SERVERS__
+EOF
+
+cat >> "$opencode_duplicate_marker_fixture_root/config/opencode/.opencode.template.jsonc" <<'EOF'
+"mcp": __MCP_JSON__
 EOF
 
 cursor_manifest_path="$home_dir/.cursor/mcp.json"
@@ -75,6 +92,7 @@ fail() {
 [[ -f "$cursor_manifest_path" ]] || fail "missing generated cursor manifest: $cursor_manifest_path"
 [[ -f "$codex_config_path" ]] || fail "missing generated codex config: $codex_config_path"
 [[ -f "$opencode_config_path" ]] || fail "missing generated opencode config: $opencode_config_path"
+jq -e . "$opencode_config_path" >/dev/null || fail "generated opencode config must be valid JSON"
 [[ "$(jq -r '.mcpServers.fff.command' "$cursor_manifest_path")" == "/Users/veged/.local/bin/fff-mcp" ]] || fail "unexpected fff command"
 [[ "$(jq -r '.mcpServers.context7.disabled' "$cursor_manifest_path")" == "true" ]] || fail "context7 must be disabled"
 [[ "$(jq -r '.mcpServers.playwright.disabled' "$cursor_manifest_path")" == "true" ]] || fail "playwright must be disabled"
@@ -99,15 +117,20 @@ fi
 if grep -Fq '[mcp_servers.playwright]' "$codex_config_path"; then
   fail "playwright must be absent from codex output"
 fi
-grep -Fq '"plugin": ["oh-my-openagent"]' "$opencode_config_path" || fail "missing opencode plugin section"
-grep -Fq '"sourcecraft"' "$opencode_config_path" || fail "missing sourcecraft in opencode output"
-grep -Fq '"fff"' "$opencode_config_path" || fail "missing fff in opencode output"
-grep -Fq '"type": "remote"' "$opencode_config_path" || fail "missing remote type in opencode output"
-grep -Fq '"type": "local"' "$opencode_config_path" || fail "missing local type in opencode output"
-grep -Fq '"command": [' "$opencode_config_path" || fail "missing opencode local command array"
-grep -Fq '"Authorization": "Bearer {env:SOURCECRAFT_PAT}"' "$opencode_config_path" || fail "missing sourcecraft auth header in opencode output"
-grep -Fq '"timeout": 60000' "$opencode_config_path" || fail "missing sourcecraft timeout in opencode output"
-grep -Fq '"/Users/veged/.local/bin/fff-mcp"' "$opencode_config_path" || fail "missing fff command in opencode output"
+[[ "$(jq -c '.plugin' "$opencode_config_path")" == '["oh-my-openagent"]' ]] || fail "unexpected opencode plugin section"
+[[ "$(jq -r '.mcp.sourcecraft.type' "$opencode_config_path")" == "remote" ]] || fail "unexpected opencode sourcecraft type"
+[[ "$(jq -r '.mcp.sourcecraft.url' "$opencode_config_path")" == "https://api.sourcecraft.tech/mcp" ]] || fail "unexpected opencode sourcecraft url"
+[[ "$(jq -r '.mcp.sourcecraft.headers.Authorization' "$opencode_config_path")" == 'Bearer {env:SOURCECRAFT_PAT}' ]] || fail "unexpected opencode sourcecraft auth header"
+[[ "$(jq -r '.mcp.sourcecraft.timeout' "$opencode_config_path")" == "60000" ]] || fail "unexpected opencode sourcecraft timeout"
+[[ "$(jq -r '.mcp.fff.type' "$opencode_config_path")" == "local" ]] || fail "unexpected opencode fff type"
+[[ "$(jq -r '.mcp.fff.enabled' "$opencode_config_path")" == "true" ]] || fail "unexpected opencode fff enabled flag"
+[[ "$(jq -r '.mcp.fff.command[0]' "$opencode_config_path")" == "/Users/veged/.local/bin/fff-mcp" ]] || fail "unexpected opencode fff command"
+[[ "$(jq -r '.mcp.fff.command | length' "$opencode_config_path")" == "1" ]] || fail "unexpected opencode fff command length"
+[[ "$(jq -r '.mcp.playwright.type' "$opencode_config_path")" == "local" ]] || fail "unexpected opencode playwright type"
+[[ "$(jq -r '.mcp.playwright.command[2]' "$opencode_config_path")" == "@playwright/mcp@latest" ]] || fail "unexpected opencode playwright command"
+if grep -Fq '__MCP_JSON__' "$opencode_config_path"; then
+  fail "opencode marker leaked into generated config"
+fi
 
 if HOME="$bad_home_dir" zsh "$bad_fixture_root/scripts/install-mcp" --sync-only >/dev/null 2>&1; then
   fail "expected install-mcp to reject mismatched fff install.check_path"
@@ -115,6 +138,10 @@ fi
 
 if HOME="$duplicate_marker_home_dir" zsh "$duplicate_marker_fixture_root/scripts/install-mcp" --sync-only >/dev/null 2>&1; then
   fail "expected install-mcp to reject duplicate codex marker"
+fi
+
+if HOME="$opencode_duplicate_marker_home_dir" zsh "$opencode_duplicate_marker_fixture_root/scripts/install-mcp" --sync-only >/dev/null 2>&1; then
+  fail "expected install-mcp to reject duplicate opencode marker"
 fi
 
 print "test-install-mcp: cursor, codex, and opencode sync ok"
