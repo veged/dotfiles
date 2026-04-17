@@ -13,7 +13,7 @@
       "name": "Eliza Anthropic",
       "npm": "@ai-sdk/anthropic",
       "options": {
-        "baseURL": "https://api.eliza.yandex.net/raw/anthropic/v1",
+        "baseURL": "https://ELIZA_API_HOST/raw/anthropic/v1",
         "apiKey": "{env:ELIZA_TOKEN}"
       },
       "models": {
@@ -80,7 +80,7 @@
       "name": "Eliza GLM 4.7 (internal)",
       "npm": "@ai-sdk/openai-compatible",
       "options": {
-        "baseURL": "https://api.eliza.yandex.net/raw/internal/glm-4-7/v1",
+        "baseURL": "https://ELIZA_API_HOST/raw/internal/glm-4-7/v1",
         "apiKey": "{env:ELIZA_TOKEN}"
       },
       "models": {
@@ -107,7 +107,7 @@
       "name": "Eliza Kimi 2.5 (internal BETA)",
       "npm": "@ai-sdk/openai-compatible",
       "options": {
-        "baseURL": "https://api.eliza.yandex.net/raw/internal/kimi-k2-5/v1",
+        "baseURL": "https://ELIZA_API_HOST/raw/internal/kimi-k2-5/v1",
         "apiKey": "{env:ELIZA_TOKEN}"
       },
       "models": {
@@ -136,7 +136,7 @@
       "name": "Eliza MiniMax M2.1 (internal BETA)",
       "npm": "@ai-sdk/openai-compatible",
       "options": {
-        "baseURL": "https://api.eliza.yandex.net/raw/internal/mini-max-m2-1/v1",
+        "baseURL": "https://ELIZA_API_HOST/raw/internal/mini-max-m2-1/v1",
         "apiKey": "{env:ELIZA_TOKEN}"
       },
       "models": {
@@ -163,7 +163,7 @@
       "name": "Eliza OpenAI",
       "npm": "@ai-sdk/openai",
       "options": {
-        "baseURL": "https://api.eliza.yandex.net/openai/v1",
+        "baseURL": "https://ELIZA_API_HOST/openai/v1",
         "apiKey": "{env:ELIZA_TOKEN}"
       },
       "models": {
@@ -245,7 +245,7 @@
       "name": "Eliza OpenRouter",
       "npm": "@ai-sdk/openai-compatible",
       "options": {
-        "baseURL": "https://api.eliza.yandex.net/openrouter/v1/",
+        "baseURL": "https://ELIZA_API_HOST/openrouter/v1/",
         "apiKey": "{env:ELIZA_TOKEN}"
       }
     },

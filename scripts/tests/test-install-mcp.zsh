@@ -22,11 +22,13 @@ mkdir -p \
   "$fixture_root/scripts/tests" \
   "$home_dir" \
   "$bad_fixture_root/ai" \
+  "$bad_fixture_root/config/opencode" \
   "$bad_fixture_root/codex" \
   "$bad_fixture_root/scripts/lib" \
   "$bad_fixture_root/scripts/tests" \
   "$bad_home_dir" \
   "$duplicate_marker_fixture_root/ai" \
+  "$duplicate_marker_fixture_root/config/opencode" \
   "$duplicate_marker_fixture_root/codex" \
   "$duplicate_marker_fixture_root/scripts/lib" \
   "$duplicate_marker_fixture_root/scripts/tests" \
@@ -40,10 +42,12 @@ cp "$repo_root/codex/.config.template.toml" "$fixture_root/codex/.config.templat
 cp "$repo_root/scripts/install-mcp" "$bad_fixture_root/scripts/install-mcp"
 cp "$repo_root/scripts/lib/install-common.zsh" "$bad_fixture_root/scripts/lib/install-common.zsh"
 cp "$repo_root/ai/mcp.json" "$bad_fixture_root/ai/mcp.json"
+cp "$repo_root/config/opencode/.opencode.template.jsonc" "$bad_fixture_root/config/opencode/.opencode.template.jsonc"
 cp "$repo_root/codex/.config.template.toml" "$bad_fixture_root/codex/.config.template.toml"
 cp "$repo_root/scripts/install-mcp" "$duplicate_marker_fixture_root/scripts/install-mcp"
 cp "$repo_root/scripts/lib/install-common.zsh" "$duplicate_marker_fixture_root/scripts/lib/install-common.zsh"
 cp "$repo_root/ai/mcp.json" "$duplicate_marker_fixture_root/ai/mcp.json"
+cp "$repo_root/config/opencode/.opencode.template.jsonc" "$duplicate_marker_fixture_root/config/opencode/.opencode.template.jsonc"
 cp "$repo_root/codex/.config.template.toml" "$duplicate_marker_fixture_root/codex/.config.template.toml"
 
 jq '.sourcecraft.clients.cursor.type = "sse"' "$fixture_root/ai/mcp.json" > "$fixture_root/ai/mcp.json.tmp"
