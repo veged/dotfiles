@@ -8,11 +8,11 @@
 * `ai/skills/*` — локальные skill-пакеты в формате Agent Skills
 * `ai/skills/skills.json` — внешние зависимости общих навыков
 * `ai/plugins/plugins.json` — канонический реестр локальных плагинов Codex
-* `~/.agents/skills` — общий слой навыков, который синхронизирует `./scripts/install-skills`
+* `~/.agents/skills` — единый source of truth для общих навыков; его синхронизирует `./scripts/install-skills`
+* `~/.claude/skills` и `~/.codex/skills` — assistant-specific discovery-слои, которые `./scripts/install-skills` обновляет через внутренний bootstrap из `~/.agents/skills`
 * `~/.codex/plugins/dotfiles-local` — локальные bundle-ы плагинов Codex, которые собирает `./scripts/install-plugins`
 * `~/.agents/plugins/marketplace.json` — локальный каталог плагинов Codex
 * `~/.claude/CLAUDE.md` — тонкая обёртка Claude, которая импортирует общие инструкции
-* `~/.claude/skills` — зеркало общего слоя навыков симлинками
 * `~/.claude/settings.json` — канонический статический конфиг Claude Code
 * `~/.claude.json` — рабочее состояние Claude Code; в `dotfiles` не канонизируется
 * `~/.config/opencode/opencode.jsonc` — адаптер OpenCode на общие инструкции
@@ -31,6 +31,8 @@
 Чтобы обновить содержимое plugins из upstream-источников, используй `./scripts/install-plugins --update`.
 
 Сама установка делается через `Plugins` или `/plugins`, после чего plugin вызывается через `@plugin-name`. Slash-команда вида `/impeccable` появляться не обязана.
+
+`./scripts/bootstrap-agent-skills` не хранит собственных навыков: он только публикует канонический слой в `~/.claude/skills` и `~/.codex/skills`, плюс один раз мигрирует известные общие bundle-ы вроде `codex-primary-runtime` из `~/.codex/skills`, не трогая `.system`. Обычно его напрямую вызывать не нужно: `./scripts/install-skills` делает это сам.
 
 ## Общие инструкции
 

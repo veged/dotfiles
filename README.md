@@ -91,11 +91,11 @@ dotfiles/
 * `dotfiles/ai/skills/skills.json` — внешние зависимости общих навыков
 * `dotfiles/ai/plugins/plugins.json` — канонический реестр локальных плагинов Codex
 * `~/.agents/instructions` — рабочий слой общих Markdown-инструкций
-* `~/.agents/skills` — канонический общий слой навыков, который собирает `./scripts/install-skills`
+* `~/.agents/skills` — единственный source of truth для общих навыков; его собирает `./scripts/install-skills`
+* `~/.claude/skills` и `~/.codex/skills` — assistant-specific discovery-слои, которые `./scripts/install-skills` обновляет через внутренний bootstrap из `~/.agents/skills`
 * `~/.codex/plugins/dotfiles-local` — локальные bundle-ы плагинов Codex, которые собирает `./scripts/install-plugins`
 * `~/.agents/plugins/marketplace.json` — локальный каталог плагинов Codex
 * `~/.claude/CLAUDE.md` — тонкая обёртка, которая импортирует общие инструкции
-* `~/.claude/skills` — зеркало общего слоя навыков симлинками
 * `~/.codex/AGENTS.md` и `~/.codex/config.toml` — слой адаптации Codex из `dotfiles/codex/`
 * `~/.config/opencode/opencode.jsonc` — адаптер OpenCode на те же общие инструкции
 
@@ -106,6 +106,8 @@ dotfiles/
 * для GitHub-источников можно использовать короткую форму `owner/repo` вместо полного `https://github.com/owner/repo`
 
 `./scripts/install-plugins` только публикует personal marketplace и локальные bundle-ы. Сам plugin затем ставится через `Plugins` или `/plugins` и вызывается через `@plugin-name`, а не через slash-команду вида `/impeccable`.
+
+`./scripts/bootstrap-agent-skills` не создаёт второй источник правды: он только публикует содержимое `~/.agents/skills` в assistant-specific discovery-слои и мигрирует известные общие bundle-ы вроде `codex-primary-runtime` из `~/.codex/skills`, не трогая `.system`. Обычно его напрямую вызывать не нужно: `./scripts/install-skills` делает это сам.
 
 Если инструмент поддерживает общий формат проектных инструкций, предпочтителен `AGENTS.md`. Если инструмент ожидает собственный файл вроде `CLAUDE.md`, лучше делать тонкую обёртку над общим слоем, а не дублировать содержимое.
 

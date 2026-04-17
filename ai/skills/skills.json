@@ -22,6 +22,7 @@
     "write-a-skill"
   ],
   "terraphim/terraphim-skills": "rust-development",
+  "veged/caveman/tree/main/skills": "caveman",
   "anthropics/skills": [
     "frontend-design",
     "web-artifacts-builder"
@@ -36,7 +37,6 @@
     "openai-docs",
     "pdf",
     "playwright",
-    "spreadsheet",
     "skill-creator",
     "skill-installer"
   ],

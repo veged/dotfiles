@@ -1,0 +1,124 @@
+#!/usr/bin/env zsh
+
+emulate -LR zsh
+set -euo pipefail
+
+repo_root=${0:A:h:h}
+SCRIPT_NAME=bootstrap-agent-skills
+source "$repo_root/scripts/lib/install-common.zsh"
+
+canonical_dir="$HOME/.agents/skills"
+claude_dir="$HOME/.claude/skills"
+codex_dir="$HOME/.codex/skills"
+
+typeset -ra shared_bundle_names=(
+  codex-primary-runtime
+)
+
+usage() {
+  cat <<'EOF'
+Usage: ./scripts/bootstrap-agent-skills
+
+Projects the canonical ~/.agents/skills layer into assistant-specific discovery
+directories and migrates known shared bundles from ~/.codex/skills into the
+canonical layer when needed.
+EOF
+}
+
+while (( $# > 0 )); do
+  case "$1" in
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    *)
+      die "bootstrap-agent-skills: unknown argument: $1"
+      ;;
+  esac
+done
+
+require_commands diff
+
+mkdir -p "$canonical_dir" "$claude_dir" "$codex_dir"
+
+migrate_shared_bundle_to_canonical() {
+  local name=$1
+  local source_path="$codex_dir/$name"
+  local canonical_path="$canonical_dir/$name"
+
+  [[ -e "$source_path" || -L "$source_path" ]] || return 0
+  [[ ! -e "$canonical_path" && ! -L "$canonical_path" ]] || return 0
+
+  if [[ -L "$source_path" ]]; then
+    print "bootstrap-agent-skills: skipping canonical migration for $name: source is already a symlink"
+    return
+  fi
+
+  [[ -d "$source_path" ]] || {
+    print "bootstrap-agent-skills: skipping canonical migration for $name: source is not a directory"
+    return
+  }
+
+  mv "$source_path" "$canonical_path"
+  print "bootstrap-agent-skills: migrated shared bundle: $name"
+}
+
+prune_projected_symlinks() {
+  local exposed_dir=$1
+  local entry_name entry_path target
+
+  for entry_path in "$exposed_dir"/*(N); do
+    [[ -L "$entry_path" ]] || continue
+
+    entry_name=${entry_path:t}
+    target=$(readlink "$entry_path")
+
+    if [[ "$target" == "$canonical_dir/"* && ! -e "$canonical_dir/$entry_name" && ! -L "$canonical_dir/$entry_name" ]]; then
+      rm -f "$entry_path"
+    fi
+  done
+}
+
+ensure_projected_symlink() {
+  local exposed_dir=$1
+  local canonical_path=$2
+  local exposed_path="$exposed_dir/${canonical_path:t}"
+  local target
+
+  if [[ -L "$exposed_path" ]]; then
+    target=$(readlink "$exposed_path")
+    if [[ "$target" == "$canonical_path" ]]; then
+      return
+    fi
+
+    if [[ "$target" == "$canonical_dir/"* ]]; then
+      rm -f "$exposed_path"
+    else
+      print "bootstrap-agent-skills: skipping projection for ${canonical_path:t}: existing symlink at $exposed_path"
+      return
+    fi
+  elif [[ -e "$exposed_path" ]]; then
+    if [[ -d "$exposed_path" && -d "$canonical_path" ]] && diff -qr "$exposed_path" "$canonical_path" >/dev/null 2>&1; then
+      rm -rf "$exposed_path"
+    else
+      print "bootstrap-agent-skills: skipping projection for ${canonical_path:t}: existing entry at $exposed_path"
+      return
+    fi
+  fi
+
+  ln -s "$canonical_path" "$exposed_path"
+}
+
+for name in "${shared_bundle_names[@]}"; do
+  migrate_shared_bundle_to_canonical "$name"
+done
+
+prune_projected_symlinks "$claude_dir"
+prune_projected_symlinks "$codex_dir"
+
+for skill_path in "$canonical_dir"/*(N/); do
+  ensure_projected_symlink "$claude_dir" "$skill_path"
+  ensure_projected_symlink "$codex_dir" "$skill_path"
+done
+
+print "bootstrap-agent-skills: projected canonical skills"

@@ -10,15 +10,20 @@ source "$repo_root/scripts/lib/install-common.zsh"
 skills_root="$repo_root/ai/skills"
 registry_path="$skills_root/skills.json"
 canonical_dir="$HOME/.agents/skills"
-claude_dir="$HOME/.claude/skills"
+bootstrap_script="$repo_root/scripts/bootstrap-agent-skills"
 force=0
+
+typeset -ra preserved_bundle_names=(
+  codex-primary-runtime
+)
 
 usage() {
   cat <<'EOF'
 Usage: ./scripts/install-skills [--update|--force]
 
 Syncs local skill packages from ai/skills/* and external skill dependencies from
-ai/skills/skills.json into ~/.agents/skills, then mirrors them into ~/.claude/skills.
+ai/skills/skills.json into ~/.agents/skills, then refreshes assistant-specific
+discovery layers.
 
 Options:
   --update, --force  Reinstall external skills from sources before syncing.
@@ -46,7 +51,7 @@ done
 
 require_commands jq npx fd
 
-mkdir -p "$canonical_dir" "$claude_dir"
+mkdir -p "$canonical_dir"
 
 tmpdir=$(make_tmpdir dotfiles-skills)
 trap 'rm -rf "$tmpdir"' EXIT
@@ -161,14 +166,13 @@ if [[ -f "$registry_path" ]]; then
   done
 fi
 
-prune_dir_except "$canonical_dir" "${managed_names[@]}"
-prune_dir_except "$claude_dir" "${managed_names[@]}"
-
-for name in "${managed_names[@]}"; do
-  if [[ -e "$canonical_dir/$name" || -L "$canonical_dir/$name" ]]; then
-    rm -rf "$claude_dir/$name"
-    ln -s "$canonical_dir/$name" "$claude_dir/$name"
-  fi
+for name in "${preserved_bundle_names[@]}"; do
+  [[ -d "$canonical_dir/$name" ]] || continue
+  managed_names+=("$name")
 done
+
+prune_dir_except "$canonical_dir" "${managed_names[@]}"
+
+zsh "$bootstrap_script"
 
 print "install-skills: synced ${#managed_names[@]} skills"

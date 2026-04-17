@@ -45,14 +45,16 @@ ai/skills/
 
 ## Правила сборки
 
-* `./scripts/install-skills` собирает итоговый набор из локальных skill-пакетов и внешних зависимостей
+* `./scripts/install-skills` собирает итоговый набор из локальных skill-пакетов и внешних зависимостей только в `~/.agents/skills`, а затем запускает projection в assistant-specific discovery-слои
 * конфликт имени между локальным и внешним skill — жёсткая ошибка
 * конфликт имени между внешними skill-источниками — жёсткая ошибка
+* `./scripts/bootstrap-agent-skills` публикует канонический слой в assistant-specific discovery-каталоги и при необходимости мигрирует `codex-primary-runtime` из `~/.codex/skills` в `~/.agents/skills`; обычно он вызывается из `./scripts/install-skills`
 
 ## Рабочие каталоги
 
-* `~/.agents/skills` — канонический общий слой навыков для Codex, OpenCode и совместимых инструментов
-* `~/.claude/skills` — зеркало общего слоя симлинками
+* `~/.agents/skills` — канонический общий слой навыков для всех инструментов
+* `~/.claude/skills` — projected discovery-слой Claude, собранный из `~/.agents/skills`
+* `~/.codex/skills` — projected discovery-слой Codex, собранный из `~/.agents/skills`; `.system` остаётся вне этого source of truth
 
 ## Установка
 
