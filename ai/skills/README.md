@@ -14,9 +14,9 @@
 ```text
 ai/skills/
 ├── editorial/
-│   ├── SKILL.md
-│   └── references/
+│   └── SKILL.md
 ├── prompt/
+│   └── SKILL.md
 ├── skills.json
 └── README.md
 ```
