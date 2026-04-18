@@ -6,7 +6,7 @@
 
 ## Формат `plugins.json`
 
-Словарь `plugin-name -> spec`. `spec`:
+Словарь `plugin-name → spec`. `spec`:
 
 * `"owner/repo"` — завернуть весь источник
 * `{ "source": "owner/repo", "skills": "*" }` — то же явно

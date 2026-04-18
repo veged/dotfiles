@@ -21,7 +21,7 @@ ai/skills/
 
 ## Формат `skills.json`
 
-Словарь `source -> spec`.
+Словарь `source → spec`.
 
 `source`:
 
@@ -40,7 +40,7 @@ ai/skills/
 * `./scripts/install-skills` собирает локальные пакеты и внешние зависимости в `~/.agents/skills`, затем запускает projection в assistant-specific слои
 * конфликт имени между локальным и внешним skill — жёсткая ошибка
 * конфликт имён между внешними источниками — жёсткая ошибка
-* `./scripts/bootstrap-agent-skills` при необходимости мигрирует `codex-primary-runtime` из `~/.codex/skills` в канонический слой; обычно вызывается из `install-skills`
+* `./scripts/bootstrap-agent-skills` при необходимости мигрирует `codex-primary-runtime` из `~/.codex/skills` в канонический слой, обычно вызывается из `install-skills`
 
 ## Установка
 
@@ -49,4 +49,4 @@ ai/skills/
 ./scripts/install-skills --update
 ```
 
-`--update` переустанавливает внешние зависимости; локальные пакеты синхронизируются при каждом запуске. `--force` оставлен алиасом.
+`--update` переустанавливает внешние зависимости. Локальные пакеты синхронизируются при каждом запуске. `--force` оставлен алиасом.
