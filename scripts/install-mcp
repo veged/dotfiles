@@ -138,6 +138,10 @@ check_generated_files() {
       "$tmp_home/.codex" \
       "$tmp_home/.config/opencode"
 
+    if [[ -f "$opencode_config_path" ]]; then
+      cp "$opencode_config_path" "$tmp_home/.config/opencode/opencode.jsonc"
+    fi
+
     HOME="$tmp_home" zsh "$repo_root/scripts/install-mcp" --sync-only >/dev/null
 
     check_generated_file "$tmp_home/.cursor/mcp.json" "$cursor_manifest_path"
@@ -331,6 +335,7 @@ if [[ "$opencode_marker_count" -ne 1 ]]; then
 fi
 
 opencode_fragment_path=$(mktemp "${TMPDIR:-/tmp}/opencode-mcp.XXXXXX")
+opencode_base_path=$(mktemp "${TMPDIR:-/tmp}/opencode-base.XXXXXX")
 
 jq '
   def opencode_local($server):
@@ -386,38 +391,46 @@ jq '
   }.mcp
 ' "$manifest_path" > "$opencode_fragment_path"
 
-awk -v fragment_path="$opencode_fragment_path" '
-  {
-    marker = "__MCP_JSON__"
-  }
-
-  match($0, marker) {
-    prefix = substr($0, 1, RSTART - 1)
-    suffix = substr($0, RSTART + RLENGTH)
-    wrote_fragment = 0
-
-    while ((getline line < fragment_path) > 0) {
-      if (!wrote_fragment) {
-        printf "%s%s", prefix, line
-        wrote_fragment = 1
-      } else {
-        printf "\n%s", line
+if [[ -n ${ELIZA_API_HOST-} || ! -f "$opencode_config_path" ]]; then
+  awk -v eliza_api_host="${ELIZA_API_HOST-}" '
+    {
+      if (length(eliza_api_host) > 0) {
+        gsub(/ELIZA_API_HOST/, eliza_api_host)
       }
+      gsub(/__MCP_JSON__/, "{}")
+      print
     }
-
-    if (!wrote_fragment) {
-      print prefix suffix
-    } else {
-      printf "%s\n", suffix
+  ' "$opencode_template_path" > "$opencode_base_path"
+else
+  awk '
+    {
+      gsub(/__MCP_JSON__/, "{}")
+      print
     }
+  ' "$opencode_template_path" > "$opencode_base_path"
 
-    close(fragment_path)
-    next
-  }
-  { print }
-' "$opencode_template_path" > "$opencode_config_path"
+  jq -s '
+    reduce (
+      (.[1].provider // {})
+      | to_entries[]
+      | select((.value.options // {}) | has("baseURL"))
+    ) as $provider (
+      .[0];
+      if (((.provider // {}) | has($provider.key)) and ((.provider[$provider.key].options // {}) | has("baseURL"))) then
+        .provider[$provider.key].options.baseURL = $provider.value.options.baseURL
+      else
+        .
+      end
+    )
+  ' "$opencode_base_path" "$opencode_config_path" > "$opencode_base_path.tmp"
+  mv "$opencode_base_path.tmp" "$opencode_base_path"
+fi
 
-rm -f "$opencode_fragment_path"
+jq --slurpfile mcp "$opencode_fragment_path" '
+  .mcp = $mcp[0]
+' "$opencode_base_path" > "$opencode_config_path"
+
+rm -f "$opencode_fragment_path" "$opencode_base_path"
 
 print "install-mcp: synced ~/.cursor/mcp.json"
 print "install-mcp: synced ~/.claude/settings.json"

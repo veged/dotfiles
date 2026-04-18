@@ -9,9 +9,11 @@
 
 - create:
   - ~/.config
+  - ~/.config/opencode
   - ~/.claude
   - ~/.claude/skills
   - ~/.codex
+  - ~/.cursor
   - ~/.agents
   - ~/.agents/instructions
   - ~/.agents/skills
@@ -26,18 +28,17 @@
     ~/.config/:
       glob: true
       path: config/*
-    ~/.claude/:
+      exclude: [config/opencode]
+    ~/.config/opencode/:
       glob: true
-      path: claude/*
+      path: config/opencode/*
+    ~/.claude/CLAUDE.md:
+      path: claude/CLAUDE.md
     ~/.codex/AGENTS.md:
       path: codex/AGENTS.md
-    ~/.codex/config.toml:
-      path: codex/config.toml
     ~/.agents/instructions/:
       glob: true
       path: ai/instructions/*
-    ~/.cursor/mcp.json:
-      path: cursor/mcp.json
     ~/.remarkrc.json:
       path: tools/remark/remarkrc.json
     ~/.local/bin/remark:
@@ -48,5 +49,6 @@
   - [brew bundle --file=Brewfile, Installing Homebrew packages]
   - [./scripts/install-skills, Syncing AI skills]
   - [./scripts/install-plugins, Installing local Codex plugins]
+  - [./scripts/install-mcp, Syncing MCP runtimes and generated configs]
   - [./scripts/install-remark, Installing remark toolchain]
   - ["git config filter.eliza-url.clean 'sd -s \"$ELIZA_API_HOST\" \"ELIZA_API_HOST\" -f -' && git config filter.eliza-url.smudge 'sd -s \"ELIZA_API_HOST\" \"$ELIZA_API_HOST\" -f -'", Configuring git clean/smudge filter for internal URLs]

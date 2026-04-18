@@ -6,6 +6,7 @@ set -euo pipefail
 repo_root=${0:A:h:h:h}
 tmp_root=$(mktemp -d "${TMPDIR:-/tmp}/install-mcp.XXXXXX")
 trap 'rm -rf "$tmp_root"' EXIT
+export ELIZA_API_HOST="eliza.test.internal"
 
 fixture_root="$tmp_root/repo"
 home_dir="$tmp_root/home"
@@ -110,6 +111,20 @@ fail() {
   exit 1
 }
 
+install_conf_path="$repo_root/install.conf.yaml"
+
+[[ -f "$install_conf_path" ]] || fail "missing install.conf.yaml"
+grep -Fq './scripts/install-mcp' "$install_conf_path" || fail "install.conf.yaml does not invoke ./scripts/install-mcp"
+grep -Fq '~/.config/opencode/:' "$install_conf_path" || fail "install.conf.yaml must link ~/.config/opencode/ explicitly"
+grep -Fq 'exclude: [config/opencode]' "$install_conf_path" || fail "install.conf.yaml must exclude config/opencode from the ~/.config/ glob"
+if grep -Fq '~/.codex/config.toml:' "$install_conf_path"; then
+  fail "install.conf.yaml must not link ~/.codex/config.toml directly"
+fi
+if grep -Fq '~/.cursor/mcp.json:' "$install_conf_path"; then
+  fail "install.conf.yaml must not link ~/.cursor/mcp.json directly"
+fi
+[[ ! -e "$repo_root/cursor/mcp.json" ]] || fail "cursor/mcp.json must not remain as a committed source file"
+
 [[ -f "$cursor_manifest_path" ]] || fail "missing generated cursor manifest: $cursor_manifest_path"
 [[ -f "$claude_settings_path" ]] || fail "missing generated claude settings: $claude_settings_path"
 [[ -f "$codex_config_path" ]] || fail "missing generated codex config: $codex_config_path"
@@ -174,12 +189,16 @@ fi
 [[ "$(jq -r '.mcp.sourcecraft.url' "$opencode_config_path")" == "https://api.sourcecraft.tech/mcp" ]] || fail "unexpected opencode sourcecraft url"
 [[ "$(jq -r '.mcp.sourcecraft.headers.Authorization' "$opencode_config_path")" == 'Bearer {env:SOURCECRAFT_PAT}' ]] || fail "unexpected opencode sourcecraft auth header"
 [[ "$(jq -r '.mcp.sourcecraft.timeout' "$opencode_config_path")" == "60000" ]] || fail "unexpected opencode sourcecraft timeout"
+[[ "$(jq -r '.provider["eliza-anthropic"].options.baseURL' "$opencode_config_path")" == "https://$ELIZA_API_HOST/raw/anthropic/v1" ]] || fail "unexpected opencode eliza anthropic baseURL"
 [[ "$(jq -r '.mcp.fff.type' "$opencode_config_path")" == "local" ]] || fail "unexpected opencode fff type"
 [[ "$(jq -r '.mcp.fff.enabled' "$opencode_config_path")" == "true" ]] || fail "unexpected opencode fff enabled flag"
 [[ "$(jq -r '.mcp.fff.command[0]' "$opencode_config_path")" == "/Users/veged/.local/bin/fff-mcp" ]] || fail "unexpected opencode fff command"
 [[ "$(jq -r '.mcp.fff.command | length' "$opencode_config_path")" == "1" ]] || fail "unexpected opencode fff command length"
 [[ "$(jq -r '.mcp.playwright.type' "$opencode_config_path")" == "local" ]] || fail "unexpected opencode playwright type"
 [[ "$(jq -r '.mcp.playwright.command[2]' "$opencode_config_path")" == "@playwright/mcp@latest" ]] || fail "unexpected opencode playwright command"
+if grep -Fq 'ELIZA_API_HOST' "$opencode_config_path"; then
+  fail "opencode ELIZA_API_HOST placeholder leaked into generated config"
+fi
 if grep -Fq '__MCP_JSON__' "$opencode_config_path"; then
   fail "opencode marker leaked into generated config"
 fi
@@ -195,6 +214,12 @@ fi
 if HOME="$opencode_duplicate_marker_home_dir" zsh "$opencode_duplicate_marker_fixture_root/scripts/install-mcp" --sync-only >/dev/null 2>&1; then
   fail "expected install-mcp to reject duplicate opencode marker"
 fi
+sd -s '"plugin": ["oh-my-openagent"]' '"plugin": ["changed-plugin"]' "$fixture_root/config/opencode/.opencode.template.jsonc"
+expected_opencode_baseurl="$(jq -r '.provider["eliza-anthropic"].options.baseURL' "$opencode_config_path")"
+env -u ELIZA_API_HOST HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --sync-only >/dev/null 2>&1 || fail "--sync-only must not fail when ELIZA_API_HOST is unset"
+[[ "$(jq -r '.provider["eliza-anthropic"].options.baseURL' "$opencode_config_path")" == "$expected_opencode_baseurl" ]] || fail "--sync-only must preserve resolved opencode baseURL when ELIZA_API_HOST is unset"
+[[ "$(jq -c '.plugin' "$opencode_config_path")" == '["changed-plugin"]' ]] || fail "--sync-only must still propagate non-MCP opencode template changes when ELIZA_API_HOST is unset"
+env -u ELIZA_API_HOST HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --check >/dev/null 2>&1 || fail "--check must not report drift when ELIZA_API_HOST is unset"
 
 jq \
   --arg fixture_runtime_path "$fixture_runtime_path" \
