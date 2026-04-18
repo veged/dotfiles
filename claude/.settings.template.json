@@ -138,7 +138,6 @@
       "Read(//private/tmp/**)",
       "Bash(for dir:*)",
       "Bash(for check:*)",
-      "mcp__fff__grep",
       "Read(//Users/veged/.claude/**)",
       "Read(//Users/veged/.agents/**)",
       "Read(//Users/veged/dotfiles/ai/**)",
@@ -146,10 +145,6 @@
       "WebSearch",
       "Skill(update-config)",
       "Skill(update-config:*)",
-      "mcp__fff__multi_grep",
-      "mcp__sourcecraft__GetMyProfile",
-      "mcp__sourcecraft__GetOrganization",
-      "mcp__sourcecraft__CreateRepository",
       "Bash(git init:*)"
     ],
     "additionalDirectories": [
@@ -176,5 +171,6 @@
         "repo": "nicobailon/visual-explainer"
       }
     }
-  }
+  },
+  "effortLevel": "xhigh"
 }
