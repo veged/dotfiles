@@ -3,5 +3,6 @@
     "source": "anthropics/skills",
     "skills": "frontend-design"
   },
-  "impeccable": "pbakaus/impeccable"
+  "impeccable": "pbakaus/impeccable",
+  "mblode": "mblode/agent-skills"
 }
