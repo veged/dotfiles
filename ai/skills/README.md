@@ -1,15 +1,13 @@
 # Навыки
 
-`~/dotfiles` хранит общий слой навыков в `ai/skills/`.
+Общий слой навыков в `ai/skills/`. Рабочие каталоги и общая архитектура — в [`../README.md`](../README.md).
 
 ## Структура
 
 В `ai/skills/` смешиваются два источника:
 
-* локальные skill-пакеты — подкаталоги верхнего уровня, где лежит `SKILL.md`
+* локальные skill-пакеты — подкаталоги с `SKILL.md` (имя = имя каталога)
 * внешние зависимости — реестр в `ai/skills/skills.json`
-
-Пример:
 
 ```text
 ai/skills/
@@ -21,40 +19,28 @@ ai/skills/
 └── README.md
 ```
 
-## Локальные навыки
+## Формат `skills.json`
 
-Каждый каталог `ai/skills/<name>/`, в котором есть `SKILL.md`, считается локальным skill-пакетом и синхронизируется как есть.
+Словарь `source -> spec`.
 
-Имена локальных навыков определяются именем каталога.
-
-## Внешние зависимости
-
-`skills.json` — это словарь `source -> spec`.
-
-`source` можно записывать в трёх видах:
+`source`:
 
 * `owner/repo`
 * `owner/repo/tree/...`
 * полный `https://github.com/...`
 
-`spec` поддерживает три формы:
+`spec`:
 
 * `"*"` — установить весь источник
 * `"skill-name"` — установить один навык
-* `["skill-a", "skill-b"]` — установить список навыков
+* `["skill-a", "skill-b"]` — установить список
 
 ## Правила сборки
 
-* `./scripts/install-skills` собирает итоговый набор из локальных skill-пакетов и внешних зависимостей только в `~/.agents/skills`, а затем запускает projection в assistant-specific discovery-слои
+* `./scripts/install-skills` собирает локальные пакеты и внешние зависимости в `~/.agents/skills`, затем запускает projection в assistant-specific слои
 * конфликт имени между локальным и внешним skill — жёсткая ошибка
-* конфликт имени между внешними skill-источниками — жёсткая ошибка
-* `./scripts/bootstrap-agent-skills` публикует канонический слой в assistant-specific discovery-каталоги и при необходимости мигрирует `codex-primary-runtime` из `~/.codex/skills` в `~/.agents/skills`; обычно он вызывается из `./scripts/install-skills`
-
-## Рабочие каталоги
-
-* `~/.agents/skills` — канонический общий слой навыков для всех инструментов
-* `~/.claude/skills` — projected discovery-слой Claude, собранный из `~/.agents/skills`
-* `~/.codex/skills` — projected discovery-слой Codex, собранный из `~/.agents/skills`; `.system` остаётся вне этого source of truth
+* конфликт имён между внешними источниками — жёсткая ошибка
+* `./scripts/bootstrap-agent-skills` при необходимости мигрирует `codex-primary-runtime` из `~/.codex/skills` в канонический слой; обычно вызывается из `install-skills`
 
 ## Установка
 
@@ -63,6 +49,4 @@ ai/skills/
 ./scripts/install-skills --update
 ```
 
-`--update` переустанавливает внешние зависимости из `skills.json`, но локальные skill-пакеты синхронизируются при каждом запуске.
-
-`--force` оставлен как алиас для обратной совместимости.
+`--update` переустанавливает внешние зависимости; локальные пакеты синхронизируются при каждом запуске. `--force` оставлен алиасом.

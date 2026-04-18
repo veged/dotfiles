@@ -14,6 +14,7 @@ cd ~/dotfiles
 
 * создаёт симлинки конфигов в `~/.config/` и `~/`
 * ставит пакеты через Homebrew из `Brewfile`
+* прогоняет скрипты из `scripts/` — синхронизацию AI-слоёв (`install-skills`, `install-plugins`, `install-mcp`) и `install-remark`
 
 ## Что настраивается
 
@@ -85,35 +86,7 @@ dotfiles/
 
 ## AI-конфиги
 
-Для AI-инструментов репозиторий разделяет канонический слой в `dotfiles` и рабочие слои в домашнем каталоге:
-
-* `dotfiles/ai/` — канонический источник общих инструкций, навыков и плагинов
-* `dotfiles/ai/skills/*` — локальные skill-пакеты в формате Agent Skills
-* `dotfiles/ai/skills/skills.json` — внешние зависимости общих навыков
-* `dotfiles/ai/plugins/plugins.json` — канонический реестр локальных плагинов Codex
-* `dotfiles/ai/mcp.json` — канонический MCP-реестр для Codex, Cursor, Claude и OpenCode
-* `~/.agents/instructions` — рабочий слой общих Markdown-инструкций
-* `~/.agents/skills` — единственный source of truth для общих навыков; его собирает `./scripts/install-skills`
-* `~/.claude/skills` и `~/.codex/skills` — assistant-specific discovery-слои, которые `./scripts/install-skills` обновляет через внутренний bootstrap из `~/.agents/skills`
-* `~/.codex/plugins/dotfiles-local` — локальные bundle-ы плагинов Codex, которые собирает `./scripts/install-plugins`
-* `~/.agents/plugins/marketplace.json` — локальный каталог плагинов Codex
-* `~/.claude/CLAUDE.md` — тонкая обёртка, которая импортирует общие инструкции
-* `dotfiles/claude/.settings.template.json`, `dotfiles/codex/.config.template.toml` и `dotfiles/config/opencode/.opencode.template.jsonc` — шаблоны non-MCP настроек для клиентских live-конфигов
-* `./scripts/install-mcp` — ставит локальные MCP runtime-ы и материализует `~/.codex/config.toml`, `~/.cursor/mcp.json`, `~/.claude/settings.json` и `~/.config/opencode/opencode.jsonc`
-* live MCP-конфиги в домашнем каталоге — generated outputs, а не редактируемые source-файлы в репозитории; часть значений материализуется из локальных env вроде `SOURCECRAFT_PAT`, `SOURCECRAFT_ENTERPRISE_PAT`, `ELIZA_API_HOST` и `ELIZA_TOKEN`
-
-Реестры описаны в минимальной форме:
-
-* `ai/skills/skills.json` — словарь `source -> "*" | "skill" | ["skills"]` для внешних skill-зависимостей
-* `ai/plugins/plugins.json` — словарь `plugin-name -> "source" | { source, skills }`
-* `ai/mcp.json` — словарь `server-name -> { enabled, transport, command/url, install, clients }`
-* для GitHub-источников можно использовать короткую форму `owner/repo` вместо полного `https://github.com/owner/repo`
-
-`./scripts/install-plugins` только публикует personal marketplace и локальные bundle-ы. Сам plugin затем ставится через `Plugins` или `/plugins` и вызывается через `@plugin-name`, а не через slash-команду вида `/impeccable`.
-
-`./scripts/bootstrap-agent-skills` не создаёт второй источник правды: он только публикует содержимое `~/.agents/skills` в assistant-specific discovery-слои и мигрирует известные общие bundle-ы вроде `codex-primary-runtime` из `~/.codex/skills`, не трогая `.system`. Обычно его напрямую вызывать не нужно: `./scripts/install-skills` делает это сам.
-
-Если инструмент поддерживает общий формат проектных инструкций, предпочтителен `AGENTS.md`. Если инструмент ожидает собственный файл вроде `CLAUDE.md`, лучше делать тонкую обёртку над общим слоем, а не дублировать содержимое.
+Канонический слой лежит в `ai/`, рабочие артефакты раскладываются в `~/.agents/`, `~/.claude/` и `~/.codex/`. `install` собирает всё это сам. Подробности — в [`ai/README.md`](ai/README.md), детали пайплайнов — в [`ai/skills/README.md`](ai/skills/README.md) и [`ai/plugins/README.md`](ai/plugins/README.md).
 
 ## Для AI-ассистентов
 

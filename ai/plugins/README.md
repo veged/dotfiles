@@ -1,27 +1,19 @@
 # Плагины
 
-`~/dotfiles` хранит канонический реестр локальных плагинов Codex в `ai/plugins/plugins.json`.
+Канонический реестр локальных плагинов Codex в `ai/plugins/plugins.json`. Рабочие каталоги и общая архитектура — в [`../README.md`](../README.md).
 
-Это отдельный слой поверх общих навыков. Он нужен там, где одного плоского пространства имён недостаточно, например при конфликте имён.
+Плагины — отдельный слой поверх общих навыков. Они нужны там, где плоского пространства имён не хватает, например при конфликте имён.
 
-## Формат
+## Формат `plugins.json`
 
-`plugins.json` — это словарь `plugin-name -> spec`.
+Словарь `plugin-name -> spec`. `spec`:
 
-`spec` поддерживает четыре формы:
+* `"owner/repo"` — завернуть весь источник
+* `{ "source": "owner/repo", "skills": "*" }` — то же явно
+* `{ "source": "owner/repo", "skills": "skill-name" }` — один навык
+* `{ "source": "owner/repo", "skills": ["skill-a", "skill-b"] }` — список
 
-* `"owner/repo"` — завернуть весь источник в плагин с этим именем
-* `{ "source": "owner/repo", "skills": "*" }` — то же самое, но в явной форме
-* `{ "source": "owner/repo", "skills": "skill-name" }` — завернуть один навык
-* `{ "source": "owner/repo", "skills": ["skill-a", "skill-b"] }` — завернуть список навыков
-
-Для `source` поддержан и полный `https://github.com/...`, но короткая форма предпочтительнее.
-
-## Рабочие каталоги
-
-* `~/.codex/plugins/dotfiles-local/<plugin-name>` — собранный локальный плагин для Codex
-* `~/.agents/plugins/marketplace.json` — локальный каталог плагинов
-* `~/.codex/config.toml` — хранит состояние уже установленных плагинов, но не заменяет установку
+Для `source` допустим и полный `https://github.com/...`, но короткая форма предпочтительнее.
 
 ## Установка
 
@@ -30,15 +22,13 @@
 ./scripts/install-plugins --update
 ```
 
-`--update` пересобирает локальные плагины из `plugins.json`, а не только добирает недостающие.
+`--update` пересобирает локальные плагины из `plugins.json`. `--force` оставлен алиасом.
 
-`--force` оставлен как алиас для обратной совместимости.
-
-После bootstrap plugin ещё нужно установить в Codex:
+Скрипт только публикует personal marketplace и локальные bundle-ы. Сам plugin затем ставится в Codex:
 
 1. открыть `Plugins` или вызвать `/plugins`
 2. выбрать marketplace `Dotfiles Local`
 3. установить нужный plugin
 4. начать новый thread и вызывать plugin через `@`, например `@impeccable`
 
-`/impeccable` не обязана появляться, потому что plugin не равен slash-команде.
+Slash-команда вида `/impeccable` появляться не обязана — plugin не равен slash-команде.
