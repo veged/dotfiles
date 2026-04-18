@@ -71,8 +71,19 @@ cp "$repo_root/claude/.settings.template.json" "$opencode_duplicate_marker_fixtu
 cp "$repo_root/config/opencode/.opencode.template.jsonc" "$opencode_duplicate_marker_fixture_root/config/opencode/.opencode.template.jsonc"
 cp "$repo_root/codex/.config.template.toml" "$opencode_duplicate_marker_fixture_root/codex/.config.template.toml"
 
-jq '.sourcecraft.clients.cursor.type = "sse"' "$fixture_root/ai/mcp.json" > "$fixture_root/ai/mcp.json.tmp"
+jq '
+  .sourcecraft.clients.cursor.type = "sse"
+  | .sourcecraft.clients.claude.allow_tools += ["mcp__fff__grep"]
+' "$fixture_root/ai/mcp.json" > "$fixture_root/ai/mcp.json.tmp"
 mv "$fixture_root/ai/mcp.json.tmp" "$fixture_root/ai/mcp.json"
+
+jq '
+  .permissions.allow =
+    ["mcp__sourcecraft__GetOrganization"]
+    + .permissions.allow
+    + ["mcp__fff__grep"]
+' "$fixture_root/claude/.settings.template.json" > "$fixture_root/claude/.settings.template.json.tmp"
+mv "$fixture_root/claude/.settings.template.json.tmp" "$fixture_root/claude/.settings.template.json"
 
 jq '.fff.install.check_path = "/tmp/fff-mcp-mismatch"' "$bad_fixture_root/ai/mcp.json" > "$bad_fixture_root/ai/mcp.json.tmp"
 mv "$bad_fixture_root/ai/mcp.json.tmp" "$bad_fixture_root/ai/mcp.json"
@@ -102,17 +113,37 @@ fail() {
 [[ -f "$claude_settings_path" ]] || fail "missing generated claude settings: $claude_settings_path"
 [[ -f "$codex_config_path" ]] || fail "missing generated codex config: $codex_config_path"
 [[ -f "$opencode_config_path" ]] || fail "missing generated opencode config: $opencode_config_path"
+
+expected_claude_mcp_tools="$(
+  jq -c '
+    reduce (
+      to_entries[]
+      | select(.value.enabled)
+      | (((.value.clients // {} | .claude // {} | .allow_tools) // [])[])
+    ) as $item (
+      [];
+      if index($item) then
+        .
+      else
+        . + [$item]
+      end
+    )
+  ' "$fixture_root/ai/mcp.json"
+)"
+
+actual_claude_mcp_tools="$(
+  jq -c '
+    [.permissions.allow[] | select(type == "string" and startswith("mcp__"))]
+  ' "$claude_settings_path"
+)"
+
 jq -e . "$claude_settings_path" >/dev/null || fail "generated claude settings must be valid JSON"
 jq -e . "$opencode_config_path" >/dev/null || fail "generated opencode config must be valid JSON"
 [[ "$(jq -r '.enabledPlugins["superpowers@claude-plugins-official"]' "$claude_settings_path")" == "true" ]] || fail "missing preserved claude plugin"
 [[ "$(jq -r '.extraKnownMarketplaces["visual-explainer-marketplace"].source.repo' "$claude_settings_path")" == "nicobailon/visual-explainer" ]] || fail "missing preserved claude marketplace"
 [[ "$(jq -r '.permissions.additionalDirectories[0]' "$claude_settings_path")" == "/private/tmp" ]] || fail "missing preserved claude additional directory"
 [[ "$(jq -r '.permissions.allow[]' "$claude_settings_path" | grep -Fx 'Bash(ugrep:*)')" == 'Bash(ugrep:*)' ]] || fail "missing preserved non-MCP claude permission"
-[[ "$(jq -r '.permissions.allow[]' "$claude_settings_path" | grep -Fx 'mcp__fff__find_files')" == 'mcp__fff__find_files' ]] || fail "missing derived claude fff find_files permission"
-[[ "$(jq -r '.permissions.allow[]' "$claude_settings_path" | grep -Fx 'mcp__fff__grep')" == 'mcp__fff__grep' ]] || fail "missing derived claude fff grep permission"
-[[ "$(jq -r '.permissions.allow[]' "$claude_settings_path" | grep -Fx 'mcp__fff__multi_grep')" == 'mcp__fff__multi_grep' ]] || fail "missing derived claude fff multi_grep permission"
-[[ "$(jq -r '.permissions.allow[]' "$claude_settings_path" | grep -Fx 'mcp__sourcecraft__GetMyProfile')" == 'mcp__sourcecraft__GetMyProfile' ]] || fail "missing derived claude sourcecraft permission"
-[[ "$(jq '[.permissions.allow[] | select(startswith("mcp__"))] | unique | length' "$claude_settings_path")" == "$(jq '[.permissions.allow[] | select(startswith("mcp__"))] | length' "$claude_settings_path")" ]] || fail "claude MCP permissions must be unique"
+[[ "$actual_claude_mcp_tools" == "$expected_claude_mcp_tools" ]] || fail "unexpected claude MCP permission set"
 [[ "$(jq -r '.mcpServers.fff.command' "$cursor_manifest_path")" == "/Users/veged/.local/bin/fff-mcp" ]] || fail "unexpected fff command"
 [[ "$(jq -r '.mcpServers.context7.disabled' "$cursor_manifest_path")" == "true" ]] || fail "context7 must be disabled"
 [[ "$(jq -r '.mcpServers.playwright.disabled' "$cursor_manifest_path")" == "true" ]] || fail "playwright must be disabled"
@@ -164,4 +195,4 @@ if HOME="$opencode_duplicate_marker_home_dir" zsh "$opencode_duplicate_marker_fi
   fail "expected install-mcp to reject duplicate opencode marker"
 fi
 
-print "test-install-mcp: cursor, codex, and opencode sync ok"
+print "test-install-mcp: cursor, claude, codex, and opencode sync ok"

@@ -101,18 +101,13 @@ jq '
 
 jq -s '
   def derived_claude_allow_tools($manifest):
-    $manifest
-    | to_entries
-    | map(
-        select(.value.enabled)
-        | (((.value.clients // {} | .claude // {} | .allow_tools) // []))
-      )
-    | flatten
-    | unique;
-
-  def append_unique($base; $extra):
-    reduce $extra[] as $item (
-      $base;
+    reduce (
+      $manifest
+      | to_entries[]
+      | select(.value.enabled)
+      | (((.value.clients // {} | .claude // {} | .allow_tools) // [])[])
+    ) as $item (
+      [];
       if index($item) then
         .
       else
@@ -120,10 +115,14 @@ jq -s '
       end
     );
 
+  def drop_mcp_allow_entries($items):
+    ($items // [])
+    | map(select((type != "string") or (startswith("mcp__") | not)));
+
   .[0] as $manifest
   | .[1]
   | .permissions = ((.permissions // {})
-      | .allow = append_unique((.allow // []); derived_claude_allow_tools($manifest)))
+      | .allow = (drop_mcp_allow_entries(.allow) + derived_claude_allow_tools($manifest)))
 ' "$manifest_path" "$claude_template_path" > "$claude_settings_path"
 
 codex_marker_count=$(grep -Fxc '# __MCP_SERVERS__' "$codex_template_path" || true)
