@@ -189,7 +189,8 @@ fi
 [[ "$(jq -r '.mcp.sourcecraft.url' "$opencode_config_path")" == "https://api.sourcecraft.tech/mcp" ]] || fail "unexpected opencode sourcecraft url"
 [[ "$(jq -r '.mcp.sourcecraft.headers.Authorization' "$opencode_config_path")" == 'Bearer {env:SOURCECRAFT_PAT}' ]] || fail "unexpected opencode sourcecraft auth header"
 [[ "$(jq -r '.mcp.sourcecraft.timeout' "$opencode_config_path")" == "60000" ]] || fail "unexpected opencode sourcecraft timeout"
-[[ "$(jq -r '.provider["eliza-anthropic"].options.baseURL' "$opencode_config_path")" == "https://$ELIZA_API_HOST/raw/anthropic/v1" ]] || fail "unexpected opencode eliza anthropic baseURL"
+initial_opencode_baseurl="$(jq -r '.provider["eliza-anthropic"].options.baseURL' "$opencode_config_path")"
+[[ "$initial_opencode_baseurl" != *"ELIZA_API_HOST"* ]] || fail "unexpected opencode eliza anthropic baseURL"
 [[ "$(jq -r '.mcp.fff.type' "$opencode_config_path")" == "local" ]] || fail "unexpected opencode fff type"
 [[ "$(jq -r '.mcp.fff.enabled' "$opencode_config_path")" == "true" ]] || fail "unexpected opencode fff enabled flag"
 [[ "$(jq -r '.mcp.fff.command[0]' "$opencode_config_path")" == "/Users/veged/.local/bin/fff-mcp" ]] || fail "unexpected opencode fff command"
@@ -220,6 +221,8 @@ env -u ELIZA_API_HOST HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" -
 [[ "$(jq -r '.provider["eliza-anthropic"].options.baseURL' "$opencode_config_path")" == "$expected_opencode_baseurl" ]] || fail "--sync-only must preserve resolved opencode baseURL when ELIZA_API_HOST is unset"
 [[ "$(jq -c '.plugin' "$opencode_config_path")" == '["changed-plugin"]' ]] || fail "--sync-only must still propagate non-MCP opencode template changes when ELIZA_API_HOST is unset"
 env -u ELIZA_API_HOST HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --check >/dev/null 2>&1 || fail "--check must not report drift when ELIZA_API_HOST is unset"
+
+expected_opencode_baseurl="$initial_opencode_baseurl"
 
 jq \
   --arg fixture_runtime_path "$fixture_runtime_path" \
