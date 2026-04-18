@@ -101,11 +101,12 @@ cursor_manifest_path="$home_dir/.cursor/mcp.json"
 claude_settings_path="$home_dir/.claude/settings.json"
 codex_config_path="$home_dir/.codex/config.toml"
 opencode_config_path="$home_dir/.config/opencode/opencode.jsonc"
+fixture_runtime_path="$home_dir/.local/bin/fff-mcp"
 
 HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --sync-only
 
 fail() {
-  print -u2 "$1"
+  print -u2 -- "$1"
   exit 1
 }
 
@@ -195,4 +196,49 @@ if HOME="$opencode_duplicate_marker_home_dir" zsh "$opencode_duplicate_marker_fi
   fail "expected install-mcp to reject duplicate opencode marker"
 fi
 
-print "test-install-mcp: cursor, claude, codex, and opencode sync ok"
+jq \
+  --arg fixture_runtime_path "$fixture_runtime_path" \
+  '
+    .fff.command = $fixture_runtime_path
+    | .fff.install.check_path = $fixture_runtime_path
+    | .fff.install.argv = [
+        "/bin/sh",
+        "-lc",
+        "mkdir -p \"$HOME/.local/bin\" && printf \"#!/bin/sh\\necho fff\\n\" > \"$HOME/.local/bin/fff-mcp\" && chmod +x \"$HOME/.local/bin/fff-mcp\""
+      ]
+    | .playwright.enabled = true
+    | .playwright.command = "zsh"
+    | .playwright.args = []
+  ' "$fixture_root/ai/mcp.json" > "$fixture_root/ai/mcp.json.tmp"
+mv "$fixture_root/ai/mcp.json.tmp" "$fixture_root/ai/mcp.json"
+
+HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --sync-only
+
+rm -f "$fixture_runtime_path"
+HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --tools-only
+[[ -x "$fixture_runtime_path" ]] || fail "fff runtime was not installed by --tools-only"
+
+rm -f "$fixture_runtime_path"
+jq '.mcpServers.fff.command = "/tmp/default-mode-drift"' "$cursor_manifest_path" > "$cursor_manifest_path.tmp"
+mv "$cursor_manifest_path.tmp" "$cursor_manifest_path"
+HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp"
+[[ -x "$fixture_runtime_path" ]] || fail "fff runtime was not installed by default mode"
+[[ "$(jq -r '.mcpServers.fff.command' "$cursor_manifest_path")" == "$fixture_runtime_path" ]] || fail "default mode did not resync generated files"
+
+HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --check
+
+jq '.mcpServers.fff.command = "/tmp/drifted-fff"' "$cursor_manifest_path" > "$cursor_manifest_path.tmp"
+mv "$cursor_manifest_path.tmp" "$cursor_manifest_path"
+
+if HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --check >/dev/null 2>&1; then
+  fail "--check unexpectedly passed with drifted generated files"
+fi
+
+HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --sync-only
+rm -f "$fixture_runtime_path"
+
+if HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --check >/dev/null 2>&1; then
+  fail "--check unexpectedly passed without fff runtime"
+fi
+
+print "test-install-mcp: install, check, and sync ok"

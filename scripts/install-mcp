@@ -19,28 +19,25 @@ codex_config_path="$codex_dir/config.toml"
 opencode_dir="$HOME/.config/opencode"
 opencode_template_path="$repo_root/config/opencode/.opencode.template.jsonc"
 opencode_config_path="$opencode_dir/opencode.jsonc"
+mode=default
 
-while (( $# > 0 )); do
+if (( $# > 1 )); then
+  die "install-mcp: expected at most one mode argument"
+fi
+
+if (( $# == 1 )); then
   case "$1" in
-    --sync-only)
+    --sync-only|--tools-only|--check)
+      mode=$1
       ;;
     *)
       die "install-mcp: unknown argument: $1"
       ;;
   esac
-  shift
-done
+fi
 
-require_commands jq
+require_commands diff jq
 [[ -f "$manifest_path" ]] || die "install-mcp: missing manifest: $manifest_path"
-[[ -f "$claude_template_path" ]] || die "install-mcp: missing claude template: $claude_template_path"
-[[ -f "$codex_template_path" ]] || die "install-mcp: missing codex template: $codex_template_path"
-[[ -f "$opencode_template_path" ]] || die "install-mcp: missing opencode template: $opencode_template_path"
-
-mkdir -p "$cursor_dir"
-mkdir -p "$claude_dir"
-mkdir -p "$codex_dir"
-mkdir -p "$opencode_dir"
 
 jq '
   to_entries[]
@@ -51,6 +48,129 @@ jq '
       empty
     end
 ' "$manifest_path" >/dev/null
+
+run_install_command() {
+  local name=$1
+  local -a argv=()
+  local arg
+
+  while IFS= read -r arg; do
+    argv+=("$arg")
+  done < <(jq -r --arg name "$name" '.[$name].install.argv[]?' "$manifest_path")
+
+  (( ${#argv[@]} > 0 )) || die "install-mcp: missing install.argv for $name"
+  "${argv[@]}"
+}
+
+runtime_exists() {
+  local target=$1
+
+  if [[ "$target" == */* ]]; then
+    [[ -x "$target" ]]
+    return
+  fi
+
+  command -v "$target" >/dev/null 2>&1
+}
+
+install_local_tools() {
+  local name check_path
+
+  while IFS= read -r name; do
+    [[ -n "$name" ]] || continue
+
+    check_path=$(jq -r --arg name "$name" '.[$name].install.check_path // .[$name].command' "$manifest_path")
+    runtime_exists "$check_path" && continue
+
+    print "install-mcp: installing local runtime: $name"
+    run_install_command "$name"
+    runtime_exists "$check_path" || die "install-mcp: install command did not produce runtime for $name: $check_path"
+  done < <(
+    jq -r '
+      to_entries[]
+      | select(.value.enabled and .value.transport == "local" and ((.value.install // {} | .kind) == "command"))
+      | .key
+    ' "$manifest_path"
+  )
+}
+
+check_local_tools() {
+  local runtime_path missing=0
+
+  while IFS= read -r runtime_path; do
+    [[ -n "$runtime_path" ]] || continue
+
+    if ! runtime_exists "$runtime_path"; then
+      print -u2 "install-mcp: missing local MCP runtime: $runtime_path"
+      missing=1
+    fi
+  done < <(
+    jq -r '
+      to_entries[]
+      | select(.value.enabled and .value.transport == "local")
+      | (.value.install.check_path // .value.command)
+    ' "$manifest_path"
+  )
+
+  (( missing == 0 )) || return 1
+}
+
+check_generated_file() {
+  local expected_path=$1
+  local live_path=$2
+
+  [[ -f "$live_path" ]] || die "install-mcp: missing generated file: $live_path"
+  diff -u "$expected_path" "$live_path"
+}
+
+check_generated_files() {
+  local tmpdir tmp_home
+
+  tmpdir=$(make_tmpdir install-mcp-check)
+
+  (
+    trap 'rm -rf "$tmpdir"' EXIT
+    tmp_home="$tmpdir/home"
+
+    mkdir -p \
+      "$tmp_home/.cursor" \
+      "$tmp_home/.claude" \
+      "$tmp_home/.codex" \
+      "$tmp_home/.config/opencode"
+
+    HOME="$tmp_home" zsh "$repo_root/scripts/install-mcp" --sync-only >/dev/null
+
+    check_generated_file "$tmp_home/.cursor/mcp.json" "$cursor_manifest_path"
+    check_generated_file "$tmp_home/.claude/settings.json" "$claude_settings_path"
+    check_generated_file "$tmp_home/.codex/config.toml" "$codex_config_path"
+    check_generated_file "$tmp_home/.config/opencode/opencode.jsonc" "$opencode_config_path"
+  )
+}
+
+case "$mode" in
+  --tools-only)
+    install_local_tools
+    exit 0
+    ;;
+  --check)
+    check_local_tools
+    check_generated_files
+    exit 0
+    ;;
+esac
+
+if [[ "$mode" == "default" ]]; then
+  install_local_tools
+fi
+
+[[ -f "$claude_template_path" ]] || die "install-mcp: missing claude template: $claude_template_path"
+[[ -f "$codex_template_path" ]] || die "install-mcp: missing codex template: $codex_template_path"
+[[ -f "$opencode_template_path" ]] || die "install-mcp: missing opencode template: $opencode_template_path"
+
+mkdir -p "$cursor_dir"
+mkdir -p "$claude_dir"
+mkdir -p "$codex_dir"
+mkdir -p "$opencode_dir"
 
 jq '
   def cursor_base($server):
