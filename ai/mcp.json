@@ -77,6 +77,28 @@
       }
     }
   },
+  "tracker": {
+    "enabled": true,
+    "transport": "local",
+    "command": "ya",
+    "args": [
+      "tool",
+      "mcp",
+      "connect",
+      "wss://mcp.yandex.net/ws?servers=tracker_mcp"
+    ]
+  },
+  "wiki": {
+    "enabled": true,
+    "transport": "local",
+    "command": "ya",
+    "args": [
+      "tool",
+      "mcp",
+      "connect",
+      "wss://mcp.yandex.net/ws?servers=wiki"
+    ]
+  },
   "context7": {
     "enabled": false,
     "transport": "local",
