@@ -75,7 +75,8 @@ alias icat='kitten icat'
 alias kitty-light='kitty +kitten themes --reload-in=all Catppuccin-Latte'
 alias kitty-dark='kitty +kitten themes --reload-in=all Catppuccin-Mocha'
 
-alias ya="$HOME/arcadia/ya"
+export ARCADIA_ROOT="$HOME/arcadia"
+alias ya="$ARCADIA_ROOT/ya"
 
 # Usage: prompt-length TEXT [COLUMNS]
 #
