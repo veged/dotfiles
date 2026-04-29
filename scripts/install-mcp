@@ -13,6 +13,7 @@ cursor_manifest_path="$cursor_dir/mcp.json"
 claude_dir="$HOME/.claude"
 claude_template_path="$repo_root/claude/.settings.template.json"
 claude_settings_path="$claude_dir/settings.json"
+claude_user_path="$HOME/.claude.json"
 codex_dir="$HOME/.codex"
 codex_template_path="$repo_root/codex/.config.template.toml"
 codex_config_path="$codex_dir/config.toml"
@@ -142,12 +143,17 @@ check_generated_files() {
       cp "$opencode_config_path" "$tmp_home/.config/opencode/opencode.jsonc"
     fi
 
+    if [[ -f "$claude_user_path" ]]; then
+      cp "$claude_user_path" "$tmp_home/.claude.json"
+    fi
+
     HOME="$tmp_home" zsh "$repo_root/scripts/install-mcp" --sync-only >/dev/null
 
     check_generated_file "$tmp_home/.cursor/mcp.json" "$cursor_manifest_path"
     check_generated_file "$tmp_home/.claude/settings.json" "$claude_settings_path"
     check_generated_file "$tmp_home/.codex/config.toml" "$codex_config_path"
     check_generated_file "$tmp_home/.config/opencode/opencode.jsonc" "$opencode_config_path"
+    check_generated_file "$tmp_home/.claude.json" "$claude_user_path"
   )
 }
 
@@ -438,7 +444,66 @@ jq --slurpfile mcp "$opencode_fragment_path" '
 
 rm -f "$opencode_fragment_path" "$opencode_base_path"
 
+claude_user_fragment_path=$(mktemp "${TMPDIR:-/tmp}/claude-user-mcp.XXXXXX")
+
+jq '
+  def claude_server_enabled($server):
+    (
+      ($server.clients // {} | .claude // {}) as $claude
+      | if ($claude | has("enabled")) then $claude.enabled else $server.enabled end
+    );
+
+  def claude_server($name; $server):
+    if (claude_server_enabled($server) | not) then
+      empty
+    elif $server.transport == "local" then
+      {
+        key: $name,
+        value: {
+          type: "stdio",
+          command: $server.command,
+          args: ($server.args // []),
+          env: {}
+        }
+      }
+    elif $server.transport == "remote" then
+      {
+        key: $name,
+        value: (
+          {type: "http", url: $server.url}
+          + (
+              $server.auth // {} |
+              if .type == "bearer_env" then
+                {headers: {Authorization: ("Bearer ${" + .env + "}")}}
+              else
+                {}
+              end
+            )
+        )
+      }
+    else
+      error("install-mcp: unsupported transport for " + $name)
+    end;
+
+  [
+    to_entries[]
+    | claude_server(.key; .value)
+  ] | from_entries
+' "$manifest_path" > "$claude_user_fragment_path"
+
+claude_user_tmp=$(mktemp "${TMPDIR:-/tmp}/claude-user.XXXXXX")
+if [[ -f "$claude_user_path" ]]; then
+  jq --slurpfile mcp "$claude_user_fragment_path" '.mcpServers = $mcp[0]' "$claude_user_path" > "$claude_user_tmp"
+else
+  jq -n --slurpfile mcp "$claude_user_fragment_path" '{mcpServers: $mcp[0]}' > "$claude_user_tmp"
+fi
+chmod 0600 "$claude_user_tmp"
+mv "$claude_user_tmp" "$claude_user_path"
+
+rm -f "$claude_user_fragment_path"
+
 print "install-mcp: synced ~/.cursor/mcp.json"
 print "install-mcp: synced ~/.claude/settings.json"
 print "install-mcp: synced ~/.codex/config.toml"
 print "install-mcp: synced ~/.config/opencode/opencode.jsonc"
+print "install-mcp: synced ~/.claude.json mcpServers"

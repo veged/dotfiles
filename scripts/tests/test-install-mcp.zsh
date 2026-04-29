@@ -100,9 +100,30 @@ EOF
 
 cursor_manifest_path="$home_dir/.cursor/mcp.json"
 claude_settings_path="$home_dir/.claude/settings.json"
+claude_user_path="$home_dir/.claude.json"
 codex_config_path="$home_dir/.codex/config.toml"
 opencode_config_path="$home_dir/.config/opencode/opencode.jsonc"
 fixture_runtime_path="$home_dir/.local/bin/fff-mcp"
+
+cat > "$claude_user_path" <<'EOF'
+{
+  "theme": "dark",
+  "projects": {
+    "/tmp/foo": {
+      "history": ["one", "two"]
+    }
+  },
+  "mcpServers": {
+    "stale-server": {
+      "type": "stdio",
+      "command": "should-be-replaced",
+      "args": [],
+      "env": {}
+    }
+  }
+}
+EOF
+chmod 0600 "$claude_user_path"
 
 HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --sync-only
 
@@ -129,6 +150,23 @@ fi
 [[ -f "$claude_settings_path" ]] || fail "missing generated claude settings: $claude_settings_path"
 [[ -f "$codex_config_path" ]] || fail "missing generated codex config: $codex_config_path"
 [[ -f "$opencode_config_path" ]] || fail "missing generated opencode config: $opencode_config_path"
+[[ -f "$claude_user_path" ]] || fail "missing generated ~/.claude.json"
+[[ "$(stat -f '%Lp' "$claude_user_path" 2>/dev/null || stat -c '%a' "$claude_user_path")" == "600" ]] || fail "~/.claude.json must be chmod 0600"
+[[ "$(jq -r '.theme' "$claude_user_path")" == "dark" ]] || fail "~/.claude.json non-mcp state (theme) lost"
+[[ "$(jq -r '.projects["/tmp/foo"].history | length' "$claude_user_path")" == "2" ]] || fail "~/.claude.json projects state lost"
+[[ "$(jq 'has("mcpServers") and (.mcpServers | has("stale-server"))' "$claude_user_path")" == "false" ]] || fail "~/.claude.json stale mcpServers entry not removed"
+[[ "$(jq -r '.mcpServers.tracker.type' "$claude_user_path")" == "stdio" ]] || fail "~/.claude.json tracker type"
+[[ "$(jq -r '.mcpServers.tracker.command' "$claude_user_path")" == "ya" ]] || fail "~/.claude.json tracker command"
+[[ "$(jq -r '.mcpServers.tracker.args | length' "$claude_user_path")" == "4" ]] || fail "~/.claude.json tracker args length"
+[[ "$(jq -r '.mcpServers.wiki.type' "$claude_user_path")" == "stdio" ]] || fail "~/.claude.json wiki type"
+[[ "$(jq -r '.mcpServers.wiki.command' "$claude_user_path")" == "ya" ]] || fail "~/.claude.json wiki command"
+[[ "$(jq -r '.mcpServers.wiki.args | length' "$claude_user_path")" == "4" ]] || fail "~/.claude.json wiki args length"
+[[ "$(jq -r '.mcpServers.fff.type' "$claude_user_path")" == "stdio" ]] || fail "~/.claude.json fff type"
+[[ "$(jq -r '.mcpServers.sourcecraft.type' "$claude_user_path")" == "http" ]] || fail "~/.claude.json sourcecraft type"
+[[ "$(jq -r '.mcpServers.sourcecraft.url' "$claude_user_path")" == "https://api.sourcecraft.tech/mcp" ]] || fail "~/.claude.json sourcecraft url"
+[[ "$(jq -r '.mcpServers.sourcecraft.headers.Authorization' "$claude_user_path")" == 'Bearer ${SOURCECRAFT_PAT}' ]] || fail "~/.claude.json sourcecraft auth header"
+[[ "$(jq 'has("mcpServers") and (.mcpServers | has("context7"))' "$claude_user_path")" == "false" ]] || fail "context7 must be absent from ~/.claude.json (disabled)"
+[[ "$(jq 'has("mcpServers") and (.mcpServers | has("playwright"))' "$claude_user_path")" == "false" ]] || fail "playwright must be absent from ~/.claude.json (disabled)"
 
 expected_claude_mcp_tools="$(
   jq -c '
