@@ -263,6 +263,12 @@ jq -r '
   def toml_array($items):
     "[" + (($items // []) | map(@json) | join(", ")) + "]";
 
+  def codex_server_enabled($server):
+    (
+      ($server.clients // {} | .codex // {}) as $codex
+      | if ($codex | has("enabled")) then $codex.enabled else $server.enabled end
+    );
+
   def codex_tool_approvals($name; $server):
     (
       (($server.clients // {} | .codex // {} | .tool_approvals) // {})
@@ -277,7 +283,7 @@ jq -r '
     );
 
   def codex_server($name; $server):
-    if ($server.enabled | not) then
+    if (codex_server_enabled($server) | not) then
       empty
     elif $server.transport == "local" then
       [

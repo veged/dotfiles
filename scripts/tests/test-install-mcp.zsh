@@ -167,8 +167,9 @@ jq -e . "$opencode_config_path" >/dev/null || fail "generated opencode config mu
 [[ "$(jq -r '.mcpServers.sourcecraft.type' "$cursor_manifest_path")" == "sse" ]] || fail "unexpected sourcecraft type"
 [[ "$(jq -r '.mcpServers.sourcecraft.headers.Authorization' "$cursor_manifest_path")" == 'Bearer ${env:SOURCECRAFT_PAT}' ]] || fail "unexpected sourcecraft auth header"
 grep -Fq 'personality = "pragmatic"' "$codex_config_path" || fail "missing codex personality"
-grep -Fq '[mcp_servers.fff]' "$codex_config_path" || fail "missing fff codex block"
-grep -Fq 'command = "/Users/veged/.local/bin/fff-mcp"' "$codex_config_path" || fail "missing fff codex command"
+if grep -Fq '[mcp_servers.fff]' "$codex_config_path"; then
+  fail "fff should be disabled for codex"
+fi
 grep -Fq '[mcp_servers.sourcecraft]' "$codex_config_path" || fail "missing sourcecraft codex block"
 grep -Fq 'bearer_token_env_var = "SOURCECRAFT_PAT"' "$codex_config_path" || fail "missing sourcecraft bearer token env"
 grep -Fq '[mcp_servers.sourcecraft.tools.GetCubeLogs]' "$codex_config_path" || fail "missing sourcecraft tool approvals"

@@ -14,6 +14,9 @@
       "check_path": "/Users/veged/.local/bin/fff-mcp"
     },
     "clients": {
+      "codex": {
+        "enabled": false
+      },
       "claude": {
         "allow_tools": [
           "mcp__fff__find_files",
