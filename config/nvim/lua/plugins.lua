@@ -123,68 +123,70 @@ return require('lazy').setup({
 
   {
     'nvim-treesitter/nvim-treesitter', -- Nvim Treesitter configurations and abstraction layer
-    branch = 'master',
+    branch = 'main',
+    lazy = false,
     build = ':TSUpdate',
-    config = function()      require 'nvim-treesitter.configs'.setup {
-        ensure_installed = { 'html', 'css', 'javascript', 'typescript', 'tsx', 'json', 'lua' },
-        auto_install = true,
-        highlight = {
-          enable = true,
-          additional_vim_regex_highlighting = false
-        },
-        injections = {
-          html = {
-            javascript = [[
-              ((element
-                (start_tag
-                  (tag_name) @_tag
-                  (attribute
-                    (attribute_name) @_name
-                    (quoted_attribute_value (attribute_value) @_value)?
-                )
-                (text) @javascript
-              ) (#eq? @_tag "script"))
-            ]],
-          },
-        },
-        textobjects = {
-          select = {
-            enable = true,
-            lookahead = true,
-            keymaps = {
-              ['af'] = '@function.outer',
-              ['if'] = '@function.inner',
-              ['ac'] = '@class.outer',
-              ['ic'] = '@class.inner'
-            },
-            selection_modes = {
-              ['@parameter.outer'] = 'v',
-              ['@function.outer'] = 'V',
-              ['@class.outer'] = '<c-v>'
-            }
-          },
-          move = {
-            enable = true,
-            set_jumps = true,
-            goto_next_start = { [']m'] = '@function.outer', [']]'] = '@class.outer' },
-            goto_next_end = { [']M'] = '@function.outer', [']['] = '@class.outer' },
-            goto_previous_start = {
-              ['[m'] = '@function.outer',
-              ['[['] = '@class.outer'
-            },
-            goto_previous_end = { ['[M'] = '@function.outer', ['[]'] = '@class.outer' }
-          },
-          swap = {
-            enable = true,
-            swap_next = { ['<Leader>p'] = '@parameter.inner' },
-            swap_previous = { ['<Leader>P'] = '@parameter.inner' }
-          }
-        },
-
-      }
-
+    config = function()
+      require('nvim-treesitter').install({
+        'asm', 'bash', 'c', 'cmake', 'cpp', 'css', 'csv', 'devicetree', 'diff',
+        'dockerfile', 'editorconfig', 'git_config', 'git_rebase', 'gitcommit',
+        'gitignore', 'go', 'gomod', 'gosum', 'html', 'ini', 'javascript',
+        'jsdoc', 'json', 'lua', 'luadoc', 'make', 'markdown',
+        'markdown_inline', 'pem', 'perl', 'python', 'query', 'regex',
+        'requirements', 'scheme', 'scss', 'ssh_config', 'toml', 'tsx',
+        'typescript', 'vim', 'vimdoc', 'xml', 'yaml',
+      })
       vim.treesitter.language.register('bash', 'zsh')
+      vim.api.nvim_create_autocmd('FileType', {
+        callback = function(ev) pcall(vim.treesitter.start, ev.buf) end,
+      })
     end
+  },
+
+  {
+    'nvim-treesitter/nvim-treesitter-textobjects',
+    branch = 'main',
+    dependencies = { 'nvim-treesitter/nvim-treesitter' },
+    config = function()
+      require('nvim-treesitter-textobjects').setup({
+        select = {
+          lookahead = true,
+          selection_modes = {
+            ['@parameter.outer'] = 'v',
+            ['@function.outer']  = 'V',
+            ['@class.outer']     = '<c-v>',
+          },
+        },
+        move = { set_jumps = true },
+      })
+
+      local select = require('nvim-treesitter-textobjects.select')
+      local move   = require('nvim-treesitter-textobjects.move')
+      local swap   = require('nvim-treesitter-textobjects.swap')
+
+      local function map(modes, lhs, rhs)
+        vim.keymap.set(modes, lhs, rhs)
+      end
+
+      for _, m in ipairs({ 'x', 'o' }) do
+        map(m, 'af', function() select.select_textobject('@function.outer', 'textobjects') end)
+        map(m, 'if', function() select.select_textobject('@function.inner', 'textobjects') end)
+        map(m, 'ac', function() select.select_textobject('@class.outer',    'textobjects') end)
+        map(m, 'ic', function() select.select_textobject('@class.inner',    'textobjects') end)
+      end
+
+      map({ 'n', 'x', 'o' }, ']m', function() move.goto_next_start('@function.outer', 'textobjects') end)
+      map({ 'n', 'x', 'o' }, ']]', function() move.goto_next_start('@class.outer',    'textobjects') end)
+      map({ 'n', 'x', 'o' }, ']M', function() move.goto_next_end('@function.outer',   'textobjects') end)
+      map({ 'n', 'x', 'o' }, '][', function() move.goto_next_end('@class.outer',      'textobjects') end)
+      map({ 'n', 'x', 'o' }, '[m', function() move.goto_previous_start('@function.outer', 'textobjects') end)
+      map({ 'n', 'x', 'o' }, '[[', function() move.goto_previous_start('@class.outer',    'textobjects') end)
+      map({ 'n', 'x', 'o' }, '[M', function() move.goto_previous_end('@function.outer',   'textobjects') end)
+      map({ 'n', 'x', 'o' }, '[]', function() move.goto_previous_end('@class.outer',      'textobjects') end)
+
+      map('n', '<Leader>p', function() swap.swap_next('@parameter.inner') end)
+      map('n', '<Leader>P', function() swap.swap_previous('@parameter.inner') end)
+    end,
   },
 
   {
