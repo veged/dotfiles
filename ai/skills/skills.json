@@ -29,7 +29,21 @@
   ],
   "emilkowalski/skill": "*",
   "Leonxlnx/taste-skill": "*",
-  "obra/superpowers": "*",
+  "obra/superpowers": [
+    "brainstorming",
+    "dispatching-parallel-agents",
+    "executing-plans",
+    "finishing-a-development-branch",
+    "receiving-code-review",
+    "requesting-code-review",
+    "subagent-driven-development",
+    "systematic-debugging",
+    "using-git-worktrees",
+    "using-superpowers",
+    "verification-before-completion",
+    "writing-plans",
+    "writing-skills"
+  ],
   "nicobailon/visual-explainer": "*",
   "openai/skills": [
     "doc",
