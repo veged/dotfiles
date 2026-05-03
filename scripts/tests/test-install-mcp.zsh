@@ -105,6 +105,11 @@ codex_config_path="$home_dir/.codex/config.toml"
 opencode_config_path="$home_dir/.config/opencode/opencode.jsonc"
 fixture_runtime_path="$home_dir/.local/bin/fff-mcp"
 
+mkdir -p "${fixture_runtime_path:h}"
+print -r -- '#!/bin/sh' > "$fixture_runtime_path"
+print -r -- 'echo fff' >> "$fixture_runtime_path"
+chmod +x "$fixture_runtime_path"
+
 cat > "$claude_user_path" <<'EOF'
 {
   "theme": "dark",
@@ -198,7 +203,7 @@ jq -e . "$opencode_config_path" >/dev/null || fail "generated opencode config mu
 [[ "$(jq -r '.permissions.additionalDirectories[0]' "$claude_settings_path")" == "/private/tmp" ]] || fail "missing preserved claude additional directory"
 [[ "$(jq -r '.permissions.allow[]' "$claude_settings_path" | grep -Fx 'Bash(ugrep:*)')" == 'Bash(ugrep:*)' ]] || fail "missing preserved non-MCP claude permission"
 [[ "$actual_claude_mcp_tools" == "$expected_claude_mcp_tools" ]] || fail "unexpected claude MCP permission set"
-[[ "$(jq -r '.mcpServers.fff.command' "$cursor_manifest_path")" == "/Users/veged/.local/bin/fff-mcp" ]] || fail "unexpected fff command"
+[[ "$(jq -r '.mcpServers.fff.command' "$cursor_manifest_path")" == "$home_dir/.local/bin/fff-mcp" ]] || fail "unexpected fff command"
 [[ "$(jq -r '.mcpServers.context7.disabled' "$cursor_manifest_path")" == "true" ]] || fail "context7 must be disabled"
 [[ "$(jq -r '.mcpServers.playwright.disabled' "$cursor_manifest_path")" == "true" ]] || fail "playwright must be disabled"
 [[ "$(jq -r '.mcpServers.sourcecraft.url' "$cursor_manifest_path")" == "https://api.sourcecraft.tech/mcp" ]] || fail "unexpected sourcecraft url"
@@ -232,7 +237,7 @@ initial_opencode_baseurl="$(jq -r '.provider["eliza-anthropic"].options.baseURL'
 [[ "$initial_opencode_baseurl" != *"ELIZA_API_HOST"* ]] || fail "unexpected opencode eliza anthropic baseURL"
 [[ "$(jq -r '.mcp.fff.type' "$opencode_config_path")" == "local" ]] || fail "unexpected opencode fff type"
 [[ "$(jq -r '.mcp.fff.enabled' "$opencode_config_path")" == "true" ]] || fail "unexpected opencode fff enabled flag"
-[[ "$(jq -r '.mcp.fff.command[0]' "$opencode_config_path")" == "/Users/veged/.local/bin/fff-mcp" ]] || fail "unexpected opencode fff command"
+[[ "$(jq -r '.mcp.fff.command[0]' "$opencode_config_path")" == "$home_dir/.local/bin/fff-mcp" ]] || fail "unexpected opencode fff command"
 [[ "$(jq -r '.mcp.fff.command | length' "$opencode_config_path")" == "1" ]] || fail "unexpected opencode fff command length"
 [[ "$(jq -r '.mcp.playwright.type' "$opencode_config_path")" == "local" ]] || fail "unexpected opencode playwright type"
 [[ "$(jq -r '.mcp.playwright.command[2]' "$opencode_config_path")" == "@playwright/mcp@latest" ]] || fail "unexpected opencode playwright command"

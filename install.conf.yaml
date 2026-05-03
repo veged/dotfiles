@@ -46,9 +46,10 @@
 
 - shell:
   - [git submodule update --init --recursive, Installing submodules]
+  - [./scripts/personal check, Checking personal variables]
   - [brew bundle --file=Brewfile, Installing Homebrew packages]
   - [./scripts/install-skills, Syncing AI skills]
   - [./scripts/install-plugins, Installing local Codex plugins]
   - [./scripts/install-mcp, Syncing MCP runtimes and generated configs]
   - [./scripts/install-remark, Installing remark toolchain]
-  - ["git config filter.eliza-url.clean 'sd -s \"$ELIZA_API_HOST\" \"ELIZA_API_HOST\" -f -' && git config filter.eliza-url.smudge 'sd -s \"ELIZA_API_HOST\" \"$ELIZA_API_HOST\" -f -'", Configuring git clean/smudge filter for internal URLs]
+  - [./scripts/personal configure-git-filter, Configuring git clean/smudge filter for internal URLs]

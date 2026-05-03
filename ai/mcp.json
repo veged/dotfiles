@@ -2,7 +2,7 @@
   "fff": {
     "enabled": true,
     "transport": "local",
-    "command": "/Users/veged/.local/bin/fff-mcp",
+    "command": "$HOME/.local/bin/fff-mcp",
     "args": [],
     "install": {
       "kind": "command",
@@ -11,7 +11,7 @@
         "-lc",
         "tmp=\"$(mktemp)\" && gh api repos/dmtrKovalenko/fff.nvim/contents/install-mcp.sh --jq '.content' | base64 -d > \"$tmp\" && bash \"$tmp\" && rm -f \"$tmp\""
       ],
-      "check_path": "/Users/veged/.local/bin/fff-mcp"
+      "check_path": "$HOME/.local/bin/fff-mcp"
     },
     "clients": {
       "codex": {

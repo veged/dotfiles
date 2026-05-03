@@ -1,6 +1,3 @@
-[user]
-	name = Sergey Berezhnoy
-	email = veged@ya.ru
 [alias]
 	co = checkout
 	st = status

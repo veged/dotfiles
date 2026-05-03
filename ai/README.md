@@ -20,7 +20,7 @@
 * `~/.claude/skills`, `~/.codex/skills` — assistant-specific discovery-слои, symlink-и на `~/.agents/skills`
 * `~/.codex/plugins/dotfiles-local/*` — локальные bundle-ы плагинов Codex
 * `~/.claude/CLAUDE.md` — тонкая обёртка, импортирующая общий слой
-* live MCP-конфиги (`~/.claude/settings.json`, `~/.codex/config.toml`, `~/.cursor/mcp.json`, `~/.config/opencode/opencode.jsonc`) — generated outputs. Секреты приходят из env вроде `SOURCECRAFT_PAT`, `SOURCECRAFT_ENTERPRISE_PAT`, `ELIZA_API_HOST`, `ELIZA_TOKEN` (их отсутствие не ломает bootstrap)
+* live MCP-конфиги (`~/.claude/settings.json`, `~/.codex/config.toml`, `~/.cursor/mcp.json`, `~/.config/opencode/opencode.jsonc`) — generated outputs. Персональные значения приходят из env или системного хранилища через `./scripts/personal`; `ELIZA_TOKEN` обновляется из OAuth client credentials в shell-профиле
 * `~/.claude.json` — рабочее состояние Claude Code, в репозитории не канонизируется
 
 ## Скрипты

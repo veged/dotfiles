@@ -1,0 +1,360 @@
+#!/usr/bin/env zsh
+
+typeset -g _PERSONAL_SCRIPT_PATH="${${(%):-%x}:A}"
+typeset -g _PERSONAL_REPO_ROOT="${_PERSONAL_SCRIPT_PATH:h:h}"
+
+personal_die() {
+  print -u2 -- "$1"
+  return 1
+}
+
+personal_required_path() {
+  print -r -- "${PERSONAL_REQUIRED_PATH:-$_PERSONAL_REPO_ROOT/personal.required}"
+}
+
+personal_required_vars() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local manifest_path line name
+  manifest_path=$(personal_required_path)
+  [[ -f "$manifest_path" ]] || personal_die "personal: missing required variables manifest: $manifest_path"
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    name=${${line%%#*}//[[:space:]]/}
+    [[ -z "$name" ]] && continue
+    personal_validate_name "$name"
+    print -r -- "$name"
+  done < "$manifest_path"
+}
+
+personal_validate_name() {
+  emulate -L zsh
+  local name=$1
+
+  [[ "$name" =~ '^[A-Z_][A-Z0-9_]*$' ]] || personal_die "personal: invalid variable name: $name"
+}
+
+personal_backend() {
+  emulate -L zsh
+
+  if [[ -n "${PERSONAL_BACKEND:-}" ]]; then
+    print -r -- "$PERSONAL_BACKEND"
+    return
+  fi
+
+  if [[ "$OSTYPE" == darwin* ]] && command -v security >/dev/null 2>&1; then
+    print -r -- "security"
+    return
+  fi
+
+  if command -v secret-tool >/dev/null 2>&1; then
+    print -r -- "secret-tool"
+    return
+  fi
+
+  personal_die "personal: no supported secret storage backend found"
+}
+
+personal_file_store_dir() {
+  print -r -- "${PERSONAL_STORE_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/personal-store}"
+}
+
+personal_storage_get() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local name=$1 backend file_path
+  personal_validate_name "$name"
+  backend=$(personal_backend)
+
+  case "$backend" in
+    security)
+      security find-generic-password -w -a "$USER" -D "environment variable" -s "$name" 2>/dev/null
+      ;;
+    secret-tool)
+      secret-tool lookup dotfiles-variable "$name" account "$USER"
+      ;;
+    file)
+      file_path="$(personal_file_store_dir)/$name"
+      [[ -r "$file_path" ]] || return 1
+      < "$file_path"
+      ;;
+    *)
+      personal_die "personal: unsupported backend: $backend"
+      ;;
+  esac
+}
+
+personal_storage_set() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local name=$1 value=$2 backend dir file_path
+  personal_validate_name "$name"
+  backend=$(personal_backend)
+
+  case "$backend" in
+    security)
+      security add-generic-password -U -a "$USER" -D "environment variable" -s "$name" -w "$value" >/dev/null
+      ;;
+    secret-tool)
+      print -rn -- "$value" | secret-tool store --label "dotfiles $name" dotfiles-variable "$name" account "$USER"
+      ;;
+    file)
+      dir=$(personal_file_store_dir)
+      mkdir -p "$dir"
+      chmod 0700 "$dir"
+      file_path="$dir/$name"
+      print -rn -- "$value" > "$file_path"
+      chmod 0600 "$file_path"
+      ;;
+    *)
+      personal_die "personal: unsupported backend: $backend"
+      ;;
+  esac
+}
+
+personal_storage_unset() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local name=$1 backend file_path
+  personal_validate_name "$name"
+  backend=$(personal_backend)
+
+  case "$backend" in
+    security)
+      security delete-generic-password -a "$USER" -D "environment variable" -s "$name" >/dev/null 2>&1 || true
+      ;;
+    secret-tool)
+      secret-tool clear dotfiles-variable "$name" account "$USER" >/dev/null 2>&1 || true
+      ;;
+    file)
+      file_path="$(personal_file_store_dir)/$name"
+      rm -f "$file_path"
+      ;;
+    *)
+      personal_die "personal: unsupported backend: $backend"
+      ;;
+  esac
+}
+
+personal_has_env() {
+  emulate -L zsh
+  local name=$1
+  personal_validate_name "$name"
+  [[ -n "${(P)name:-}" ]]
+}
+
+personal_get() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local name=$1
+  personal_validate_name "$name"
+
+  if personal_has_env "$name"; then
+    print -r -- "${(P)name}"
+    return
+  fi
+
+  personal_storage_get "$name"
+}
+
+personal_set() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local name=${1:-} value
+  [[ -n "$name" ]] || personal_die "Usage: personal set NAME [VALUE]"
+  personal_validate_name "$name"
+
+  if (( $# >= 2 )); then
+    value=$2
+  else
+    print -n -- "Значение переменной $name: "
+    read -rs value
+    print
+  fi
+
+  [[ -n "$value" ]] || personal_die "personal: empty value for $name"
+  personal_storage_set "$name" "$value"
+}
+
+personal_unset() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local name=${1:-}
+  [[ -n "$name" ]] || personal_die "Usage: personal unset NAME"
+  personal_storage_unset "$name"
+}
+
+personal_check() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local name missing=0
+  for name in $(personal_required_vars); do
+    if personal_get "$name" >/dev/null 2>&1; then
+      print -r -- "$name: ok"
+    else
+      print -r -- "$name: missing"
+      missing=1
+    fi
+  done
+
+  (( missing == 0 )) || print -u2 -- "Run ./scripts/personal setup to fill missing values."
+  return "$missing"
+}
+
+personal_setup() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local name value
+
+  print -r -- "Эти персональные переменные нужны для работы dotfiles, но не могут храниться в репозитории."
+  print -r -- "Значения будут сохранены в системное хранилище секретов."
+  print
+
+  for name in $(personal_required_vars); do
+    if personal_storage_get "$name" >/dev/null 2>&1; then
+      print -r -- "$name: уже задано"
+      continue
+    fi
+
+    if personal_has_env "$name"; then
+      personal_storage_set "$name" "${(P)name}"
+      print -r -- "$name: сохранено из окружения"
+      continue
+    fi
+
+    print -n -- "Значение переменной $name: "
+    read -rs value
+    print
+    [[ -n "$value" ]] || personal_die "personal: empty value for $name"
+    personal_storage_set "$name" "$value"
+  done
+}
+
+personal_export() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local name value
+  for name in $(personal_required_vars); do
+    value=$(personal_get "$name") || return 1
+    print -r -- "export $name=${(q)value}"
+  done
+}
+
+personal_publish_launchctl() {
+  emulate -L zsh
+  set -euo pipefail
+
+  (( $+commands[launchctl] )) || return 0
+
+  local name
+  for name in "$@"; do
+    personal_has_env "$name" || continue
+    launchctl setenv "$name" "${(P)name}" >/dev/null 2>&1 || true
+  done
+}
+
+personal_load_env() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local name value
+  for name in $(personal_required_vars); do
+    personal_has_env "$name" && continue
+    value=$(personal_storage_get "$name" 2>/dev/null) || continue
+    export "$name=$value"
+  done
+
+  if [[ -n "${GIT_NAME:-}" && -n "${GIT_EMAIL:-}" ]]; then
+    export GIT_AUTHOR_NAME="$GIT_NAME"
+    export GIT_AUTHOR_EMAIL="$GIT_EMAIL"
+    export GIT_COMMITTER_NAME="$GIT_NAME"
+    export GIT_COMMITTER_EMAIL="$GIT_EMAIL"
+  fi
+
+  personal_publish_launchctl SOURCECRAFT_PAT SOURCECRAFT_ENTERPRISE_PAT
+}
+
+personal_refresh_eliza_token() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local dir token_path
+  dir=${XDG_CACHE_HOME:-$HOME/.cache}/tokens
+  token_path="$dir/ELIZA_TOKEN"
+
+  mkdir -p "$dir"
+  if [[ -s "$token_path" ]]; then
+    export ELIZA_TOKEN="$(<"$token_path")"
+  fi
+
+  (( $+commands[ya] )) || return 0
+  [[ -n "${ELIZA_CLIENT_ID:-}" && -n "${ELIZA_CLIENT_SECRET:-}" ]] || return 0
+
+  {
+    ya tool fetch-token -client-id "$ELIZA_CLIENT_ID" -client-secret "$ELIZA_CLIENT_SECRET" > "$token_path" 2>/dev/null
+  } &!
+}
+
+personal_configure_git_filter() {
+  emulate -L zsh
+  set -euo pipefail
+
+  personal_load_env
+  [[ -n "${ELIZA_API_HOST:-}" ]] || personal_die "personal: ELIZA_API_HOST is required to configure git filters"
+
+  git config filter.eliza-url.clean "sd -s \"$ELIZA_API_HOST\" \"ELIZA_API_HOST\" -f -"
+  git config filter.eliza-url.smudge "sd -s \"ELIZA_API_HOST\" \"$ELIZA_API_HOST\" -f -"
+}
+
+personal_usage() {
+  cat <<'EOF'
+Usage: ./scripts/personal COMMAND [ARGS]
+
+Commands:
+  setup                 Ask for missing required values and store them.
+  check                 Verify required values are present.
+  set NAME [VALUE]      Store a value.
+  get NAME              Print a value.
+  unset NAME            Remove a stored value.
+  export                Print shell exports for required values.
+  configure-git-filter  Configure the ELIZA_API_HOST git clean/smudge filter.
+EOF
+}
+
+personal_main() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local command=${1:-}
+  [[ -n "$command" ]] || {
+    personal_usage
+    return 1
+  }
+  shift
+
+  case "$command" in
+    setup) personal_setup "$@" ;;
+    check) personal_check "$@" ;;
+    set) personal_set "$@" ;;
+    get) personal_get "$@" ;;
+    unset) personal_unset "$@" ;;
+    export) personal_export "$@" ;;
+    configure-git-filter) personal_configure_git_filter "$@" ;;
+    help|--help|-h) personal_usage ;;
+    *) personal_die "personal: unknown command: $command" ;;
+  esac
+}
+
+if [[ "${ZSH_EVAL_CONTEXT:-}" != *:file ]]; then
+  personal_main "$@"
+fi

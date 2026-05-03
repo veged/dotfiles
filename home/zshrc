@@ -342,34 +342,11 @@ then
   unset ZSH_EVAL
 fi
 
-# Токены: читаем кеш + фоново обновляем
-() {
-  local dir=${XDG_CACHE_HOME:-$HOME/.cache}/tokens
-  local -a keychain_names=(OPENROUTER_API_KEY YA_WIKI_KEY ELIZA_API_HOST SOURCECRAFT_PAT SOURCECRAFT_ENTERPRISE_PAT)
-  local file
-  local name
-
-  _publish_launchctl() {
-    (( $+commands[launchctl] )) || return
-    for name in SOURCECRAFT_PAT SOURCECRAFT_ENTERPRISE_PAT; do
-      [[ -s "$dir/$name" ]] && launchctl setenv "$name" "$( < "$dir/$name")" >/dev/null 2>&1
-    done
-  }
-
-  mkdir -p "$dir"
-  for file in ${^keychain_names/#/$dir/}(N); do
-    export "${file:t}"="$(<"$file")"
-  done
-  [[ -s "$dir/ELIZA_TOKEN" ]] && export ELIZA_TOKEN="$(<"$dir/ELIZA_TOKEN")"
-  _publish_launchctl
-  {
-    for name in $keychain_names; do
-      security find-generic-password -w -a ${USER} -D "environment variable" -s "$name" 2>/dev/null > "$dir/$name"
-    done
-    ya tool fetch-token -client-id 'd1f988f246c44274b9fdef4feaaf8ad7' -client-secret 'e865e4f30d3d4a4e945dd5304ab265dd' > "$dir/ELIZA_TOKEN" 2>/dev/null
-    _publish_launchctl
-  } &!
-}
+# Токены: читаем персональные переменные + фоново обновляем ELIZA_TOKEN
+if (( $+functions[personal_load_env] )); then
+  personal_load_env
+  personal_refresh_eliza_token
+fi
 
 export OPENCODE_ELIZA_AUTH_ALL_PROVIDERS=true
 

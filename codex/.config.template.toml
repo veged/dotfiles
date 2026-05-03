@@ -67,22 +67,22 @@ enabled = false
 name = "build-web-apps:stripe-best-practices"
 enabled = false
 
-[projects."/Users/veged/Documents/TED-ai-and-programming"]
+[projects."$HOME/Documents/TED-ai-and-programming"]
 trust_level = "trusted"
 
-[projects."/Users/veged/Documents/ai-for-junior"]
+[projects."$HOME/Documents/ai-for-junior"]
 trust_level = "trusted"
 
-[projects."/Users/veged/dotfiles"]
+[projects."$HOME/dotfiles"]
 trust_level = "trusted"
 
-[projects."/Users/veged/Documents/slidev-theme-practicum"]
+[projects."$HOME/Documents/slidev-theme-practicum"]
 trust_level = "trusted"
 
-[projects."/Users/veged/Documents/Playground"]
+[projects."$HOME/Documents/Playground"]
 trust_level = "trusted"
 
 [marketplaces.openai-bundled]
 last_updated = "2026-04-17T17:40:16Z"
 source_type = "local"
-source = "/Users/veged/.codex/.tmp/bundled-marketplaces/openai-bundled"
+source = "$HOME/.codex/.tmp/bundled-marketplaces/openai-bundled"
