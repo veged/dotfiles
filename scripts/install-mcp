@@ -555,6 +555,8 @@ mv "$claude_user_tmp" "$claude_user_path"
 
 rm -f "$claude_user_fragment_path"
 
+"$repo_root/scripts/build-agents-md"
+
 print "install-mcp: synced ~/.cursor/mcp.json"
 print "install-mcp: synced ~/.claude/settings.json"
 print "install-mcp: synced ~/.codex/config.toml"
