@@ -20,6 +20,7 @@ mkdir -p \
 
 cp "$repo_root/scripts/install-skills" "$fixture_root/scripts/install-skills"
 cp "$repo_root/scripts/lib/install-common.zsh" "$fixture_root/scripts/lib/install-common.zsh"
+cp "$repo_root/scripts/lib/skill-acquisition.zsh" "$fixture_root/scripts/lib/skill-acquisition.zsh"
 cp "$repo_root/scripts/bootstrap-agent-skills" "$fixture_root/scripts/bootstrap-agent-skills"
 
 cat > "$fixture_root/ai/skills/local-one/SKILL.md" <<'EOF'

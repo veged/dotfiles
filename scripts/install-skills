@@ -6,6 +6,7 @@ set -euo pipefail
 repo_root=${0:A:h:h}
 SCRIPT_NAME=install-skills
 source "$repo_root/scripts/lib/install-common.zsh"
+source "$repo_root/scripts/lib/skill-acquisition.zsh"
 
 skills_root="$repo_root/ai/skills"
 registry_path="$skills_root/skills.json"
@@ -88,41 +89,23 @@ for skill_dir in "$skills_root"/*(N/); do
 done
 
 if [[ -f "$registry_path" ]]; then
-  skill_entries=("${(@f)$(jq -c 'to_entries[]' "$registry_path")}")
+  skill_entries=("${(@f)$(acquisition_skill_specs "$registry_path")}")
 
   for entry in "${skill_entries[@]}"; do
-    source=$(normalize_source "$(jq -r '.key' <<<"$entry")")
-    install_all=0
-    selected_skills=()
+    source=$(jq -r '.source' <<<"$entry")
+    install_all=$(jq -r 'if .install_all then 1 else 0 end' <<<"$entry")
+    selected_skills=("${(@f)$(acquisition_spec_skills "$entry")}")
     stage_dir="$tmpdir/source-$source_index"
     ((source_index += 1))
-    mkdir -p "$stage_dir"
-
-    case "$(jq -r '.value | type' <<<"$entry")" in
-      string)
-        value=$(jq -r '.value' <<<"$entry")
-        if [[ $value == "*" ]]; then
-          install_all=1
-        else
-          selected_skills=("$value")
-        fi
-        ;;
-      array)
-        selected_skills=("${(@f)$(jq -r '.value[]' <<<"$entry")}")
-        ;;
-      *)
-        die "install-skills: invalid spec for source: $source"
-        ;;
-    esac
 
     requested_names=("${selected_skills[@]}")
     (( install_all || ${#requested_names[@]} )) || die "install-skills: empty skill list for source: $source"
 
     if (( install_all )); then
       print "install-skills: fetching: $source"
-      stage_skills "$stage_dir" "$source" "${selected_skills[@]}"
+      acquisition_stage_skills "$stage_dir" "$source" "${selected_skills[@]}"
 
-      staged_paths=("${(@f)$(staged_skill_paths "$stage_dir")}")
+      staged_paths=("${(@f)$(acquisition_staged_skill_paths "$stage_dir")}")
       (( ${#staged_paths[@]} )) || die "install-skills: no skills staged for source: $source"
 
       for skill_path in "${staged_paths[@]}"; do
@@ -156,7 +139,7 @@ if [[ -f "$registry_path" ]]; then
     fi
 
     print "install-skills: fetching: $source"
-    stage_skills "$stage_dir" "$source" "${selected_skills[@]}"
+    acquisition_stage_skills "$stage_dir" "$source" "${selected_skills[@]}"
 
     for name in "${requested_names[@]}"; do
       [[ -d "$stage_dir/.agents/skills/$name" ]] || die "install-skills: staged skill not found: $source#$name"
