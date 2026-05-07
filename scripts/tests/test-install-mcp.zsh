@@ -14,63 +14,54 @@ bad_fixture_root="$tmp_root/bad-repo"
 bad_home_dir="$tmp_root/bad-home"
 duplicate_marker_fixture_root="$tmp_root/duplicate-marker-repo"
 duplicate_marker_home_dir="$tmp_root/duplicate-marker-home"
-opencode_duplicate_marker_fixture_root="$tmp_root/opencode-duplicate-marker-repo"
-opencode_duplicate_marker_home_dir="$tmp_root/opencode-duplicate-marker-home"
 
 mkdir -p \
-  "$fixture_root/ai" \
+  "$fixture_root/ai/instructions" \
   "$fixture_root/claude" \
   "$fixture_root/config/opencode" \
   "$fixture_root/codex" \
   "$fixture_root/scripts/lib" \
   "$fixture_root/scripts/tests" \
   "$home_dir" \
-  "$bad_fixture_root/ai" \
+  "$bad_fixture_root/ai/instructions" \
   "$bad_fixture_root/claude" \
   "$bad_fixture_root/config/opencode" \
   "$bad_fixture_root/codex" \
   "$bad_fixture_root/scripts/lib" \
   "$bad_fixture_root/scripts/tests" \
   "$bad_home_dir" \
-  "$duplicate_marker_fixture_root/ai" \
+  "$duplicate_marker_fixture_root/ai/instructions" \
   "$duplicate_marker_fixture_root/claude" \
   "$duplicate_marker_fixture_root/config/opencode" \
   "$duplicate_marker_fixture_root/codex" \
   "$duplicate_marker_fixture_root/scripts/lib" \
   "$duplicate_marker_fixture_root/scripts/tests" \
-  "$duplicate_marker_home_dir" \
-  "$opencode_duplicate_marker_fixture_root/ai" \
-  "$opencode_duplicate_marker_fixture_root/claude" \
-  "$opencode_duplicate_marker_fixture_root/config/opencode" \
-  "$opencode_duplicate_marker_fixture_root/codex" \
-  "$opencode_duplicate_marker_fixture_root/scripts/lib" \
-  "$opencode_duplicate_marker_fixture_root/scripts/tests" \
-  "$opencode_duplicate_marker_home_dir"
+  "$duplicate_marker_home_dir"
 
 cp "$repo_root/scripts/install-mcp" "$fixture_root/scripts/install-mcp"
 cp "$repo_root/scripts/lib/install-common.zsh" "$fixture_root/scripts/lib/install-common.zsh"
+cp "$repo_root/scripts/lib/instruction-projection.zsh" "$fixture_root/scripts/lib/instruction-projection.zsh"
 cp "$repo_root/ai/mcp.json" "$fixture_root/ai/mcp.json"
+cp "$repo_root"/ai/instructions/*.md "$fixture_root/ai/instructions/"
 cp "$repo_root/claude/.settings.template.json" "$fixture_root/claude/.settings.template.json"
 cp "$repo_root/config/opencode/.opencode.template.jsonc" "$fixture_root/config/opencode/.opencode.template.jsonc"
 cp "$repo_root/codex/.config.template.toml" "$fixture_root/codex/.config.template.toml"
 cp "$repo_root/scripts/install-mcp" "$bad_fixture_root/scripts/install-mcp"
 cp "$repo_root/scripts/lib/install-common.zsh" "$bad_fixture_root/scripts/lib/install-common.zsh"
+cp "$repo_root/scripts/lib/instruction-projection.zsh" "$bad_fixture_root/scripts/lib/instruction-projection.zsh"
 cp "$repo_root/ai/mcp.json" "$bad_fixture_root/ai/mcp.json"
+cp "$repo_root"/ai/instructions/*.md "$bad_fixture_root/ai/instructions/"
 cp "$repo_root/claude/.settings.template.json" "$bad_fixture_root/claude/.settings.template.json"
 cp "$repo_root/config/opencode/.opencode.template.jsonc" "$bad_fixture_root/config/opencode/.opencode.template.jsonc"
 cp "$repo_root/codex/.config.template.toml" "$bad_fixture_root/codex/.config.template.toml"
 cp "$repo_root/scripts/install-mcp" "$duplicate_marker_fixture_root/scripts/install-mcp"
 cp "$repo_root/scripts/lib/install-common.zsh" "$duplicate_marker_fixture_root/scripts/lib/install-common.zsh"
+cp "$repo_root/scripts/lib/instruction-projection.zsh" "$duplicate_marker_fixture_root/scripts/lib/instruction-projection.zsh"
 cp "$repo_root/ai/mcp.json" "$duplicate_marker_fixture_root/ai/mcp.json"
+cp "$repo_root"/ai/instructions/*.md "$duplicate_marker_fixture_root/ai/instructions/"
 cp "$repo_root/claude/.settings.template.json" "$duplicate_marker_fixture_root/claude/.settings.template.json"
 cp "$repo_root/config/opencode/.opencode.template.jsonc" "$duplicate_marker_fixture_root/config/opencode/.opencode.template.jsonc"
 cp "$repo_root/codex/.config.template.toml" "$duplicate_marker_fixture_root/codex/.config.template.toml"
-cp "$repo_root/scripts/install-mcp" "$opencode_duplicate_marker_fixture_root/scripts/install-mcp"
-cp "$repo_root/scripts/lib/install-common.zsh" "$opencode_duplicate_marker_fixture_root/scripts/lib/install-common.zsh"
-cp "$repo_root/ai/mcp.json" "$opencode_duplicate_marker_fixture_root/ai/mcp.json"
-cp "$repo_root/claude/.settings.template.json" "$opencode_duplicate_marker_fixture_root/claude/.settings.template.json"
-cp "$repo_root/config/opencode/.opencode.template.jsonc" "$opencode_duplicate_marker_fixture_root/config/opencode/.opencode.template.jsonc"
-cp "$repo_root/codex/.config.template.toml" "$opencode_duplicate_marker_fixture_root/codex/.config.template.toml"
 
 jq '
   .sourcecraft.clients.cursor.type = "sse"
@@ -92,10 +83,6 @@ mv "$bad_fixture_root/ai/mcp.json.tmp" "$bad_fixture_root/ai/mcp.json"
 cat >> "$duplicate_marker_fixture_root/codex/.config.template.toml" <<'EOF'
 
 # __MCP_SERVERS__
-EOF
-
-cat >> "$opencode_duplicate_marker_fixture_root/config/opencode/.opencode.template.jsonc" <<'EOF'
-"mcp": __MCP_JSON__
 EOF
 
 cursor_manifest_path="$home_dir/.cursor/mcp.json"
@@ -256,10 +243,8 @@ if HOME="$duplicate_marker_home_dir" zsh "$duplicate_marker_fixture_root/scripts
   fail "expected install-mcp to reject duplicate codex marker"
 fi
 
-if HOME="$opencode_duplicate_marker_home_dir" zsh "$opencode_duplicate_marker_fixture_root/scripts/install-mcp" --sync-only >/dev/null 2>&1; then
-  fail "expected install-mcp to reject duplicate opencode marker"
-fi
-sd -s '"plugin": ["oh-my-openagent"]' '"plugin": ["changed-plugin"]' "$fixture_root/config/opencode/.opencode.template.jsonc"
+jq '.plugin = ["changed-plugin"]' "$fixture_root/config/opencode/.opencode.template.jsonc" > "$fixture_root/config/opencode/.opencode.template.jsonc.tmp"
+mv "$fixture_root/config/opencode/.opencode.template.jsonc.tmp" "$fixture_root/config/opencode/.opencode.template.jsonc"
 expected_opencode_baseurl="$(jq -r '.provider["eliza-anthropic"].options.baseURL' "$opencode_config_path")"
 env -u ELIZA_API_HOST HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --sync-only >/dev/null 2>&1 || fail "--sync-only must not fail when ELIZA_API_HOST is unset"
 [[ "$(jq -r '.provider["eliza-anthropic"].options.baseURL' "$opencode_config_path")" == "$expected_opencode_baseurl" ]] || fail "--sync-only must preserve resolved opencode baseURL when ELIZA_API_HOST is unset"

@@ -256,5 +256,5 @@
       "options": { "baseURL": "https://openrouter.ai/api/v1" }
     }
   },
-  "mcp": __MCP_JSON__
+  "mcp": {}
 }

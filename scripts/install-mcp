@@ -6,6 +6,7 @@ set -euo pipefail
 repo_root=${0:A:h:h}
 SCRIPT_NAME=install-mcp
 source "$repo_root/scripts/lib/install-common.zsh"
+source "$repo_root/scripts/lib/instruction-projection.zsh"
 if [[ -f "$repo_root/scripts/personal" ]]; then
   source "$repo_root/scripts/personal"
   personal_load_env
@@ -213,6 +214,7 @@ case "$mode" in
     exit 0
     ;;
   --check)
+    instruction_projection_check "$repo_root"
     check_local_tools
     check_generated_files
     exit 0
@@ -222,6 +224,8 @@ esac
 if [[ "$mode" == "default" ]]; then
   install_local_tools
 fi
+
+instruction_projection_sync "$repo_root"
 
 [[ -f "$claude_template_path" ]] || die "install-mcp: missing claude template: $claude_template_path"
 [[ -f "$codex_template_path" ]] || die "install-mcp: missing codex template: $codex_template_path"
@@ -391,14 +395,6 @@ awk -v fragment_path="$codex_fragment_path" -v home="$render_home" '
 
 rm -f "$codex_fragment_path"
 
-opencode_marker_count=$(grep -Fc '"mcp": __MCP_JSON__' "$opencode_template_path" || true)
-if [[ "$opencode_marker_count" -eq 0 ]]; then
-  die "install-mcp: missing opencode marker in template: $opencode_template_path"
-fi
-if [[ "$opencode_marker_count" -ne 1 ]]; then
-  die "install-mcp: expected exactly one opencode marker in template: $opencode_template_path"
-fi
-
 opencode_fragment_path=$(mktemp "${TMPDIR:-/tmp}/opencode-mcp.XXXXXX")
 opencode_base_path=$(mktemp "${TMPDIR:-/tmp}/opencode-base.XXXXXX")
 
@@ -457,22 +453,21 @@ jq '
 ' "$normalized_manifest_path" > "$opencode_fragment_path"
 
 if [[ -n ${ELIZA_API_HOST-} || ! -f "$opencode_config_path" ]]; then
-  awk -v eliza_api_host="${ELIZA_API_HOST-}" '
-    {
-      if (length(eliza_api_host) > 0) {
-        gsub(/ELIZA_API_HOST/, eliza_api_host)
-      }
-      gsub(/__MCP_JSON__/, "{}")
-      print
-    }
+  jq --arg eliza_api_host "${ELIZA_API_HOST-}" '
+    def replace_eliza_host:
+      walk(
+        if type == "string" then
+          gsub("ELIZA_API_HOST"; $eliza_api_host)
+        else
+          .
+        end
+      );
+
+    (if ($eliza_api_host | length) > 0 then replace_eliza_host else . end)
+    | .mcp = {}
   ' "$opencode_template_path" > "$opencode_base_path"
 else
-  awk '
-    {
-      gsub(/__MCP_JSON__/, "{}")
-      print
-    }
-  ' "$opencode_template_path" > "$opencode_base_path"
+  jq '.mcp = {}' "$opencode_template_path" > "$opencode_base_path"
 
   jq -s '
     reduce (
@@ -554,8 +549,6 @@ chmod 0600 "$claude_user_tmp"
 mv "$claude_user_tmp" "$claude_user_path"
 
 rm -f "$claude_user_fragment_path"
-
-"$repo_root/scripts/build-agents-md"
 
 print "install-mcp: synced ~/.cursor/mcp.json"
 print "install-mcp: synced ~/.claude/settings.json"
