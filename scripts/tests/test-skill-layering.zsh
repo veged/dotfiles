@@ -20,6 +20,7 @@ mkdir -p \
 
 cp "$repo_root/scripts/install-skills" "$fixture_root/scripts/install-skills"
 cp "$repo_root/scripts/lib/install-common.zsh" "$fixture_root/scripts/lib/install-common.zsh"
+cp "$repo_root/scripts/lib/agent-skills-layer.zsh" "$fixture_root/scripts/lib/agent-skills-layer.zsh"
 cp "$repo_root/scripts/bootstrap-agent-skills" "$fixture_root/scripts/bootstrap-agent-skills"
 
 cat > "$fixture_root/ai/skills/local-one/SKILL.md" <<'EOF'
@@ -134,6 +135,14 @@ assert_path_exists "$home_dir/.codex/skills/unmanaged" "unmanaged codex entry"
 assert_not_exists "$home_dir/.claude/skills/stale" "stale claude link"
 
 PATH="$bin_dir:$PATH" HOME="$home_dir" zsh "$fixture_root/scripts/install-skills"
+
+mkdir -p "$home_dir/.agents/skills/direct-bootstrap"
+print -r -- "# direct-bootstrap" > "$home_dir/.agents/skills/direct-bootstrap/SKILL.md"
+
+PATH="$bin_dir:$PATH" HOME="$home_dir" zsh "$fixture_root/scripts/bootstrap-agent-skills"
+
+assert_symlink_target "$home_dir/.claude/skills/direct-bootstrap" "$home_dir/.agents/skills/direct-bootstrap" "direct bootstrap claude projection"
+assert_symlink_target "$home_dir/.codex/skills/direct-bootstrap" "$home_dir/.agents/skills/direct-bootstrap" "direct bootstrap codex projection"
 
 assert_path_exists "$home_dir/.agents/skills/codex-primary-runtime/slides/SKILL.md" "preserved canonical bundle"
 

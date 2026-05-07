@@ -6,16 +6,11 @@ set -euo pipefail
 repo_root=${0:A:h:h}
 SCRIPT_NAME=install-skills
 source "$repo_root/scripts/lib/install-common.zsh"
+source "$repo_root/scripts/lib/agent-skills-layer.zsh"
 
 skills_root="$repo_root/ai/skills"
 registry_path="$skills_root/skills.json"
-canonical_dir="$HOME/.agents/skills"
-bootstrap_script="$repo_root/scripts/bootstrap-agent-skills"
 force=0
-
-typeset -ra preserved_bundle_names=(
-  codex-primary-runtime
-)
 
 usage() {
   cat <<'EOF'
@@ -49,9 +44,9 @@ while (( $# > 0 )); do
   shift
 done
 
-require_commands jq npx fd
+require_commands jq npx fd diff
 
-mkdir -p "$canonical_dir"
+mkdir -p "$AGENT_SKILLS_CANONICAL_DIR"
 
 tmpdir=$(make_tmpdir dotfiles-skills)
 trap 'rm -rf "$tmpdir"' EXIT
@@ -83,7 +78,7 @@ for skill_dir in "$skills_root"/*(N/); do
 
   name=${skill_dir:t}
   local_skill_dirs[$name]=$skill_dir
-  replace_dir "$canonical_dir/$name" "$skill_dir"
+  replace_dir "$AGENT_SKILLS_CANONICAL_DIR/$name" "$skill_dir"
   managed_names+=("$name")
 done
 
@@ -128,7 +123,7 @@ if [[ -f "$registry_path" ]]; then
       for skill_path in "${staged_paths[@]}"; do
         name=${skill_path:t}
         register_external_skill "$name" "$source"
-        replace_dir "$canonical_dir/$name" "$skill_path"
+        replace_dir "$AGENT_SKILLS_CANONICAL_DIR/$name" "$skill_path"
         managed_names+=("$name")
       done
       continue
@@ -141,7 +136,7 @@ if [[ -f "$registry_path" ]]; then
     needs_install=$force
     if (( ! needs_install )); then
       for name in "${requested_names[@]}"; do
-        target="$canonical_dir/$name"
+        target="$AGENT_SKILLS_CANONICAL_DIR/$name"
         if [[ ! -d "$target" || -L "$target" ]]; then
           needs_install=1
           break
@@ -160,19 +155,16 @@ if [[ -f "$registry_path" ]]; then
 
     for name in "${requested_names[@]}"; do
       [[ -d "$stage_dir/.agents/skills/$name" ]] || die "install-skills: staged skill not found: $source#$name"
-      replace_dir "$canonical_dir/$name" "$stage_dir/.agents/skills/$name"
+      replace_dir "$AGENT_SKILLS_CANONICAL_DIR/$name" "$stage_dir/.agents/skills/$name"
       managed_names+=("$name")
     done
   done
 fi
 
-for name in "${preserved_bundle_names[@]}"; do
-  [[ -d "$canonical_dir/$name" ]] || continue
-  managed_names+=("$name")
-done
+agent_skills_append_preserved_bundles managed_names
 
-prune_dir_except "$canonical_dir" "${managed_names[@]}"
+prune_dir_except "$AGENT_SKILLS_CANONICAL_DIR" "${managed_names[@]}"
 
-zsh "$bootstrap_script"
+agent_skills_reconcile_layer
 
 print "install-skills: synced ${#managed_names[@]} skills"
