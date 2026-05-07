@@ -1,12 +1,14 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["oh-my-openagent"],
+  "plugin": [
+    "oh-my-openagent"
+  ],
   "instructions": [
-    "~/.agents/instructions/engineering.md",
-    "~/.agents/instructions/personal-programming-principles.md",
-    "~/.agents/instructions/language.md",
-    "~/.agents/instructions/search.md",
     "~/.agents/instructions/cli.md",
+    "~/.agents/instructions/engineering.md",
+    "~/.agents/instructions/language.md",
+    "~/.agents/instructions/personal-programming-principles.md",
+    "~/.agents/instructions/search.md",
     "~/.agents/instructions/worktrees.md"
   ],
   "provider": {
@@ -253,7 +255,9 @@
     "openrouter": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "OpenRouter",
-      "options": { "baseURL": "https://openrouter.ai/api/v1" }
+      "options": {
+        "baseURL": "https://openrouter.ai/api/v1"
+      }
     }
   },
   "mcp": {}
