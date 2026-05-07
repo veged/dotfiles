@@ -1,6 +1,7 @@
 .DS_Store
 Brewfile.lock.json
 .claude/
+.worktrees/
 ~/
 zsh-fsh/
 tools/remark/node_modules/
