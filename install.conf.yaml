@@ -38,7 +38,7 @@
       path: codex/AGENTS.md
     ~/.agents/instructions/:
       glob: true
-      path: ai/instructions/*
+      path: ai/instructions/*.md
     ~/.remarkrc.json:
       path: tools/remark/remarkrc.json
     ~/.local/bin/remark:
