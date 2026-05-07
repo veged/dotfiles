@@ -12,6 +12,15 @@
 
 Для GitHub-источников в реестрах допустима короткая форма `owner/repo` или `owner/repo/tree/...`.
 
+## AI-инструкции
+
+`ai/instructions/*.md` — source of truth для общих AI-инструкций.
+Instruction id — это filename без `.md`; projected files используют то же filename под `~/.agents/instructions/`.
+Claude, Codex и OpenCode instruction lists генерируются из markdown file set в deterministic filename order.
+
+После добавления, удаления, переименования или редактирования instruction files запускай `./scripts/install-mcp --sync-only`.
+Для проверки stale generated artifacts запускай `./scripts/install-mcp --check`.
+
 ## Рабочие каталоги
 
 * `~/.agents/instructions` — projected Markdown-инструкции
