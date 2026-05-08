@@ -9,6 +9,7 @@ source "$repo_root/scripts/lib/install-common.zsh"
 source "$repo_root/scripts/lib/skill-acquisition.zsh"
 source "$repo_root/scripts/lib/agent-skills-layer.zsh"
 
+ACQUISITION_SOURCE_BASE_DIR="$repo_root"
 skills_root="$repo_root/ai/skills"
 registry_path="$skills_root/skills.json"
 force=0

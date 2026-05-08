@@ -25,7 +25,10 @@ cat > "$fixture_root/ai/skills/skills.json" <<'JSON'
 {
   "org/all": "*",
   "org/one": "alpha",
-  "https://example.com/skills.git": ["beta", "gamma"]
+  "https://example.com/skills.git": ["beta", "gamma"],
+  "~/arcadia/ai/artifacts/skills/infra/arc": "*",
+  "/opt/local-skills/custom": "local-custom",
+  "./local-skills/relative": "relative-local"
 }
 JSON
 
@@ -92,6 +95,7 @@ ZSH
 chmod +x "$bin_dir/npx"
 
 SCRIPT_NAME=test-skill-acquisition
+ACQUISITION_SOURCE_BASE_DIR="$fixture_root"
 source "$fixture_root/scripts/lib/install-common.zsh"
 source "$fixture_root/scripts/lib/skill-acquisition.zsh"
 
@@ -109,10 +113,21 @@ assert_json() {
 }
 
 skill_specs=("${(@f)$(acquisition_skill_specs "$fixture_root/ai/skills/skills.json")}")
-[[ ${#skill_specs[@]} == 3 ]] || fail "expected 3 skill specs, got ${#skill_specs[@]}"
+[[ ${#skill_specs[@]} == 6 ]] || fail "expected 6 skill specs, got ${#skill_specs[@]}"
 assert_json "${skill_specs[1]}" '.source == "https://github.com/org/all" and .install_all == true and (.skills | length) == 0' "skill all spec"
 assert_json "${skill_specs[2]}" '.source == "https://github.com/org/one" and .install_all == false and .skills == ["alpha"]' "single skill spec"
 assert_json "${skill_specs[3]}" '.source == "https://example.com/skills.git" and .install_all == false and .skills == ["beta", "gamma"]' "array skill spec"
+
+expected_arc_source="$HOME/arcadia/ai/artifacts/skills/infra/arc"
+jq -e --arg source "$expected_arc_source" \
+  '.source == $source and .install_all == true and (.skills | length) == 0' \
+  <<<"${skill_specs[4]}" >/dev/null || fail "json assertion failed: tilde local skill source"
+assert_json "${skill_specs[5]}" '.source == "/opt/local-skills/custom" and .install_all == false and .skills == ["local-custom"]' "absolute local skill source"
+expected_relative_source="$fixture_root/local-skills/relative"
+expected_relative_source="${expected_relative_source:A}"
+jq -e --arg source "$expected_relative_source" \
+  '.source == $source and .install_all == false and .skills == ["relative-local"]' \
+  <<<"${skill_specs[6]}" >/dev/null || fail "json assertion failed: relative local skill source"
 
 plugin_specs=("${(@f)$(acquisition_plugin_specs "$fixture_root/ai/plugins/plugins.json")}")
 [[ ${#plugin_specs[@]} == 3 ]] || fail "expected 3 plugin specs, got ${#plugin_specs[@]}"

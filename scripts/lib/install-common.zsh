@@ -23,6 +23,23 @@ normalize_source() {
     return
   fi
 
+  if [[ $source == '~' || $source == '~/'* ]]; then
+    print -r -- "$HOME${source#\~}"
+    return
+  fi
+
+  if [[ $source == ./* || $source == ../* ]]; then
+    local base_dir=${ACQUISITION_SOURCE_BASE_DIR:-$PWD}
+    local source_path="$base_dir/$source"
+    print -r -- "${source_path:A}"
+    return
+  fi
+
+  if [[ $source == /* ]]; then
+    print -r -- "$source"
+    return
+  fi
+
   print -r -- "https://github.com/$source"
 }
 

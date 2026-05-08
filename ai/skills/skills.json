@@ -54,5 +54,6 @@
     "skill-creator",
     "skill-installer"
   ],
-  "openai/codex/tree/main/codex-rs/skills/src/assets/samples/plugin-creator": "*"
+  "openai/codex/tree/main/codex-rs/skills/src/assets/samples/plugin-creator": "*",
+  "~/arcadia/ai/artifacts/skills/infra/arc": "*"
 }

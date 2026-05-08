@@ -28,6 +28,7 @@ ai/skills/
 * `owner/repo`
 * `owner/repo/tree/...`
 * полный `https://github.com/...`
+* явный локальный путь: `~/...`, `/...`, `./...` или `../...`
 
 `spec`:
 

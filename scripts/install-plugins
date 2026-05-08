@@ -8,6 +8,7 @@ SCRIPT_NAME=install-plugins
 source "$repo_root/scripts/lib/install-common.zsh"
 source "$repo_root/scripts/lib/skill-acquisition.zsh"
 
+ACQUISITION_SOURCE_BASE_DIR="$repo_root"
 plugins_path="$repo_root/ai/plugins/plugins.json"
 plugins_root_dir="$HOME/.codex/plugins"
 plugins_dir="$plugins_root_dir/dotfiles-local"

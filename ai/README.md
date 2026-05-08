@@ -11,6 +11,7 @@
 * `claude/.settings.template.json`, `codex/.config.template.toml`, `config/opencode/.opencode.template.jsonc` — шаблоны non-MCP настроек клиентов
 
 Для GitHub-источников в реестрах допустима короткая форма `owner/repo` или `owner/repo/tree/...`.
+Локальные источники навыков задаются явным путём: `~/...`, `/...`, `./...` или `../...`.
 
 ## AI-инструкции
 
