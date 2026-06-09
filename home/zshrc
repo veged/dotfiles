@@ -358,3 +358,9 @@ yc() {
   [ -f ~/yandex-cloud/completion.zsh.inc ] && source ~/yandex-cloud/completion.zsh.inc
   yc "$@"
 }
+
+# The next line updates PATH for src CLI.
+if [ -f ~/sourcecraft/path.zsh.inc ]; then source ~/sourcecraft/path.zsh.inc; fi
+
+# The next line enables shell command completion for src.
+if [ -f ~/sourcecraft/completion.zsh.inc ]; then source ~/sourcecraft/completion.zsh.inc; fi
