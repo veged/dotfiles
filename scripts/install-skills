@@ -46,7 +46,7 @@ while (( $# > 0 )); do
   shift
 done
 
-require_commands jq npx fd diff
+require_commands jq npx fd diff git
 
 mkdir -p "$AGENT_SKILLS_CANONICAL_DIR"
 

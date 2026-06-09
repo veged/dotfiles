@@ -127,7 +127,12 @@ acquisition_stage_skills() {
   shift 2
 
   mkdir -p "$stage_dir"
-  stage_skills "$stage_dir" "$source" "$@"
+  # Non-GitHub git URLs are cloned directly; GitHub shorthands go through the skills CLI.
+  if [[ "$source" == *://* && "$source" != https://github.com/* ]]; then
+    stage_skills_git "$stage_dir" "$source" "$@"
+  else
+    stage_skills "$stage_dir" "$source" "$@"
+  fi
 }
 
 acquisition_staged_skill_paths() {

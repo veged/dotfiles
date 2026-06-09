@@ -3,23 +3,27 @@
   "vercel-labs/skills": "*",
   "slidevjs/slidev": "*",
   "mattpocock/skills": [
-    "design-an-interface",
-    "edit-article",
-    "git-guardrails-claude-code",
     "grill-me",
     "improve-codebase-architecture",
-    "migrate-to-shoehorn",
-    "obsidian-vault",
-    "prd-to-issues",
-    "prd-to-plan",
-    "request-refactor-plan",
-    "scaffold-exercises",
-    "setup-pre-commit",
     "tdd",
-    "triage-issue",
-    "ubiquitous-language",
-    "write-a-prd",
+    "to-issues",
+    "to-prd",
     "write-a-skill"
+  ],
+  "mattpocock/skills/tree/main/skills/deprecated": [
+    "design-an-interface",
+    "request-refactor-plan",
+    "ubiquitous-language"
+  ],
+  "mattpocock/skills/tree/main/skills/misc": [
+    "git-guardrails-claude-code",
+    "migrate-to-shoehorn",
+    "scaffold-exercises",
+    "setup-pre-commit"
+  ],
+  "mattpocock/skills/tree/main/skills/personal": [
+    "edit-article",
+    "obsidian-vault"
   ],
   "terraphim/terraphim-skills": "rust-development",
   "veged/caveman/tree/main/skills": "caveman",
@@ -46,7 +50,6 @@
   ],
   "nicobailon/visual-explainer": "*",
   "openai/skills": [
-    "doc",
     "imagegen",
     "openai-docs",
     "pdf",
@@ -55,5 +58,6 @@
     "skill-installer"
   ],
   "openai/codex/tree/main/codex-rs/skills/src/assets/samples/plugin-creator": "*",
-  "~/arcadia/ai/artifacts/skills/infra/arc": "*"
+  "~/arcadia/ai/artifacts/skills/infra/arc": "*",
+  "ssh://ssh.sourcecraft.dev/veged/slidev-theme-practicum.git": "slidev-practicum"
 }

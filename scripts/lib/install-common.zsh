@@ -70,6 +70,44 @@ stage_skills() {
   )
 }
 
+git_find_skill_dir() {
+  local root=$1 name=$2 dir
+  for dir in "$root/$name" "$root/skills/$name"; do
+    [[ -f "$dir/SKILL.md" ]] && { print -r -- "$dir"; return 0; }
+  done
+  return 1
+}
+
+stage_skills_git() {
+  local stage_dir=$1 source=$2
+  shift 2
+
+  local clone_dir="$stage_dir/clone"
+  local dest_dir="$stage_dir/.agents/skills"
+
+  rm -rf "$clone_dir"
+  git clone --depth 1 "$source" "$clone_dir" >/dev/null 2>&1 \
+    || die "$SCRIPT_NAME: git clone failed for skill source: $source"
+  rm -rf "$clone_dir/.git"
+  mkdir -p "$dest_dir"
+
+  local name skill_dir dir
+  if (( $# )); then
+    for name in "$@"; do
+      skill_dir=$(git_find_skill_dir "$clone_dir" "$name") \
+        || die "$SCRIPT_NAME: skill '$name' not found in $source"
+      rm -rf "$dest_dir/$name"
+      cp -R "$skill_dir" "$dest_dir/$name"
+    done
+  else
+    for dir in "$clone_dir"/*(N/) "$clone_dir"/skills/*(N/); do
+      [[ -f "$dir/SKILL.md" ]] || continue
+      rm -rf "$dest_dir/${dir:t}"
+      cp -R "$dir" "$dest_dir/${dir:t}"
+    done
+  fi
+}
+
 staged_skill_paths() {
   fd -td -d 1 . "$1/.agents/skills"
 }

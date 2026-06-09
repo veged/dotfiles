@@ -15,6 +15,7 @@ linked_skill_source="$fixture_root/local-skill-source/linked-one"
 mkdir -p \
   "$fixture_root/ai/skills/local-one" \
   "$linked_skill_source" \
+  "$fixture_root/remote-skill-src/skills/git-skill" \
   "$fixture_root/scripts/lib" \
   "$fixture_root/scripts/tests" \
   "$home_dir" \
@@ -37,11 +38,23 @@ EOF
 ln -s "$linked_skill_source" "$fixture_root/ai/skills/linked-one"
 linked_skill_source="${linked_skill_source:A}"
 
-cat > "$fixture_root/ai/skills/skills.json" <<'EOF'
+git_skill_src="$fixture_root/remote-skill-src"
+git_skill_url="file://${git_skill_src:A}"
+
+cat > "$fixture_root/ai/skills/skills.json" <<EOF
 {
-  "example/source": "external-one"
+  "example/source": "external-one",
+  "$git_skill_url": "git-skill"
 }
 EOF
+
+cat > "$fixture_root/remote-skill-src/skills/git-skill/SKILL.md" <<'EOF'
+# git-skill
+EOF
+
+git -C "$git_skill_src" init -q
+git -C "$git_skill_src" add -A
+git -C "$git_skill_src" -c user.email=test@example.com -c user.name=test commit -q -m init
 
 cat > "$bin_dir/npx" <<'EOF'
 #!/usr/bin/env zsh
@@ -137,6 +150,8 @@ PATH="$bin_dir:$PATH" HOME="$home_dir" zsh "$fixture_root/scripts/install-skills
 assert_path_exists "$home_dir/.agents/skills/local-one" "canonical local skill"
 assert_symlink_target "$home_dir/.agents/skills/linked-one" "$linked_skill_source" "canonical linked local skill"
 assert_path_exists "$home_dir/.agents/skills/external-one" "canonical external skill"
+assert_path_exists "$home_dir/.agents/skills/git-skill/SKILL.md" "git-cloned skill"
+[[ -d "$home_dir/.agents/skills/git-skill" && ! -L "$home_dir/.agents/skills/git-skill" ]] || fail "git skill must be a real directory"
 assert_path_exists "$home_dir/.agents/skills/codex-primary-runtime/slides/SKILL.md" "migrated codex-primary-runtime bundle"
 assert_symlink_target "$home_dir/.claude/skills/local-one" "$home_dir/.agents/skills/local-one" "claude local skill link"
 assert_symlink_target "$home_dir/.codex/skills/linked-one" "$home_dir/.agents/skills/linked-one" "codex linked local skill link"
