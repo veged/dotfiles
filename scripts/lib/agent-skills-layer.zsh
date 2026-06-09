@@ -123,7 +123,7 @@ agent_skills_reconcile_layer() {
     agent_skills_prune_projected_symlinks "$projection_dir"
   done
 
-  for skill_path in "$AGENT_SKILLS_CANONICAL_DIR"/*(N/); do
+  for skill_path in "$AGENT_SKILLS_CANONICAL_DIR"/*(N-/); do
     for projection_dir in "${AGENT_SKILLS_PROJECTION_DIRS[@]}"; do
       agent_skills_ensure_projected_symlink "$projection_dir" "$skill_path"
     done

@@ -12,8 +12,16 @@
 * `{ "source": "owner/repo", "skills": "*" }` — то же явно
 * `{ "source": "owner/repo", "skills": "skill-name" }` — один навык
 * `{ "source": "owner/repo", "skills": ["skill-a", "skill-b"] }` — список
+* `{ "source": "owner/repo", "kind": "plugin" }` — подключить готовый Codex-plugin целиком (с `commands`/`agents`/`context`), а не набор skills
 
-Для `source` допустим и полный `https://github.com/...`, но короткая форма предпочтительнее.
+Для `source` допустим и полный `https://github.com/...` или `ssh://...`, но короткая форма предпочтительнее.
+
+`kind: "plugin"` берёт source двумя способами:
+
+* **remote URL** (канонический, «для всех») → `install-plugins` клонирует репозиторий в `~/.codex/plugins/dotfiles-local/<name>` реальной папкой, как `kind: skills`;
+* **локальный путь** (`./...`, `~/...`) → симлинк на рабочую копию, правки видны сразу — для разработки своих плагинов (live: прокидывается в marketplace и installed cache Codex).
+
+Локальная подмена remote-плагина: замени чекаут `~/.codex/plugins/dotfiles-local/<name>` симлинком на свою рабочую копию — `install-plugins` уважает такой симлинк (`local override`) и не перетирает его при реинсталле.
 
 ## Установка
 

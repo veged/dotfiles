@@ -4,5 +4,9 @@
     "skills": "frontend-design"
   },
   "impeccable": "pbakaus/impeccable",
-  "mblode": "mblode/agent-skills"
+  "mblode": "mblode/agent-skills",
+  "presentation-craft": {
+    "source": "ssh://ssh.sourcecraft.dev/veged/presentationcraft.git",
+    "kind": "plugin"
+  }
 }

@@ -45,13 +45,14 @@ acquisition_skill_specs() {
 
 acquisition_plugin_specs() {
   local registry_path=$1
-  local entry name value_type source source_spec skills_type value install_all skills_json
+  local entry name value_type source source_spec kind skills_type value install_all skills_json
 
   [[ -f "$registry_path" ]] || die "$SCRIPT_NAME: missing plugin registry: $registry_path"
 
   for entry in "${(@f)$(jq -c 'to_entries[]' "$registry_path")}"; do
     name=$(jq -r '.key' <<<"$entry")
     value_type=$(jq -r '.value | type' <<<"$entry")
+    kind=skills
     install_all=false
     skills_json='[]'
 
@@ -63,26 +64,37 @@ acquisition_plugin_specs() {
       object)
         source_spec=$(jq -er '.value.source' <<<"$entry" 2>/dev/null) || die "$SCRIPT_NAME: missing source for plugin: $name"
         source=$(normalize_source "$source_spec")
-        skills_type=$(jq -r 'if .value.skills == null then "null" else (.value.skills | type) end' <<<"$entry")
-        case "$skills_type" in
-          null)
-            install_all=true
-            ;;
-          string)
-            value=$(jq -r '.value.skills' <<<"$entry")
-            if [[ "$value" == "*" ]]; then
+        kind=$(jq -r '.value.kind // "skills"' <<<"$entry")
+        [[ "$kind" == "skills" || "$kind" == "plugin" ]] || die "$SCRIPT_NAME: invalid plugin kind for $name: $kind"
+
+        if [[ "$kind" == "plugin" ]]; then
+          if jq -e '.value | has("skills")' <<<"$entry" >/dev/null; then
+            die "$SCRIPT_NAME: plugin kind must not declare skills: $name"
+          fi
+
+          install_all=true
+        else
+          skills_type=$(jq -r 'if .value.skills == null then "null" else (.value.skills | type) end' <<<"$entry")
+          case "$skills_type" in
+            null)
               install_all=true
-            else
-              skills_json=$(acquisition_json_array_from_args "$value")
-            fi
-            ;;
-          array)
-            skills_json=$(jq -c '.value.skills' <<<"$entry")
-            ;;
-          *)
-            die "$SCRIPT_NAME: invalid skills spec for plugin: $name"
-            ;;
-        esac
+              ;;
+            string)
+              value=$(jq -r '.value.skills' <<<"$entry")
+              if [[ "$value" == "*" ]]; then
+                install_all=true
+              else
+                skills_json=$(acquisition_json_array_from_args "$value")
+              fi
+              ;;
+            array)
+              skills_json=$(jq -c '.value.skills' <<<"$entry")
+              ;;
+            *)
+              die "$SCRIPT_NAME: invalid skills spec for plugin: $name"
+              ;;
+          esac
+        fi
         ;;
       *)
         die "$SCRIPT_NAME: invalid plugin source spec: $name"
@@ -96,9 +108,10 @@ acquisition_plugin_specs() {
     jq -cn \
       --arg name "$name" \
       --arg source "$source" \
+      --arg kind "$kind" \
       --argjson install_all "$install_all" \
       --argjson skills "$skills_json" \
-      '{name: $name, source: $source, install_all: $install_all, skills: $skills}'
+      '{name: $name, source: $source, kind: $kind, install_all: $install_all, skills: $skills}'
   done
 }
 

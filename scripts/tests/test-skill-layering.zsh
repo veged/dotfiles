@@ -10,9 +10,11 @@ trap 'rm -rf "$tmp_root"' EXIT
 fixture_root="$tmp_root/repo"
 home_dir="$tmp_root/home"
 bin_dir="$tmp_root/bin"
+linked_skill_source="$fixture_root/local-skill-source/linked-one"
 
 mkdir -p \
   "$fixture_root/ai/skills/local-one" \
+  "$linked_skill_source" \
   "$fixture_root/scripts/lib" \
   "$fixture_root/scripts/tests" \
   "$home_dir" \
@@ -27,6 +29,13 @@ cp "$repo_root/scripts/bootstrap-agent-skills" "$fixture_root/scripts/bootstrap-
 cat > "$fixture_root/ai/skills/local-one/SKILL.md" <<'EOF'
 # local-one
 EOF
+
+cat > "$linked_skill_source/SKILL.md" <<'EOF'
+# linked-one
+EOF
+
+ln -s "$linked_skill_source" "$fixture_root/ai/skills/linked-one"
+linked_skill_source="${linked_skill_source:A}"
 
 cat > "$fixture_root/ai/skills/skills.json" <<'EOF'
 {
@@ -126,14 +135,25 @@ ln -s "$home_dir/.agents/skills/missing" "$home_dir/.claude/skills/stale"
 PATH="$bin_dir:$PATH" HOME="$home_dir" zsh "$fixture_root/scripts/install-skills"
 
 assert_path_exists "$home_dir/.agents/skills/local-one" "canonical local skill"
+assert_symlink_target "$home_dir/.agents/skills/linked-one" "$linked_skill_source" "canonical linked local skill"
 assert_path_exists "$home_dir/.agents/skills/external-one" "canonical external skill"
 assert_path_exists "$home_dir/.agents/skills/codex-primary-runtime/slides/SKILL.md" "migrated codex-primary-runtime bundle"
 assert_symlink_target "$home_dir/.claude/skills/local-one" "$home_dir/.agents/skills/local-one" "claude local skill link"
+assert_symlink_target "$home_dir/.codex/skills/linked-one" "$home_dir/.agents/skills/linked-one" "codex linked local skill link"
 assert_symlink_target "$home_dir/.codex/skills/local-one" "$home_dir/.agents/skills/local-one" "codex local skill link"
 assert_symlink_target "$home_dir/.codex/skills/codex-primary-runtime" "$home_dir/.agents/skills/codex-primary-runtime" "codex shared bundle link"
 assert_path_exists "$home_dir/.codex/skills/.system/keep.txt" "codex system bundle"
 assert_path_exists "$home_dir/.codex/skills/unmanaged" "unmanaged codex entry"
 assert_not_exists "$home_dir/.claude/skills/stale" "stale claude link"
+
+# A manual symlink at the canonical external skill dir is a dev override and must survive re-install.
+external_override_src="${fixture_root:A}/external-override"
+mkdir -p "$external_override_src"
+print -r -- "# external-one" > "$external_override_src/SKILL.md"
+rm -rf "$home_dir/.agents/skills/external-one"
+ln -s "$external_override_src" "$home_dir/.agents/skills/external-one"
+PATH="$bin_dir:$PATH" HOME="$home_dir" zsh "$fixture_root/scripts/install-skills"
+assert_symlink_target "$home_dir/.agents/skills/external-one" "$external_override_src" "external skill dev override preserved"
 
 PATH="$bin_dir:$PATH" HOME="$home_dir" zsh "$fixture_root/scripts/install-skills"
 

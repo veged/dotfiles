@@ -39,6 +39,8 @@ ai/skills/
 ## Правила сборки
 
 * `./scripts/install-skills` собирает локальные пакеты и внешние зависимости в `~/.agents/skills`, затем запускает projection в assistant-specific слои
+* локальный skill-пакет, подключённый в `ai/skills/` symlink-ом, сохраняется symlink-ом в `~/.agents/skills`
+* для разработки внешнего skill можно вручную заменить его каталог в `~/.agents/skills/<name>` symlink-ом на рабочую копию — `install-skills` уважает такой override и не перетирает его
 * конфликт имени между локальным и внешним skill — жёсткая ошибка
 * конфликт имён между внешними источниками — жёсткая ошибка
 * `./scripts/bootstrap-agent-skills` при необходимости мигрирует `codex-primary-runtime` из `~/.codex/skills` в канонический слой, обычно вызывается из `install-skills`

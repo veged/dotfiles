@@ -58,6 +58,19 @@ typeset -Ua managed_names
 managed_names=()
 source_index=0
 
+sync_local_skill_dir() {
+  local target_dir=$1
+  local source_dir=$2
+
+  if [[ -L "$source_dir" ]]; then
+    rm -rf "$target_dir"
+    ln -s "${source_dir:A}" "$target_dir"
+    return
+  fi
+
+  replace_dir "$target_dir" "$source_dir"
+}
+
 register_external_skill() {
   local name=$1
   local source=$2
@@ -75,12 +88,12 @@ register_external_skill() {
   external_skill_sources[$name]=$source
 }
 
-for skill_dir in "$skills_root"/*(N/); do
+for skill_dir in "$skills_root"/*(N-/); do
   [[ -f "$skill_dir/SKILL.md" ]] || continue
 
   name=${skill_dir:t}
   local_skill_dirs[$name]=$skill_dir
-  replace_dir "$AGENT_SKILLS_CANONICAL_DIR/$name" "$skill_dir"
+  sync_local_skill_dir "$AGENT_SKILLS_CANONICAL_DIR/$name" "$skill_dir"
   managed_names+=("$name")
 done
 
@@ -107,6 +120,11 @@ if [[ -f "$registry_path" ]]; then
       for skill_path in "${staged_paths[@]}"; do
         name=${skill_path:t}
         register_external_skill "$name" "$source"
+        if [[ -L "$AGENT_SKILLS_CANONICAL_DIR/$name" ]]; then
+          print "install-skills: local override: $name"
+          managed_names+=("$name")
+          continue
+        fi
         replace_dir "$AGENT_SKILLS_CANONICAL_DIR/$name" "$skill_path"
         managed_names+=("$name")
       done
@@ -117,27 +135,42 @@ if [[ -f "$registry_path" ]]; then
       register_external_skill "$name" "$source"
     done
 
+    # A manual symlink at the canonical dir is a local dev override — keep it as-is.
+    typeset -a override_names install_names
+    override_names=()
+    install_names=()
+    for name in "${requested_names[@]}"; do
+      if [[ -L "$AGENT_SKILLS_CANONICAL_DIR/$name" ]]; then
+        override_names+=("$name")
+      else
+        install_names+=("$name")
+      fi
+    done
+
+    if (( ${#override_names[@]} )); then
+      print "install-skills: local override: ${override_names[*]}"
+      managed_names+=("${override_names[@]}")
+    fi
+
+    (( ${#install_names[@]} )) || continue
+
     needs_install=$force
     if (( ! needs_install )); then
-      for name in "${requested_names[@]}"; do
-        target="$AGENT_SKILLS_CANONICAL_DIR/$name"
-        if [[ ! -d "$target" || -L "$target" ]]; then
-          needs_install=1
-          break
-        fi
+      for name in "${install_names[@]}"; do
+        [[ -d "$AGENT_SKILLS_CANONICAL_DIR/$name" ]] || { needs_install=1; break; }
       done
     fi
 
     if (( ! needs_install )); then
-      managed_names+=("${requested_names[@]}")
+      managed_names+=("${install_names[@]}")
       print "install-skills: already present: $source"
       continue
     fi
 
     print "install-skills: fetching: $source"
-    acquisition_stage_skills "$stage_dir" "$source" "${selected_skills[@]}"
+    acquisition_stage_skills "$stage_dir" "$source" "${install_names[@]}"
 
-    for name in "${requested_names[@]}"; do
+    for name in "${install_names[@]}"; do
       [[ -d "$stage_dir/.agents/skills/$name" ]] || die "install-skills: staged skill not found: $source#$name"
       replace_dir "$AGENT_SKILLS_CANONICAL_DIR/$name" "$stage_dir/.agents/skills/$name"
       managed_names+=("$name")

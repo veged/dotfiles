@@ -41,6 +41,10 @@ cat > "$fixture_root/ai/plugins/plugins.json" <<'JSON'
   },
   "implicit-all-plugin": {
     "source": "https://example.com/plugin.git"
+  },
+  "local-root-plugin": {
+    "source": "./local-plugins/root",
+    "kind": "plugin"
   }
 }
 JSON
@@ -130,10 +134,15 @@ jq -e --arg source "$expected_relative_source" \
   <<<"${skill_specs[6]}" >/dev/null || fail "json assertion failed: relative local skill source"
 
 plugin_specs=("${(@f)$(acquisition_plugin_specs "$fixture_root/ai/plugins/plugins.json")}")
-[[ ${#plugin_specs[@]} == 3 ]] || fail "expected 3 plugin specs, got ${#plugin_specs[@]}"
-assert_json "${plugin_specs[1]}" '.name == "string-plugin" and .source == "https://github.com/org/plugin-all" and .install_all == true and (.skills | length) == 0' "string plugin spec"
-assert_json "${plugin_specs[2]}" '.name == "selected-plugin" and .source == "https://github.com/org/plugin-selected" and .install_all == false and .skills == ["delta", "epsilon"]' "selected plugin spec"
-assert_json "${plugin_specs[3]}" '.name == "implicit-all-plugin" and .source == "https://example.com/plugin.git" and .install_all == true and (.skills | length) == 0' "implicit all plugin spec"
+[[ ${#plugin_specs[@]} == 4 ]] || fail "expected 4 plugin specs, got ${#plugin_specs[@]}"
+assert_json "${plugin_specs[1]}" '.name == "string-plugin" and .source == "https://github.com/org/plugin-all" and .kind == "skills" and .install_all == true and (.skills | length) == 0' "string plugin spec"
+assert_json "${plugin_specs[2]}" '.name == "selected-plugin" and .source == "https://github.com/org/plugin-selected" and .kind == "skills" and .install_all == false and .skills == ["delta", "epsilon"]' "selected plugin spec"
+assert_json "${plugin_specs[3]}" '.name == "implicit-all-plugin" and .source == "https://example.com/plugin.git" and .kind == "skills" and .install_all == true and (.skills | length) == 0' "implicit all plugin spec"
+expected_plugin_root_source="$fixture_root/local-plugins/root"
+expected_plugin_root_source="${expected_plugin_root_source:A}"
+jq -e --arg source "$expected_plugin_root_source" \
+  '.name == "local-root-plugin" and .source == $source and .kind == "plugin" and .install_all == true and (.skills | length) == 0' \
+  <<<"${plugin_specs[4]}" >/dev/null || fail "json assertion failed: local plugin-root spec"
 
 selected=("${(@f)$(acquisition_spec_skills "${plugin_specs[2]}")}")
 [[ "${selected[*]}" == "delta epsilon" ]] || fail "unexpected selected skills: ${selected[*]}"

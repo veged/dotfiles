@@ -49,7 +49,7 @@ while (( $# > 0 )); do
   shift
 done
 
-require_commands jq npx fd
+require_commands jq npx fd git
 
 mkdir -p "$plugins_root_dir" "$plugins_root_dir/cache" "$plugins_dir" "$agents_plugins_dir"
 
@@ -81,6 +81,54 @@ build_plugin_manifest() {
     }' > "$plugin_dir/.codex-plugin/plugin.json"
 }
 
+link_plugin_root() {
+  local plugin_name=$1
+  local plugin_source=$2
+  local plugin_dir=$3
+  local plugin_cache_dir=$4
+
+  [[ -d "$plugin_source" ]] || die "install-plugins: missing plugin root for $plugin_name: $plugin_source"
+  [[ -f "$plugin_source/.codex-plugin/plugin.json" ]] || die "install-plugins: missing Codex plugin manifest for $plugin_name: $plugin_source/.codex-plugin/plugin.json"
+
+  rm -rf "$plugin_dir"
+  ln -s "$plugin_source" "$plugin_dir"
+
+  mkdir -p "${plugin_cache_dir:h}"
+  rm -rf "$plugin_cache_dir"
+  mkdir -p "$plugin_cache_dir/.codex-plugin"
+  ln -s "$plugin_source/.codex-plugin/plugin.json" "$plugin_cache_dir/.codex-plugin/plugin.json"
+
+  local entry_path entry_name
+  for entry_path in "$plugin_source"/*(N) "$plugin_source"/.*(N); do
+    entry_name=${entry_path:t}
+    case "$entry_name" in
+      .|..|.codex-plugin|.git|.worktrees|node_modules)
+        continue
+        ;;
+    esac
+
+    ln -s "$entry_path" "$plugin_cache_dir/$entry_name"
+  done
+}
+
+clone_plugin_root() {
+  local plugin_name=$1
+  local plugin_source=$2
+  local plugin_dir=$3
+  local stage_dir=$4
+  local clone_dir="$stage_dir/clone"
+
+  rm -rf "$clone_dir"
+  git clone --depth 1 "$plugin_source" "$clone_dir" >/dev/null 2>&1 || return 1
+  [[ -f "$clone_dir/.codex-plugin/plugin.json" ]] \
+    || die "install-plugins: cloned source is not a Codex plugin for $plugin_name: $plugin_source"
+
+  rm -rf "$clone_dir/.git"
+  rm -rf "$plugin_dir"
+  mkdir -p "${plugin_dir:h}"
+  mv "$clone_dir" "$plugin_dir"
+}
+
 prune_legacy_root_plugins() {
   local plugin_name legacy_dir
 
@@ -100,47 +148,100 @@ plugin_index=0
 for entry in "${plugin_entries[@]}"; do
   plugin_name=$(jq -r '.name' <<<"$entry")
   plugin_source=$(jq -r '.source' <<<"$entry")
+  plugin_kind=$(jq -r '.kind // "skills"' <<<"$entry")
   install_all=$(jq -r 'if .install_all then 1 else 0 end' <<<"$entry")
   plugin_skills=("${(@f)$(acquisition_spec_skills "$entry")}")
   plugin_dir="$plugins_dir/$plugin_name"
+  plugin_cache_dir=""
+  plugin_cache_manifest=""
+  plugin_manifest_path=""
+  plugin_version=""
   stage_dir="$tmpdir/plugin-$plugin_index"
+  plugin_category="Coding"
   ((plugin_index += 1))
   mkdir -p "$stage_dir"
 
-  needs_install=$force
-  if (( ! needs_install )); then
-    if [[ ! -f "$plugin_dir/.codex-plugin/plugin.json" || ! -d "$plugin_dir/skills" ]]; then
-      needs_install=1
-    elif (( install_all )); then
-      skill_count=$(fd -td -d 1 . "$plugin_dir/skills" | wc -l | tr -d ' ')
-      [[ "$skill_count" == "0" ]] && needs_install=1
+  if [[ "$plugin_kind" == "plugin" ]]; then
+    if [[ -d "$plugin_source" ]]; then
+      # Local plugin root: link live so edits in the working copy propagate immediately.
+      [[ -f "$plugin_source/.codex-plugin/plugin.json" ]] || die "install-plugins: missing Codex plugin manifest for $plugin_name: $plugin_source/.codex-plugin/plugin.json"
+      plugin_category=$(jq -r '.interface.category // "Coding"' "$plugin_source/.codex-plugin/plugin.json")
+      plugin_version=$(jq -r '.version // "0.1.0"' "$plugin_source/.codex-plugin/plugin.json")
+      plugin_cache_dir="$plugins_root_dir/cache/dotfiles-local/$plugin_name/$plugin_version"
+      plugin_manifest_path="$plugin_source/.codex-plugin/plugin.json"
+      plugin_cache_manifest="$plugin_cache_dir/.codex-plugin/plugin.json"
+
+      needs_install=$force
+      if (( ! needs_install )); then
+        if [[ ! -L "$plugin_dir" || "${plugin_dir:A}" != "${plugin_source:A}" || ! -d "$plugin_cache_dir" || -L "$plugin_cache_dir" || ! -L "$plugin_cache_manifest" || "${plugin_cache_manifest:A}" != "${plugin_manifest_path:A}" ]]; then
+          needs_install=1
+        fi
+      fi
+
+      if (( needs_install )); then
+        print "install-plugins: linking: $plugin_source"
+        link_plugin_root "$plugin_name" "$plugin_source" "$plugin_dir" "$plugin_cache_dir"
+      else
+        print "install-plugins: already present: $plugin_name"
+      fi
     else
-      acquisition_has_selected_skills "$plugin_dir/skills" "${plugin_skills[@]}" || needs_install=1
+      # Remote plugin: clone into plugin_dir as a real directory, same shape as kind: skills.
+      # A manual symlink at plugin_dir is a local dev override and is left untouched.
+      if [[ -L "$plugin_dir" ]]; then
+        print "install-plugins: local override: $plugin_name"
+      else
+        needs_install=$force
+        (( needs_install )) || [[ -f "$plugin_dir/.codex-plugin/plugin.json" ]] || needs_install=1
+        if (( needs_install )); then
+          print "install-plugins: cloning: $plugin_source"
+          if ! clone_plugin_root "$plugin_name" "$plugin_source" "$plugin_dir" "$stage_dir"; then
+            [[ -f "$plugin_dir/.codex-plugin/plugin.json" ]] \
+              || { print -u2 "install-plugins: skipping $plugin_name (clone failed: $plugin_source)"; continue; }
+            print -u2 "install-plugins: keeping previous $plugin_name (clone failed: $plugin_source)"
+          fi
+        else
+          print "install-plugins: already present: $plugin_name"
+        fi
+      fi
+      plugin_category=$(jq -r '.interface.category // "Coding"' "$plugin_dir/.codex-plugin/plugin.json")
     fi
-  fi
-
-  if (( needs_install )); then
-    print "install-plugins: fetching: $plugin_source"
-    acquisition_stage_skills "$stage_dir" "$plugin_source" "${plugin_skills[@]}"
-
-    rm -rf "$plugin_dir"
-    mkdir -p "$plugin_dir/.codex-plugin" "$plugin_dir/skills"
-
-    staged_paths=("${(@f)$(acquisition_staged_skill_paths "$stage_dir")}")
-    (( ${#staged_paths[@]} )) || die "install-plugins: no skills staged for plugin: $plugin_name"
-
-    for skill_path in "${staged_paths[@]}"; do
-      replace_dir "$plugin_dir/skills/${skill_path:t}" "$skill_path"
-    done
-
-    build_plugin_manifest "$plugin_name" "$plugin_source" "$plugin_dir"
   else
-    print "install-plugins: already present: $plugin_name"
+    needs_install=$force
+    if (( ! needs_install )); then
+      if [[ ! -f "$plugin_dir/.codex-plugin/plugin.json" || ! -d "$plugin_dir/skills" ]]; then
+        needs_install=1
+      elif (( install_all )); then
+        skill_count=$(fd -td -d 1 . "$plugin_dir/skills" | wc -l | tr -d ' ')
+        [[ "$skill_count" == "0" ]] && needs_install=1
+      else
+        acquisition_has_selected_skills "$plugin_dir/skills" "${plugin_skills[@]}" || needs_install=1
+      fi
+    fi
+
+    if (( needs_install )); then
+      print "install-plugins: fetching: $plugin_source"
+      acquisition_stage_skills "$stage_dir" "$plugin_source" "${plugin_skills[@]}"
+
+      rm -rf "$plugin_dir"
+      mkdir -p "$plugin_dir/.codex-plugin" "$plugin_dir/skills"
+
+      staged_paths=("${(@f)$(acquisition_staged_skill_paths "$stage_dir")}")
+      (( ${#staged_paths[@]} )) || die "install-plugins: no skills staged for plugin: $plugin_name"
+
+      for skill_path in "${staged_paths[@]}"; do
+        replace_dir "$plugin_dir/skills/${skill_path:t}" "$skill_path"
+      done
+
+      build_plugin_manifest "$plugin_name" "$plugin_source" "$plugin_dir"
+    else
+      print "install-plugins: already present: $plugin_name"
+    fi
   fi
 
   managed_names+=("$plugin_name")
   marketplace_plugins=$(jq \
     --arg name "$plugin_name" \
+    --arg category "$plugin_category" \
     '. + [{
       name: $name,
       source: {
@@ -151,7 +252,7 @@ for entry in "${plugin_entries[@]}"; do
         installation: "AVAILABLE",
         authentication: "ON_INSTALL"
       },
-      category: "Coding"
+      category: $category
     }]' <<<"$marketplace_plugins")
 done
 
