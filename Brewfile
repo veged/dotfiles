@@ -14,6 +14,7 @@ brew "cpplint"
 brew "libssh2"
 brew "curl"
 brew "eza"
+brew "fabric-ai"
 brew "fd"
 brew "figlet"
 brew "fontforge", link: false

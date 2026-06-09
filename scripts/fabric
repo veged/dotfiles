@@ -1,0 +1,4 @@
+#!/bin/sh
+# Обёртка над fabric-ai: всегда уводит OpenAI-вендор на Chat Completions API,
+# чтобы запросы шли в локальный codex-bridge (а не в Responses API настоящего OpenAI).
+exec fabric-ai --disable-responses-api "$@"

@@ -1,0 +1,90 @@
+#!/usr/bin/env zsh
+
+emulate -LR zsh
+set -euo pipefail
+
+repo_root=${0:A:h:h}
+SCRIPT_NAME=install-fabric
+source "$repo_root/scripts/lib/install-common.zsh"
+
+require_commands fabric-ai launchctl
+
+config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/fabric"
+mkdir -p "$config_dir"
+
+# .env держим вне git (fabric --setup мог бы дописать туда ключи); создаём, если нет.
+env_file="$config_dir/.env"
+if [[ ! -f "$env_file" ]]; then
+  cat > "$env_file" <<'ENV'
+# Fabric → Codex CLI (через локальный мост codex-bridge.mjs).
+# Модель отвечает на ChatGPT-подписке Codex, без OpenAI API-ключа.
+OPENAI_API_KEY=codex-bridge
+OPENAI_API_BASE_URL=http://127.0.0.1:8123/v1
+DEFAULT_VENDOR=OpenAI
+DEFAULT_MODEL=gpt-5.5
+ENV
+  print -r -- "$SCRIPT_NAME: created $env_file"
+fi
+
+# Паттерны Fabric — если ещё не скачаны.
+[[ -d "$config_dir/patterns" ]] || fabric-ai -U
+
+# Стабильный node: default-алиас fnm переживает смену версии, иначе берём из PATH.
+node_bin="$HOME/.local/share/fnm/aliases/default/bin/node"
+[[ -x "$node_bin" ]] || node_bin=$(command -v node 2>/dev/null || true)
+[[ -n "$node_bin" ]] || die "$SCRIPT_NAME: node not found"
+
+codex_bin="$HOME/.local/bin/codex"
+[[ -x "$codex_bin" ]] || codex_bin=$(command -v codex 2>/dev/null || print -r -- codex)
+
+bridge="$config_dir/codex-bridge.mjs"
+log_file="$config_dir/codex-bridge.log"
+
+# launchd-агент генерируем под конкретную машину (нейтральный лейбл, без логина).
+label=com.fabric.codex-bridge
+agents_dir="$HOME/Library/LaunchAgents"
+plist="$agents_dir/$label.plist"
+mkdir -p "$agents_dir"
+
+cat > "$plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>$label</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>$node_bin</string>
+        <string>$bridge</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>HOME</key>
+        <string>$HOME</string>
+        <key>CODEX_BIN</key>
+        <string>$codex_bin</string>
+        <key>CODEX_MODEL</key>
+        <string>gpt-5.5</string>
+        <key>CODEX_REASONING_EFFORT</key>
+        <string>high</string>
+        <key>FABRIC_CODEX_BRIDGE_PORT</key>
+        <string>8123</string>
+    </dict>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>$log_file</string>
+    <key>StandardErrorPath</key>
+    <string>$log_file</string>
+</dict>
+</plist>
+PLIST
+
+launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
+launchctl bootstrap "gui/$(id -u)" "$plist"
+print -r -- "$SCRIPT_NAME: (re)loaded $label on :8123 (node=$node_bin)"

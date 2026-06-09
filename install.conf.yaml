@@ -19,6 +19,7 @@
   - ~/.agents/skills
   - ~/.agents/plugins
   - ~/.codex/plugins
+  - ~/.config/fabric
 
 - link:
     ~/:
@@ -43,6 +44,14 @@
       path: tools/remark/remarkrc.json
     ~/.local/bin/remark:
       path: scripts/remark
+    ~/.local/bin/openspec:
+      path: scripts/openspec
+    ~/.config/fabric/codex-bridge.mjs:
+      path: fabric/codex-bridge.mjs
+    ~/.config/fabric/README.md:
+      path: fabric/README.md
+    ~/.local/bin/fabric:
+      path: scripts/fabric
 
 - shell:
   - [git submodule update --init --recursive, Installing submodules]
@@ -52,4 +61,6 @@
   - [./scripts/install-plugins, Installing local Codex plugins]
   - [./scripts/install-mcp, Syncing MCP runtimes and generated configs]
   - [./scripts/install-remark, Installing remark toolchain]
+  - [./scripts/install-openspec, Installing OpenSpec toolchain]
+  - [./scripts/install-fabric, Configuring Fabric → Codex bridge]
   - [./scripts/personal configure-git-filter, Configuring git clean/smudge filter for internal URLs]
