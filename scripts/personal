@@ -162,6 +162,17 @@ personal_get() {
   personal_storage_get "$name"
 }
 
+personal_load_storage_env() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local name value
+  for name in "$@"; do
+    value=$(personal_storage_get "$name" 2>/dev/null) || continue
+    export "$name=$value"
+  done
+}
+
 personal_set() {
   emulate -L zsh
   set -euo pipefail
@@ -254,6 +265,7 @@ personal_publish_launchctl() {
   emulate -L zsh
   set -euo pipefail
 
+  [[ "${PERSONAL_PUBLISH_LAUNCHCTL:-1}" != 0 ]] || return 0
   (( $+commands[launchctl] )) || return 0
 
   local name
@@ -268,11 +280,15 @@ personal_load_env() {
   set -euo pipefail
 
   local name value
+  local launchctl_vars=(SOURCECRAFT_PAT SOURCECRAFT_ENTERPRISE_PAT)
+
   for name in $(personal_required_vars); do
     personal_has_env "$name" && continue
     value=$(personal_storage_get "$name" 2>/dev/null) || continue
     export "$name=$value"
   done
+
+  personal_load_storage_env "${launchctl_vars[@]}"
 
   if [[ -n "${GIT_NAME:-}" && -n "${GIT_EMAIL:-}" ]]; then
     export GIT_AUTHOR_NAME="$GIT_NAME"
@@ -281,7 +297,7 @@ personal_load_env() {
     export GIT_COMMITTER_EMAIL="$GIT_EMAIL"
   fi
 
-  personal_publish_launchctl SOURCECRAFT_PAT SOURCECRAFT_ENTERPRISE_PAT
+  personal_publish_launchctl "${launchctl_vars[@]}"
 }
 
 personal_refresh_eliza_token() {

@@ -36,6 +36,7 @@ unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL
 
 personal_env=(
   PERSONAL_BACKEND=file
+  PERSONAL_PUBLISH_LAUNCHCTL=0
   PERSONAL_REQUIRED_PATH="$required_path"
   PERSONAL_STORE_DIR="$store_dir"
 )
@@ -58,12 +59,17 @@ exports="$(env $personal_env "$script_path" export)"
 
 (
   export PERSONAL_BACKEND=file
+  export PERSONAL_PUBLISH_LAUNCHCTL=0
   export PERSONAL_REQUIRED_PATH="$required_path"
   export PERSONAL_STORE_DIR="$store_dir"
+  export AWS_PROFILE="env-profile"
+  export SOURCECRAFT_PAT="stale pat"
   source "$script_path"
   personal_load_env
 
   assert_eq "Test User" "$GIT_NAME" "personal_load_env GIT_NAME"
+  assert_eq "env-profile" "$AWS_PROFILE" "personal_load_env keeps regular env override"
+  assert_eq "pat secret" "$SOURCECRAFT_PAT" "personal_load_env refreshes SOURCECRAFT_PAT"
   assert_eq "Test User" "$GIT_AUTHOR_NAME" "personal_load_env GIT_AUTHOR_NAME"
   assert_eq "test@example.com" "$GIT_COMMITTER_EMAIL" "personal_load_env GIT_COMMITTER_EMAIL"
 )
