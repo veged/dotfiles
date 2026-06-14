@@ -151,24 +151,29 @@ personal_get() {
   emulate -L zsh
   set -euo pipefail
 
-  local name=$1
+  local name=$1 value
   personal_validate_name "$name"
+
+  if value=$(personal_storage_get "$name" 2>/dev/null); then
+    print -r -- "$value"
+    return
+  fi
 
   if personal_has_env "$name"; then
     print -r -- "${(P)name}"
     return
   fi
 
-  personal_storage_get "$name"
+  return 1
 }
 
-personal_load_storage_env() {
+personal_load_named_env() {
   emulate -L zsh
   set -euo pipefail
 
   local name value
   for name in "$@"; do
-    value=$(personal_storage_get "$name" 2>/dev/null) || continue
+    value=$(personal_get "$name" 2>/dev/null) || continue
     export "$name=$value"
   done
 }
@@ -279,16 +284,10 @@ personal_load_env() {
   emulate -L zsh
   set -euo pipefail
 
-  local name value
+  local personal_vars=("${(@f)$(personal_required_vars)}")
   local launchctl_vars=(SOURCECRAFT_PAT SOURCECRAFT_ENTERPRISE_PAT)
 
-  for name in $(personal_required_vars); do
-    personal_has_env "$name" && continue
-    value=$(personal_storage_get "$name" 2>/dev/null) || continue
-    export "$name=$value"
-  done
-
-  personal_load_storage_env "${launchctl_vars[@]}"
+  personal_load_named_env "${personal_vars[@]}"
 
   if [[ -n "${GIT_NAME:-}" && -n "${GIT_EMAIL:-}" ]]; then
     export GIT_AUTHOR_NAME="$GIT_NAME"

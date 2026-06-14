@@ -68,7 +68,7 @@ exports="$(env $personal_env "$script_path" export)"
   personal_load_env
 
   assert_eq "Test User" "$GIT_NAME" "personal_load_env GIT_NAME"
-  assert_eq "env-profile" "$AWS_PROFILE" "personal_load_env keeps regular env override"
+  assert_eq "test-profile" "$AWS_PROFILE" "personal_load_env refreshes AWS_PROFILE"
   assert_eq "pat secret" "$SOURCECRAFT_PAT" "personal_load_env refreshes SOURCECRAFT_PAT"
   assert_eq "Test User" "$GIT_AUTHOR_NAME" "personal_load_env GIT_AUTHOR_NAME"
   assert_eq "test@example.com" "$GIT_COMMITTER_EMAIL" "personal_load_env GIT_COMMITTER_EMAIL"
