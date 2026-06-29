@@ -558,29 +558,12 @@ return require('lazy').setup({
   },
 
   {
-    'dmtrKovalenko/fff.nvim', -- Fast fuzzy file finder with frecency ranking
-    build = function() require('fff.download').download_or_build_binary() end,
-    lazy = false,
-    opts = {},
-    keys = {
-      { '<Leader>ff', function() require('fff').find_files() end, desc = 'Find files (fff)' },
-      { '<Leader>fg', function() require('fff').live_grep() end, desc = 'Live grep (fff)' },
-      {
-        '<Leader>fz',
-        function() require('fff').live_grep({ grep = { modes = { 'fuzzy', 'plain' } } }) end,
-        desc = 'Fuzzy grep (fff)'
-      },
-      {
-        '<Leader>f*',
-        function() require('fff').live_grep({ query = vim.fn.expand('<cword>') }) end,
-        desc = 'Grep current word (fff)'
-      }
-    }
-  },
-
-  {
     'folke/snacks.nvim', -- Snacks.picker keymaps (registered separately from main snacks config)
     keys = {
+      { '<Leader>ff', function() Snacks.picker.files() end,                     desc = 'Find files' },
+      { '<Leader>fg', function() Snacks.picker.grep() end,                      desc = 'Live grep' },
+      { '<Leader>fz', function() Snacks.picker.grep() end,                      desc = 'Fuzzy grep' },
+      { '<Leader>f*', function() Snacks.picker.grep_word() end,                 desc = 'Grep current word' },
       { '<Leader>fc', function() Snacks.picker.colorschemes() end,              desc = 'Find color scheme' },
       { '<Leader>f/', function() Snacks.picker.lines() end,                     desc = 'Current buffer fuzzy find' },
       { '<Leader>fb', function() Snacks.picker.buffers() end,                   desc = 'Buffers' },
