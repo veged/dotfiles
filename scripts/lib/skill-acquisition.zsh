@@ -2,34 +2,73 @@ acquisition_json_array_from_args() {
   jq -n --args '$ARGS.positional' "$@"
 }
 
+acquisition_skill_selection_json() {
+  local value_json=$1
+  local label=$2
+  local value_type value install_all skills_json exclude_json negative_count positive_count
+
+  value_type=$(jq -r 'type' <<<"$value_json")
+  install_all=false
+  skills_json='[]'
+  exclude_json='[]'
+
+  case "$value_type" in
+    string)
+      value=$(jq -r '.' <<<"$value_json")
+      if [[ "$value" == "*" ]]; then
+        install_all=true
+      elif [[ "$value" == !* ]]; then
+        [[ "$value" != "!" ]] || die "$SCRIPT_NAME: empty excluded skill name for $label"
+        install_all=true
+        exclude_json=$(acquisition_json_array_from_args "${value#!}")
+      else
+        skills_json=$(acquisition_json_array_from_args "$value")
+      fi
+      ;;
+    array)
+      jq -e 'all(.[]; type == "string")' <<<"$value_json" >/dev/null \
+        || die "$SCRIPT_NAME: invalid skill list for $label"
+
+      negative_count=$(jq '[.[] | select(startswith("!"))] | length' <<<"$value_json")
+      positive_count=$(jq '[.[] | select(startswith("!") | not)] | length' <<<"$value_json")
+
+      if (( negative_count && positive_count )); then
+        die "$SCRIPT_NAME: cannot mix included and excluded skills for $label"
+      fi
+
+      if (( negative_count )); then
+        jq -e 'all(.[]; . != "!")' <<<"$value_json" >/dev/null \
+          || die "$SCRIPT_NAME: empty excluded skill name for $label"
+        install_all=true
+        exclude_json=$(jq -c 'map(.[1:])' <<<"$value_json")
+      else
+        skills_json=$(jq -c '.' <<<"$value_json")
+      fi
+      ;;
+    *)
+      die "$SCRIPT_NAME: invalid skill selection for $label"
+      ;;
+  esac
+
+  jq -cn \
+    --argjson install_all "$install_all" \
+    --argjson skills "$skills_json" \
+    --argjson exclude "$exclude_json" \
+    '{install_all: $install_all, skills: $skills, exclude: $exclude}'
+}
+
 acquisition_skill_specs() {
   local registry_path=$1
-  local entry source value_type value install_all skills_json
+  local entry source selection_json install_all skills_json exclude_json
 
   [[ -f "$registry_path" ]] || return 0
 
   for entry in "${(@f)$(jq -c 'to_entries[]' "$registry_path")}"; do
     source=$(normalize_source "$(jq -r '.key' <<<"$entry")")
-    value_type=$(jq -r '.value | type' <<<"$entry")
-    install_all=false
-    skills_json='[]'
-
-    case "$value_type" in
-      string)
-        value=$(jq -r '.value' <<<"$entry")
-        if [[ "$value" == "*" ]]; then
-          install_all=true
-        else
-          skills_json=$(acquisition_json_array_from_args "$value")
-        fi
-        ;;
-      array)
-        skills_json=$(jq -c '.value' <<<"$entry")
-        ;;
-      *)
-        die "$SCRIPT_NAME: invalid skill source spec: $source"
-        ;;
-    esac
+    selection_json=$(acquisition_skill_selection_json "$(jq -c '.value' <<<"$entry")" "source: $source")
+    install_all=$(jq -r '.install_all' <<<"$selection_json")
+    skills_json=$(jq -c '.skills' <<<"$selection_json")
+    exclude_json=$(jq -c '.exclude' <<<"$selection_json")
 
     if [[ "$install_all" == false ]] && ! jq -e 'length > 0' <<<"$skills_json" >/dev/null; then
       die "$SCRIPT_NAME: empty skill list for source: $source"
@@ -39,13 +78,14 @@ acquisition_skill_specs() {
       --arg source "$source" \
       --argjson install_all "$install_all" \
       --argjson skills "$skills_json" \
-      '{source: $source, install_all: $install_all, skills: $skills}'
+      --argjson exclude "$exclude_json" \
+      '{source: $source, install_all: $install_all, skills: $skills, exclude: $exclude}'
   done
 }
 
 acquisition_plugin_specs() {
   local registry_path=$1
-  local entry name value_type source source_spec kind skills_type value install_all skills_json
+  local entry name value_type source source_spec kind skills_type install_all skills_json exclude_json selection_json
 
   [[ -f "$registry_path" ]] || die "$SCRIPT_NAME: missing plugin registry: $registry_path"
 
@@ -55,6 +95,7 @@ acquisition_plugin_specs() {
     kind=skills
     install_all=false
     skills_json='[]'
+    exclude_json='[]'
 
     case "$value_type" in
       string)
@@ -79,16 +120,11 @@ acquisition_plugin_specs() {
             null)
               install_all=true
               ;;
-            string)
-              value=$(jq -r '.value.skills' <<<"$entry")
-              if [[ "$value" == "*" ]]; then
-                install_all=true
-              else
-                skills_json=$(acquisition_json_array_from_args "$value")
-              fi
-              ;;
-            array)
-              skills_json=$(jq -c '.value.skills' <<<"$entry")
+            string|array)
+              selection_json=$(acquisition_skill_selection_json "$(jq -c '.value.skills' <<<"$entry")" "plugin: $name")
+              install_all=$(jq -r '.install_all' <<<"$selection_json")
+              skills_json=$(jq -c '.skills' <<<"$selection_json")
+              exclude_json=$(jq -c '.exclude' <<<"$selection_json")
               ;;
             *)
               die "$SCRIPT_NAME: invalid skills spec for plugin: $name"
@@ -111,7 +147,8 @@ acquisition_plugin_specs() {
       --arg kind "$kind" \
       --argjson install_all "$install_all" \
       --argjson skills "$skills_json" \
-      '{name: $name, source: $source, kind: $kind, install_all: $install_all, skills: $skills}'
+      --argjson exclude "$exclude_json" \
+      '{name: $name, source: $source, kind: $kind, install_all: $install_all, skills: $skills, exclude: $exclude}'
   done
 }
 
@@ -119,6 +156,12 @@ acquisition_spec_skills() {
   local spec_json=$1
 
   jq -r '.skills[]' <<<"$spec_json"
+}
+
+acquisition_spec_excluded_skills() {
+  local spec_json=$1
+
+  jq -r '.exclude[]?' <<<"$spec_json"
 }
 
 acquisition_stage_skills() {

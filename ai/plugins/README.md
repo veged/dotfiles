@@ -12,7 +12,10 @@
 * `{ "source": "owner/repo", "skills": "*" }` — то же явно
 * `{ "source": "owner/repo", "skills": "skill-name" }` — один навык
 * `{ "source": "owner/repo", "skills": ["skill-a", "skill-b"] }` — список
+* `{ "source": "owner/repo", "skills": ["!skill-a", "!skill-b"] }` — весь источник, кроме перечисленных навыков
 * `{ "source": "owner/repo", "kind": "plugin" }` — подключить готовый Codex-plugin целиком (с `commands`/`agents`/`context`), а не набор skills
+
+В `skills` нельзя смешивать включения и исключения: `["skill-a", "!skill-b"]` считается ошибкой.
 
 Для `source` допустим и полный `https://github.com/...` или `ssh://...`, но короткая форма предпочтительнее.
 

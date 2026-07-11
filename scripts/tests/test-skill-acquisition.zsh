@@ -26,6 +26,8 @@ cat > "$fixture_root/ai/skills/skills.json" <<'JSON'
   "org/all": "*",
   "org/one": "alpha",
   "https://example.com/skills.git": ["beta", "gamma"],
+  "https://example.com/excluded.git": ["!skip-one", "!skip-two"],
+  "https://example.com/excluded-one.git": "!skip-single",
   "~/arcadia/ai/artifacts/skills/infra/arc": "*",
   "/opt/local-skills/custom": "local-custom",
   "./local-skills/relative": "relative-local"
@@ -38,6 +40,14 @@ cat > "$fixture_root/ai/plugins/plugins.json" <<'JSON'
   "selected-plugin": {
     "source": "org/plugin-selected",
     "skills": ["delta", "epsilon"]
+  },
+  "excluded-plugin": {
+    "source": "org/plugin-excluded",
+    "skills": ["!zeta", "!eta"]
+  },
+  "excluded-single-plugin": {
+    "source": "org/plugin-excluded-one",
+    "skills": "!theta"
   },
   "implicit-all-plugin": {
     "source": "https://example.com/plugin.git"
@@ -132,32 +142,36 @@ assert_json() {
 }
 
 skill_specs=("${(@f)$(acquisition_skill_specs "$fixture_root/ai/skills/skills.json")}")
-[[ ${#skill_specs[@]} == 6 ]] || fail "expected 6 skill specs, got ${#skill_specs[@]}"
+[[ ${#skill_specs[@]} == 8 ]] || fail "expected 8 skill specs, got ${#skill_specs[@]}"
 assert_json "${skill_specs[1]}" '.source == "https://github.com/org/all" and .install_all == true and (.skills | length) == 0' "skill all spec"
 assert_json "${skill_specs[2]}" '.source == "https://github.com/org/one" and .install_all == false and .skills == ["alpha"]' "single skill spec"
 assert_json "${skill_specs[3]}" '.source == "https://example.com/skills.git" and .install_all == false and .skills == ["beta", "gamma"]' "array skill spec"
+assert_json "${skill_specs[4]}" '.source == "https://example.com/excluded.git" and .install_all == true and .skills == [] and .exclude == ["skip-one", "skip-two"]' "excluded skill list spec"
+assert_json "${skill_specs[5]}" '.source == "https://example.com/excluded-one.git" and .install_all == true and .skills == [] and .exclude == ["skip-single"]' "single excluded skill spec"
 
 expected_arc_source="$HOME/arcadia/ai/artifacts/skills/infra/arc"
 jq -e --arg source "$expected_arc_source" \
   '.source == $source and .install_all == true and (.skills | length) == 0' \
-  <<<"${skill_specs[4]}" >/dev/null || fail "json assertion failed: tilde local skill source"
-assert_json "${skill_specs[5]}" '.source == "/opt/local-skills/custom" and .install_all == false and .skills == ["local-custom"]' "absolute local skill source"
+  <<<"${skill_specs[6]}" >/dev/null || fail "json assertion failed: tilde local skill source"
+assert_json "${skill_specs[7]}" '.source == "/opt/local-skills/custom" and .install_all == false and .skills == ["local-custom"]' "absolute local skill source"
 expected_relative_source="$fixture_root/local-skills/relative"
 expected_relative_source="${expected_relative_source:A}"
 jq -e --arg source "$expected_relative_source" \
   '.source == $source and .install_all == false and .skills == ["relative-local"]' \
-  <<<"${skill_specs[6]}" >/dev/null || fail "json assertion failed: relative local skill source"
+  <<<"${skill_specs[8]}" >/dev/null || fail "json assertion failed: relative local skill source"
 
 plugin_specs=("${(@f)$(acquisition_plugin_specs "$fixture_root/ai/plugins/plugins.json")}")
-[[ ${#plugin_specs[@]} == 4 ]] || fail "expected 4 plugin specs, got ${#plugin_specs[@]}"
+[[ ${#plugin_specs[@]} == 6 ]] || fail "expected 6 plugin specs, got ${#plugin_specs[@]}"
 assert_json "${plugin_specs[1]}" '.name == "string-plugin" and .source == "https://github.com/org/plugin-all" and .kind == "skills" and .install_all == true and (.skills | length) == 0' "string plugin spec"
 assert_json "${plugin_specs[2]}" '.name == "selected-plugin" and .source == "https://github.com/org/plugin-selected" and .kind == "skills" and .install_all == false and .skills == ["delta", "epsilon"]' "selected plugin spec"
-assert_json "${plugin_specs[3]}" '.name == "implicit-all-plugin" and .source == "https://example.com/plugin.git" and .kind == "skills" and .install_all == true and (.skills | length) == 0' "implicit all plugin spec"
+assert_json "${plugin_specs[3]}" '.name == "excluded-plugin" and .source == "https://github.com/org/plugin-excluded" and .kind == "skills" and .install_all == true and .skills == [] and .exclude == ["zeta", "eta"]' "excluded plugin spec"
+assert_json "${plugin_specs[4]}" '.name == "excluded-single-plugin" and .source == "https://github.com/org/plugin-excluded-one" and .kind == "skills" and .install_all == true and .skills == [] and .exclude == ["theta"]' "single excluded plugin spec"
+assert_json "${plugin_specs[5]}" '.name == "implicit-all-plugin" and .source == "https://example.com/plugin.git" and .kind == "skills" and .install_all == true and (.skills | length) == 0' "implicit all plugin spec"
 expected_plugin_root_source="$fixture_root/local-plugins/root"
 expected_plugin_root_source="${expected_plugin_root_source:A}"
 jq -e --arg source "$expected_plugin_root_source" \
   '.name == "local-root-plugin" and .source == $source and .kind == "plugin" and .install_all == true and (.skills | length) == 0' \
-  <<<"${plugin_specs[4]}" >/dev/null || fail "json assertion failed: local plugin-root spec"
+  <<<"${plugin_specs[6]}" >/dev/null || fail "json assertion failed: local plugin-root spec"
 
 selected=("${(@f)$(acquisition_spec_skills "${plugin_specs[2]}")}")
 [[ "${selected[*]}" == "delta epsilon" ]] || fail "unexpected selected skills: ${selected[*]}"
@@ -191,9 +205,41 @@ if (acquisition_skill_specs "$fixture_root/ai/skills/invalid-skills.json") >/dev
   fail "invalid skill spec unexpectedly passed"
 fi
 
-ugrep -q 'invalid skill source spec: https://github.com/org/bad' "$tmp_root/invalid-skills.err" || {
+ugrep -q 'invalid skill selection for source: https://github.com/org/bad' "$tmp_root/invalid-skills.err" || {
   print -u2 "unexpected invalid skill error:"
   cat "$tmp_root/invalid-skills.err" >&2
+  exit 1
+}
+
+cat > "$fixture_root/ai/skills/mixed-skills.json" <<'JSON'
+{
+  "org/mixed": ["alpha", "!beta"]
+}
+JSON
+
+if (acquisition_skill_specs "$fixture_root/ai/skills/mixed-skills.json") >/dev/null 2>"$tmp_root/mixed-skills.err"; then
+  fail "mixed skill spec unexpectedly passed"
+fi
+
+ugrep -q 'cannot mix included and excluded skills for source: https://github.com/org/mixed' "$tmp_root/mixed-skills.err" || {
+  print -u2 "unexpected mixed skill error:"
+  cat "$tmp_root/mixed-skills.err" >&2
+  exit 1
+}
+
+cat > "$fixture_root/ai/skills/empty-excluded-skills.json" <<'JSON'
+{
+  "org/empty-excluded": ["!"]
+}
+JSON
+
+if (acquisition_skill_specs "$fixture_root/ai/skills/empty-excluded-skills.json") >/dev/null 2>"$tmp_root/empty-excluded-skills.err"; then
+  fail "empty excluded skill spec unexpectedly passed"
+fi
+
+ugrep -q 'empty excluded skill name for source: https://github.com/org/empty-excluded' "$tmp_root/empty-excluded-skills.err" || {
+  print -u2 "unexpected empty excluded skill error:"
+  cat "$tmp_root/empty-excluded-skills.err" >&2
   exit 1
 }
 
@@ -212,6 +258,25 @@ fi
 ugrep -q 'missing source for plugin: bad-plugin' "$tmp_root/invalid-plugin.err" || {
   print -u2 "unexpected invalid plugin error:"
   cat "$tmp_root/invalid-plugin.err" >&2
+  exit 1
+}
+
+cat > "$fixture_root/ai/plugins/mixed-plugin.json" <<'JSON'
+{
+  "mixed-plugin": {
+    "source": "org/plugin-mixed",
+    "skills": ["alpha", "!beta"]
+  }
+}
+JSON
+
+if (acquisition_plugin_specs "$fixture_root/ai/plugins/mixed-plugin.json") >/dev/null 2>"$tmp_root/mixed-plugin.err"; then
+  fail "mixed plugin spec unexpectedly passed"
+fi
+
+ugrep -q 'cannot mix included and excluded skills for plugin: mixed-plugin' "$tmp_root/mixed-plugin.err" || {
+  print -u2 "unexpected mixed plugin error:"
+  cat "$tmp_root/mixed-plugin.err" >&2
   exit 1
 }
 

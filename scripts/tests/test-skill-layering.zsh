@@ -44,6 +44,7 @@ git_skill_url="file://${git_skill_src:A}"
 cat > "$fixture_root/ai/skills/skills.json" <<EOF
 {
   "example/source": "external-one",
+  "example/exclude": ["!all-two"],
   "$git_skill_url": "git-skill"
 }
 EOF
@@ -96,6 +97,10 @@ while (( $# > 0 )); do
 done
 
 mkdir -p .agents/skills
+
+if (( ${#requested_skills[@]} == 0 )); then
+  requested_skills=(all-one all-two)
+fi
 
 for skill_name in "${requested_skills[@]}"; do
   mkdir -p ".agents/skills/$skill_name"
@@ -151,10 +156,13 @@ PATH="$bin_dir:$PATH" HOME="$home_dir" zsh "$fixture_root/scripts/install-skills
 assert_path_exists "$home_dir/.agents/skills/local-one" "canonical local skill"
 assert_symlink_target "$home_dir/.agents/skills/linked-one" "$linked_skill_source" "canonical linked local skill"
 assert_path_exists "$home_dir/.agents/skills/external-one" "canonical external skill"
+assert_path_exists "$home_dir/.agents/skills/all-one" "canonical included skill from exclusion spec"
+assert_not_exists "$home_dir/.agents/skills/all-two" "canonical excluded skill"
 assert_path_exists "$home_dir/.agents/skills/git-skill/SKILL.md" "git-cloned skill"
 [[ -d "$home_dir/.agents/skills/git-skill" && ! -L "$home_dir/.agents/skills/git-skill" ]] || fail "git skill must be a real directory"
 assert_path_exists "$home_dir/.agents/skills/codex-primary-runtime/slides/SKILL.md" "migrated codex-primary-runtime bundle"
 assert_symlink_target "$home_dir/.claude/skills/local-one" "$home_dir/.agents/skills/local-one" "claude local skill link"
+assert_symlink_target "$home_dir/.cursor/skills/all-one" "$home_dir/.agents/skills/all-one" "cursor included skill from exclusion spec"
 assert_symlink_target "$home_dir/.codex/skills/linked-one" "$home_dir/.agents/skills/linked-one" "codex linked local skill link"
 assert_symlink_target "$home_dir/.codex/skills/local-one" "$home_dir/.agents/skills/local-one" "codex local skill link"
 assert_symlink_target "$home_dir/.cursor/skills/local-one" "$home_dir/.agents/skills/local-one" "cursor local skill link"

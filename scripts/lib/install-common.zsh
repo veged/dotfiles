@@ -109,7 +109,13 @@ stage_skills_git() {
 }
 
 staged_skill_paths() {
-  fd -td -d 1 . "$1/.agents/skills"
+  local skills_dir="$1/.agents/skills"
+  local skill_dir
+
+  for skill_dir in "$skills_dir"/*(N-/); do
+    [[ -f "$skill_dir/SKILL.md" ]] || continue
+    print -r -- "${skill_dir%/}"
+  done
 }
 
 prune_dir_except() {

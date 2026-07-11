@@ -151,6 +151,13 @@ for entry in "${plugin_entries[@]}"; do
   plugin_kind=$(jq -r '.kind // "skills"' <<<"$entry")
   install_all=$(jq -r 'if .install_all then 1 else 0 end' <<<"$entry")
   plugin_skills=("${(@f)$(acquisition_spec_skills "$entry")}")
+  excluded_skills=("${(@f)$(acquisition_spec_excluded_skills "$entry")}")
+  if (( ${#plugin_skills[@]} == 1 )) && [[ -z ${plugin_skills[1]} ]]; then
+    plugin_skills=()
+  fi
+  if (( ${#excluded_skills[@]} == 1 )) && [[ -z ${excluded_skills[1]} ]]; then
+    excluded_skills=()
+  fi
   plugin_dir="$plugins_dir/$plugin_name"
   plugin_cache_dir=""
   plugin_cache_manifest=""
@@ -213,6 +220,11 @@ for entry in "${plugin_entries[@]}"; do
       elif (( install_all )); then
         skill_count=$(fd -td -d 1 . "$plugin_dir/skills" | wc -l | tr -d ' ')
         [[ "$skill_count" == "0" ]] && needs_install=1
+        if (( ! needs_install )); then
+          for skill_name in "${excluded_skills[@]}"; do
+            [[ -d "$plugin_dir/skills/$skill_name" ]] && { needs_install=1; break; }
+          done
+        fi
       else
         acquisition_has_selected_skills "$plugin_dir/skills" "${plugin_skills[@]}" || needs_install=1
       fi
@@ -226,10 +238,21 @@ for entry in "${plugin_entries[@]}"; do
       mkdir -p "$plugin_dir/.codex-plugin" "$plugin_dir/skills"
 
       staged_paths=("${(@f)$(acquisition_staged_skill_paths "$stage_dir")}")
+      if (( ${#staged_paths[@]} == 1 )) && [[ -z ${staged_paths[1]} ]]; then
+        staged_paths=()
+      fi
       (( ${#staged_paths[@]} )) || die "install-plugins: no skills staged for plugin: $plugin_name"
 
+      typeset -A excluded_skill_names
+      excluded_skill_names=()
+      for skill_name in "${excluded_skills[@]}"; do
+        excluded_skill_names[$skill_name]=1
+      done
+
       for skill_path in "${staged_paths[@]}"; do
-        replace_dir "$plugin_dir/skills/${skill_path:t}" "$skill_path"
+        skill_name=${skill_path:t}
+        [[ -n ${excluded_skill_names[$skill_name]-} ]] && continue
+        replace_dir "$plugin_dir/skills/$skill_name" "$skill_path"
       done
 
       build_plugin_manifest "$plugin_name" "$plugin_source" "$plugin_dir"

@@ -36,6 +36,10 @@ cat > "$fixture_root/ai/plugins/plugins.json" <<JSON
     "source": "example/source",
     "skills": ["alpha", "beta"]
   },
+  "sample-exclude": {
+    "source": "example/source-exclude",
+    "skills": ["!beta"]
+  },
   "presentation-craft": {
     "source": "./local-plugin-root",
     "kind": "plugin"
@@ -132,6 +136,10 @@ done
 mkdir -p .agents/skills
 print -r -- "$source_arg" > .source
 
+if (( ${#requested_skills[@]} == 0 )); then
+  requested_skills=(alpha beta)
+fi
+
 for skill_name in "${requested_skills[@]}"; do
   mkdir -p ".agents/skills/$skill_name"
   print -r -- "# $skill_name" > ".agents/skills/$skill_name/SKILL.md"
@@ -171,6 +179,7 @@ assert_symlink_target() {
 PATH="$bin_dir:$PATH" HOME="$home_dir" zsh "$fixture_root/scripts/install-plugins"
 
 plugin_dir="$home_dir/.codex/plugins/dotfiles-local/sample"
+excluded_plugin_dir="$home_dir/.codex/plugins/dotfiles-local/sample-exclude"
 linked_plugin_dir="$home_dir/.codex/plugins/dotfiles-local/presentation-craft"
 linked_plugin_cache_dir="$home_dir/.codex/plugins/cache/dotfiles-local/presentation-craft/0.1.0"
 marketplace_path="$home_dir/.agents/plugins/marketplace.json"
@@ -180,6 +189,8 @@ remote_plugin_dir="$home_dir/.codex/plugins/dotfiles-local/remote-deck"
 assert_path_exists "$plugin_dir/.codex-plugin/plugin.json" "plugin manifest"
 assert_path_exists "$plugin_dir/skills/alpha/SKILL.md" "alpha skill"
 assert_path_exists "$plugin_dir/skills/beta/SKILL.md" "beta skill"
+assert_path_exists "$excluded_plugin_dir/skills/alpha/SKILL.md" "included skill in exclusion plugin"
+assert_not_exists "$excluded_plugin_dir/skills/beta" "excluded skill in exclusion plugin"
 assert_symlink_target "$linked_plugin_dir" "$local_plugin_root" "plugin-root bundle"
 [[ -d "$linked_plugin_cache_dir" && ! -L "$linked_plugin_cache_dir" ]] || fail "plugin-root cache must be a real directory"
 assert_symlink_target "$linked_plugin_cache_dir/.codex-plugin/plugin.json" "$local_plugin_root/.codex-plugin/plugin.json" "plugin-root cache manifest"
@@ -205,8 +216,11 @@ assert_not_exists "$home_dir/.codex/plugins/dotfiles-local/broken-remote" "broke
 jq -e '[.plugins[].name] | index("broken-remote") == null' "$marketplace_path" >/dev/null
 
 mkdir -p "$home_dir/.codex/plugins/dotfiles-local/stale"
+mkdir -p "$excluded_plugin_dir/skills/beta"
+print -r -- "# stale beta" > "$excluded_plugin_dir/skills/beta/SKILL.md"
 PATH="$bin_dir:$PATH" HOME="$home_dir" zsh "$fixture_root/scripts/install-plugins"
 assert_not_exists "$home_dir/.codex/plugins/dotfiles-local/stale" "stale plugin"
+assert_not_exists "$excluded_plugin_dir/skills/beta" "stale excluded plugin skill"
 assert_symlink_target "$linked_plugin_dir" "$local_plugin_root" "plugin-root bundle after resync"
 assert_symlink_target "$linked_plugin_cache_dir/skills" "$local_plugin_root/skills" "plugin-root cache after resync"
 

@@ -3,30 +3,9 @@
   "vercel-labs/skills": "*",
   "slidevjs/slidev": "*",
   "mattpocock/skills": [
-    "grill-with-docs",
-    "grill-me",
-    "handoff",
-    "improve-codebase-architecture",
-    "code-review",
-    "tdd",
-    "to-spec",
-    "to-tickets",
-    "writing-great-skills"
-  ],
-  "mattpocock/skills/tree/main/skills/deprecated": [
-    "design-an-interface",
-    "request-refactor-plan",
-    "ubiquitous-language"
-  ],
-  "mattpocock/skills/tree/main/skills/misc": [
-    "git-guardrails-claude-code",
-    "migrate-to-shoehorn",
-    "scaffold-exercises",
-    "setup-pre-commit"
-  ],
-  "mattpocock/skills/tree/main/skills/personal": [
-    "edit-article",
-    "obsidian-vault"
+    "!github-triage",
+    "!qa",
+    "!triage"
   ],
   "terraphim/codex-skills": "rust-development",
   "https://github.com/beaverbeard/slopotron.git": "slopotron",
@@ -37,21 +16,7 @@
   ],
   "emilkowalski/skill": "*",
   "Leonxlnx/taste-skill": "*",
-  "obra/superpowers": [
-    "brainstorming",
-    "dispatching-parallel-agents",
-    "executing-plans",
-    "finishing-a-development-branch",
-    "receiving-code-review",
-    "requesting-code-review",
-    "subagent-driven-development",
-    "systematic-debugging",
-    "using-git-worktrees",
-    "using-superpowers",
-    "verification-before-completion",
-    "writing-plans",
-    "writing-skills"
-  ],
+  "obra/superpowers": "!test-driven-development",
   "nicobailon/visual-explainer": "*",
   "openai/skills": [
     "imagegen",

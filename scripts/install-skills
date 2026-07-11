@@ -104,6 +104,13 @@ if [[ -f "$registry_path" ]]; then
     source=$(jq -r '.source' <<<"$entry")
     install_all=$(jq -r 'if .install_all then 1 else 0 end' <<<"$entry")
     selected_skills=("${(@f)$(acquisition_spec_skills "$entry")}")
+    excluded_skills=("${(@f)$(acquisition_spec_excluded_skills "$entry")}")
+    if (( ${#selected_skills[@]} == 1 )) && [[ -z ${selected_skills[1]} ]]; then
+      selected_skills=()
+    fi
+    if (( ${#excluded_skills[@]} == 1 )) && [[ -z ${excluded_skills[1]} ]]; then
+      excluded_skills=()
+    fi
     stage_dir="$tmpdir/source-$source_index"
     ((source_index += 1))
 
@@ -115,10 +122,20 @@ if [[ -f "$registry_path" ]]; then
       acquisition_stage_skills "$stage_dir" "$source" "${selected_skills[@]}"
 
       staged_paths=("${(@f)$(acquisition_staged_skill_paths "$stage_dir")}")
+      if (( ${#staged_paths[@]} == 1 )) && [[ -z ${staged_paths[1]} ]]; then
+        staged_paths=()
+      fi
       (( ${#staged_paths[@]} )) || die "install-skills: no skills staged for source: $source"
+
+      typeset -A excluded_skill_names
+      excluded_skill_names=()
+      for name in "${excluded_skills[@]}"; do
+        excluded_skill_names[$name]=1
+      done
 
       for skill_path in "${staged_paths[@]}"; do
         name=${skill_path:t}
+        [[ -n ${excluded_skill_names[$name]-} ]] && continue
         register_external_skill "$name" "$source"
         if [[ -L "$AGENT_SKILLS_CANONICAL_DIR/$name" ]]; then
           print "install-skills: local override: $name"
