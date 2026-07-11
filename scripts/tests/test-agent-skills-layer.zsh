@@ -12,7 +12,8 @@ home_dir="$tmp_root/home"
 mkdir -p \
   "$home_dir/.agents/skills" \
   "$home_dir/.claude/skills" \
-  "$home_dir/.codex/skills"
+  "$home_dir/.codex/skills" \
+  "$home_dir/.cursor/skills"
 
 fail() {
   print -u2 "$1"
@@ -55,6 +56,11 @@ print -r -- "# slides" > "$home_dir/.codex/skills/codex-primary-runtime/slides/S
 mkdir -p "$home_dir/.codex/skills/unmanaged"
 print -r -- "keep" > "$home_dir/.codex/skills/unmanaged/value.txt"
 
+mkdir -p "$tmp_root/cursor-internal/arc"
+print -r -- "keep" > "$tmp_root/cursor-internal/arc/value.txt"
+ln -s "$tmp_root/cursor-internal/arc" "$home_dir/.cursor/skills/arc"
+ln -s "$home_dir/.agents/skills/missing" "$home_dir/.cursor/skills/stale"
+
 mkdir -p "$home_dir/.claude/skills/local-one"
 print -r -- "# local-one" > "$home_dir/.claude/skills/local-one/SKILL.md"
 
@@ -72,13 +78,17 @@ agent_skills_reconcile_layer
 assert_path_exists "$home_dir/.agents/skills/codex-primary-runtime/slides/SKILL.md" "migrated shared bundle"
 assert_symlink_target "$home_dir/.claude/skills/local-one" "$home_dir/.agents/skills/local-one" "claude local projection"
 assert_symlink_target "$home_dir/.codex/skills/local-one" "$home_dir/.agents/skills/local-one" "codex local projection"
+assert_symlink_target "$home_dir/.cursor/skills/local-one" "$home_dir/.agents/skills/local-one" "cursor local projection"
 assert_symlink_target "$home_dir/.codex/skills/codex-primary-runtime" "$home_dir/.agents/skills/codex-primary-runtime" "codex shared bundle projection"
 assert_path_exists "$home_dir/.codex/skills/unmanaged/value.txt" "unmanaged codex entry"
+assert_symlink_target "$home_dir/.cursor/skills/arc" "$tmp_root/cursor-internal/arc" "unmanaged cursor symlink"
 assert_not_exists "$home_dir/.claude/skills/stale" "stale claude projection"
+assert_not_exists "$home_dir/.cursor/skills/stale" "stale cursor projection"
 
 agent_skills_reconcile_layer
 
 assert_symlink_target "$home_dir/.claude/skills/local-one" "$home_dir/.agents/skills/local-one" "idempotent claude local projection"
 assert_symlink_target "$home_dir/.codex/skills/codex-primary-runtime" "$home_dir/.agents/skills/codex-primary-runtime" "idempotent codex shared projection"
+assert_symlink_target "$home_dir/.cursor/skills/local-one" "$home_dir/.agents/skills/local-one" "idempotent cursor local projection"
 
 print "test-agent-skills-layer: ok"

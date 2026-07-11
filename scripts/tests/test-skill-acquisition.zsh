@@ -96,7 +96,22 @@ for skill_name in "${requested_skills[@]}"; do
 done
 ZSH
 
+cat > "$bin_dir/git" <<'ZSH'
+#!/usr/bin/env zsh
+
+emulate -LR zsh
+set -euo pipefail
+
+[[ "$1" == "clone" && "$2" == "--depth" && "$3" == "1" ]] || {
+  print -u2 "unexpected git command: $*"
+  exit 1
+}
+
+cp -R "$GIT_FIXTURE_REPO" "$5"
+ZSH
+
 chmod +x "$bin_dir/npx"
+chmod +x "$bin_dir/git"
 
 SCRIPT_NAME=test-skill-acquisition
 ACQUISITION_SOURCE_BASE_DIR="$fixture_root"
@@ -152,6 +167,14 @@ staged_paths=("${(@f)$(acquisition_staged_skill_paths "$stage_dir")}")
 [[ ${#staged_paths[@]} == 2 ]] || fail "expected 2 staged paths, got ${#staged_paths[@]}"
 [[ -d "$stage_dir/.agents/skills/delta" ]] || fail "missing staged delta"
 [[ -d "$stage_dir/.agents/skills/epsilon" ]] || fail "missing staged epsilon"
+
+git_fixture_repo="$tmp_root/git-fixture"
+git_stage_dir="$tmp_root/git-stage"
+mkdir -p "$git_fixture_repo/.claude/skills/slopotron"
+print -r -- "# slopotron" > "$git_fixture_repo/.claude/skills/slopotron/SKILL.md"
+GIT_FIXTURE_REPO="$git_fixture_repo" PATH="$bin_dir:$PATH" \
+  acquisition_stage_skills "$git_stage_dir" "https://github.com/beaverbeard/slopotron.git" slopotron
+[[ -d "$git_stage_dir/.agents/skills/slopotron" ]] || fail "missing staged slopotron"
 
 acquisition_has_selected_skills "$stage_dir/.agents/skills" delta epsilon || fail "selected skills should be present"
 if acquisition_has_selected_skills "$stage_dir/.agents/skills" delta missing; then

@@ -5,4 +5,5 @@ Brewfile.lock.json
 ~/
 zsh-fsh/
 tools/remark/node_modules/
+tools/openspec/node_modules/
 docs/superpowers/

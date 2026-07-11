@@ -28,7 +28,7 @@ ai/skills/
 * `owner/repo`
 * `owner/repo/tree/...`
 * полный `https://github.com/...`
-* git-URL не на GitHub (`ssh://...`, `git://...`) — клонируется напрямую через `git`; навык ищется по имени в корне репозитория или в `skills/`
+* git-URL (`*.git`, `ssh://...`, `git://...`) — клонируется напрямую через `git`; навык ищется по имени в корне репозитория, `skills/` или `.claude/skills/`
 * явный локальный путь: `~/...`, `/...`, `./...` или `../...`
 
 `spec`:
@@ -39,7 +39,7 @@ ai/skills/
 
 ## Правила сборки
 
-* `./scripts/install-skills` собирает локальные пакеты и внешние зависимости в `~/.agents/skills`, затем запускает projection в assistant-specific слои
+* `./scripts/install-skills` собирает локальные пакеты и внешние зависимости в `~/.agents/skills`, затем запускает projection в assistant-specific слои (`~/.claude/skills`, `~/.codex/skills`, `~/.cursor/skills`)
 * локальный skill-пакет, подключённый в `ai/skills/` symlink-ом, сохраняется symlink-ом в `~/.agents/skills`
 * для разработки внешнего skill можно вручную заменить его каталог в `~/.agents/skills/<name>` symlink-ом на рабочую копию — `install-skills` уважает такой override и не перетирает его
 * конфликт имени между локальным и внешним skill — жёсткая ошибка

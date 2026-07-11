@@ -1,6 +1,7 @@
 typeset -g AGENT_SKILLS_CANONICAL_DIR
 typeset -g AGENT_SKILLS_CLAUDE_DIR
 typeset -g AGENT_SKILLS_CODEX_DIR
+typeset -g AGENT_SKILLS_CURSOR_DIR
 typeset -ga AGENT_SKILLS_PROJECTION_DIRS
 typeset -ga AGENT_SKILLS_SHARED_BUNDLE_NAMES
 
@@ -14,9 +15,11 @@ agent_skills_layer_init() {
   AGENT_SKILLS_CANONICAL_DIR="$home_dir/.agents/skills"
   AGENT_SKILLS_CLAUDE_DIR="$home_dir/.claude/skills"
   AGENT_SKILLS_CODEX_DIR="$home_dir/.codex/skills"
+  AGENT_SKILLS_CURSOR_DIR="$home_dir/.cursor/skills"
   AGENT_SKILLS_PROJECTION_DIRS=(
     "$AGENT_SKILLS_CLAUDE_DIR"
     "$AGENT_SKILLS_CODEX_DIR"
+    "$AGENT_SKILLS_CURSOR_DIR"
   )
 }
 

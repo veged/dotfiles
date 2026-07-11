@@ -20,7 +20,7 @@ Usage: ./scripts/install-skills [--update|--force]
 
 Syncs local skill packages from ai/skills/* and external skill dependencies from
 ai/skills/skills.json into ~/.agents/skills, then refreshes assistant-specific
-discovery layers.
+discovery layers (~/.claude/skills, ~/.codex/skills, ~/.cursor/skills).
 
 Options:
   --update, --force  Reinstall external skills from sources before syncing.

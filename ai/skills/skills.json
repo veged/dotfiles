@@ -3,12 +3,15 @@
   "vercel-labs/skills": "*",
   "slidevjs/slidev": "*",
   "mattpocock/skills": [
+    "grill-with-docs",
     "grill-me",
+    "handoff",
     "improve-codebase-architecture",
+    "code-review",
     "tdd",
-    "to-issues",
-    "to-prd",
-    "write-a-skill"
+    "to-spec",
+    "to-tickets",
+    "writing-great-skills"
   ],
   "mattpocock/skills/tree/main/skills/deprecated": [
     "design-an-interface",
@@ -25,7 +28,8 @@
     "edit-article",
     "obsidian-vault"
   ],
-  "terraphim/terraphim-skills": "rust-development",
+  "terraphim/codex-skills": "rust-development",
+  "https://github.com/beaverbeard/slopotron.git": "slopotron",
   "veged/caveman/tree/main/skills": "caveman",
   "anthropics/skills": [
     "frontend-design",

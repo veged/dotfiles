@@ -1,0 +1,14 @@
+#!/usr/bin/env zsh
+
+emulate -LR zsh
+set -euo pipefail
+
+repo_root=${0:A:h:h}
+SCRIPT_NAME=install-openspec
+source "$repo_root/scripts/lib/install-common.zsh"
+
+tool_dir="$repo_root/tools/openspec"
+
+require_commands npm
+
+npm install --prefix "$tool_dir"

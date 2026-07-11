@@ -2,6 +2,7 @@
   "private": true,
   "dependencies": {
     "remark-cli": "12.0.1",
+    "remark-frontmatter": "^5.0.0",
     "remark-gfm": "4.0.1",
     "remark-lint-final-newline": "3.0.1",
     "remark-lint-list-item-indent": "4.0.1",

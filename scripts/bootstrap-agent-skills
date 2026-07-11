@@ -13,8 +13,8 @@ usage() {
 Usage: ./scripts/bootstrap-agent-skills
 
 Projects the canonical ~/.agents/skills layer into assistant-specific discovery
-directories and migrates known shared bundles from ~/.codex/skills into the
-canonical layer when needed.
+directories (~/.claude/skills, ~/.codex/skills, ~/.cursor/skills) and migrates
+known shared bundles from ~/.codex/skills into the canonical layer when needed.
 EOF
 }
 

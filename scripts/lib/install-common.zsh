@@ -72,7 +72,7 @@ stage_skills() {
 
 git_find_skill_dir() {
   local root=$1 name=$2 dir
-  for dir in "$root/$name" "$root/skills/$name"; do
+  for dir in "$root/$name" "$root/skills/$name" "$root/.claude/skills/$name"; do
     [[ -f "$dir/SKILL.md" ]] && { print -r -- "$dir"; return 0; }
   done
   return 1
@@ -100,7 +100,7 @@ stage_skills_git() {
       cp -R "$skill_dir" "$dest_dir/$name"
     done
   else
-    for dir in "$clone_dir"/*(N/) "$clone_dir"/skills/*(N/); do
+    for dir in "$clone_dir"/*(N/) "$clone_dir"/skills/*(N/) "$clone_dir"/.claude/skills/*(N/); do
       [[ -f "$dir/SKILL.md" ]] || continue
       rm -rf "$dest_dir/${dir:t}"
       cp -R "$dir" "$dest_dir/${dir:t}"

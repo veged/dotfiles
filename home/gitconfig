@@ -75,3 +75,6 @@
 [credential "https://gist.github.com"]
 	helper = 
 	helper = !/opt/homebrew/bin/gh auth git-credential
+[user]
+	name = veged
+	email = veged@ya.ru

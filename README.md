@@ -15,7 +15,7 @@ cd ~/dotfiles
 
 * создаёт симлинки конфигов в `~/.config/` и `~/`
 * ставит пакеты через Homebrew из `Brewfile`
-* прогоняет скрипты из `scripts/` — синхронизацию AI-слоёв (`install-skills`, `install-plugins`, `install-mcp`) и `install-remark`
+* прогоняет скрипты из `scripts/` — синхронизацию AI-слоёв (`install-skills`, `install-plugins`, `install-mcp`) и локальные инструменты (`install-remark`, `install-openspec`)
 
 ## Персонализация
 

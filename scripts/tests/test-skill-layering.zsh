@@ -143,6 +143,7 @@ print -r -- "# slides" > "$home_dir/.codex/skills/codex-primary-runtime/slides/S
 
 mkdir -p "$home_dir/.codex/skills/unmanaged"
 mkdir -p "$home_dir/.claude/skills"
+mkdir -p "$home_dir/.cursor/skills"
 ln -s "$home_dir/.agents/skills/missing" "$home_dir/.claude/skills/stale"
 
 PATH="$bin_dir:$PATH" HOME="$home_dir" zsh "$fixture_root/scripts/install-skills"
@@ -156,6 +157,7 @@ assert_path_exists "$home_dir/.agents/skills/codex-primary-runtime/slides/SKILL.
 assert_symlink_target "$home_dir/.claude/skills/local-one" "$home_dir/.agents/skills/local-one" "claude local skill link"
 assert_symlink_target "$home_dir/.codex/skills/linked-one" "$home_dir/.agents/skills/linked-one" "codex linked local skill link"
 assert_symlink_target "$home_dir/.codex/skills/local-one" "$home_dir/.agents/skills/local-one" "codex local skill link"
+assert_symlink_target "$home_dir/.cursor/skills/local-one" "$home_dir/.agents/skills/local-one" "cursor local skill link"
 assert_symlink_target "$home_dir/.codex/skills/codex-primary-runtime" "$home_dir/.agents/skills/codex-primary-runtime" "codex shared bundle link"
 assert_path_exists "$home_dir/.codex/skills/.system/keep.txt" "codex system bundle"
 assert_path_exists "$home_dir/.codex/skills/unmanaged" "unmanaged codex entry"
@@ -179,6 +181,7 @@ PATH="$bin_dir:$PATH" HOME="$home_dir" zsh "$fixture_root/scripts/bootstrap-agen
 
 assert_symlink_target "$home_dir/.claude/skills/direct-bootstrap" "$home_dir/.agents/skills/direct-bootstrap" "direct bootstrap claude projection"
 assert_symlink_target "$home_dir/.codex/skills/direct-bootstrap" "$home_dir/.agents/skills/direct-bootstrap" "direct bootstrap codex projection"
+assert_symlink_target "$home_dir/.cursor/skills/direct-bootstrap" "$home_dir/.agents/skills/direct-bootstrap" "direct bootstrap cursor projection"
 
 assert_path_exists "$home_dir/.agents/skills/codex-primary-runtime/slides/SKILL.md" "preserved canonical bundle"
 

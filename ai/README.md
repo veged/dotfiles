@@ -27,7 +27,7 @@ Claude, Codex и OpenCode instruction lists генерируются из markdo
 * `~/.agents/instructions` — projected Markdown-инструкции
 * `~/.agents/skills` — единственный source of truth общих навыков
 * `~/.agents/plugins/marketplace.json` — локальный каталог плагинов Codex
-* `~/.claude/skills`, `~/.codex/skills` — assistant-specific discovery-слои, symlink-и на `~/.agents/skills`
+* `~/.claude/skills`, `~/.codex/skills`, `~/.cursor/skills` — assistant-specific discovery-слои, symlink-и на `~/.agents/skills`
 * `~/.codex/plugins/dotfiles-local/*` — локальные bundle-ы плагинов Codex
 * `~/.claude/CLAUDE.md` — тонкая обёртка, импортирующая общий слой
 * live MCP-конфиги (`~/.claude/settings.json`, `~/.codex/config.toml`, `~/.cursor/mcp.json`, `~/.config/opencode/opencode.jsonc`) — generated outputs. Персональные значения приходят из env или системного хранилища через `./scripts/personal`; `ELIZA_TOKEN` обновляется из OAuth client credentials в shell-профиле
@@ -38,7 +38,7 @@ Claude, Codex и OpenCode instruction lists генерируются из markdo
 * `./scripts/install-skills` — синхронизирует `~/.agents/skills` и publish-ит его в discovery-слои
 * `./scripts/install-plugins` — собирает локальные plugin-bundle-ы и marketplace
 * `./scripts/install-mcp` — ставит локальные MCP runtime-ы и материализует live-конфиги
-* `./scripts/bootstrap-agent-skills` — projection `~/.agents/skills → ~/.claude/skills, ~/.codex/skills`, вызывается из `install-skills`, напрямую обычно не нужен
+* `./scripts/bootstrap-agent-skills` — projection `~/.agents/skills → ~/.claude/skills, ~/.codex/skills, ~/.cursor/skills`, вызывается из `install-skills`, напрямую обычно не нужен
 
 Все три `install-*` принимают `--update` для перетяжки внешних источников. `--force` оставлен алиасом.
 

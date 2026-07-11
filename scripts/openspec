@@ -1,0 +1,15 @@
+#!/usr/bin/env zsh
+
+set -eu
+set -o pipefail
+
+repo_root=${0:A:h:h}
+tool_dir=$repo_root/tools/openspec
+cli=$tool_dir/node_modules/.bin/openspec
+
+if [[ ! -x $cli ]]; then
+  print -u2 "openspec is not installed yet. Run: $repo_root/scripts/install-openspec"
+  exit 1
+fi
+
+exec "$cli" "$@"
