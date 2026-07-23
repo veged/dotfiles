@@ -19,6 +19,10 @@
 Instruction id — это filename без `.md`; projected files используют то же filename под `~/.agents/instructions/`.
 Claude, Codex и OpenCode instruction lists генерируются из markdown file set в deterministic filename order.
 
+Если нужен явный текстовый триггер внутри instruction-слоя, выноси его в отдельный файл `ai/instructions/*-activation.md`, а не в доменный документ. Это уменьшает prompt-шум, даёт отдельный instruction id и упрощает независимые правки правил и активации.
+
+Если нужен настоящий Codex slash-command вида `/name`, не клади его в `ai/instructions/`. Делай локальный plugin root с `commands/*.toml` и регистрируй plugin в `ai/plugins/plugins.json`.
+
 После добавления, удаления, переименования или редактирования instruction files запускай `./scripts/install-mcp --sync-only`.
 Для проверки stale generated artifacts запускай `./scripts/install-mcp --check`.
 

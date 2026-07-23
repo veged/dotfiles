@@ -6,6 +6,10 @@
   "impeccable": "pbakaus/impeccable",
   "improve": "shadcn/improve",
   "mblode": "mblode/agent-skills",
+  "ppp": {
+    "source": "./ai/plugins/ppp",
+    "kind": "plugin"
+  },
   "ponytail": {
     "source": "DietrichGebert/ponytail",
     "kind": "plugin"

@@ -4,6 +4,12 @@
 
 Плагины — отдельный слой поверх общих навыков. Они нужны там, где плоского пространства имён не хватает, например при конфликте имён.
 
+Реальные Codex slash-команды живут именно здесь: в plugin root под `commands/*.toml` или `commands/*.md`. Файлы в `ai/instructions/*.md` не регистрируют slash-команды клиента; они влияют только на prompt/instruction layer.
+
+По умолчанию держи один source of truth прямо в `commands/*.toml`. Отдельный instruction-источник или генератор добавляй только если один и тот же контент действительно должен обслуживать несколько разных рантаймов.
+
+Локальные plugin root для этого репозитория храни в `ai/plugins/<plugin-name>/`. Тогда `plugins.json` остаётся коротким реестром, а сам plugin лежит рядом.
+
 ## Формат `plugins.json`
 
 Словарь `plugin-name → spec`. `spec`:
@@ -14,6 +20,7 @@
 * `{ "source": "owner/repo", "skills": ["skill-a", "skill-b"] }` — список
 * `{ "source": "owner/repo", "skills": ["!skill-a", "!skill-b"] }` — весь источник, кроме перечисленных навыков
 * `{ "source": "owner/repo", "kind": "plugin" }` — подключить готовый Codex-plugin целиком (с `commands`/`agents`/`context`), а не набор skills
+* `{ "source": "./ai/plugins/name", "kind": "plugin" }` — локальный plugin root из этого репозитория; основной вариант для своих slash-команд и локальной разработки plugin
 
 В `skills` нельзя смешивать включения и исключения: `["skill-a", "!skill-b"]` считается ошибкой.
 
