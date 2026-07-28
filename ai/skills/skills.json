@@ -16,7 +16,10 @@
   ],
   "emilkowalski/skill": "*",
   "Leonxlnx/taste-skill": "*",
-  "obra/superpowers": "!test-driven-development",
+  "obra/superpowers": [
+    "!test-driven-development",
+    "!subagent-driven-development"
+  ],
   "nicobailon/visual-explainer": "*",
   "openai/skills": [
     "imagegen",

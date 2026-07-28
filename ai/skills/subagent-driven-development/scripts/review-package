@@ -1,0 +1,190 @@
+#!/usr/bin/env bash
+# Создаёт атомарный пакет: фиксации Git, статистику, манифест исключённого
+# содержимого и изменения обычных файлов.
+#
+# Использование: review-package PLAN_FILE BASE HEAD [OUTFILE]
+# SDD_REVIEW_PACKAGE_MAX_BYTES переопределяет предел 204800 байт.
+# При переполнении скрипт возвращает 4 и сохраняет прежний OUTFILE.
+set -euo pipefail
+
+if [ $# -lt 3 ] || [ $# -gt 4 ]; then
+  echo "использование: review-package PLAN_FILE BASE HEAD [OUTFILE]" >&2
+  exit 2
+fi
+
+plan=$1
+base=$2
+head=$3
+max_bytes=${SDD_REVIEW_PACKAGE_MAX_BYTES:-204800}
+
+[ -f "$plan" ] || { echo "нет файла плана: $plan" >&2; exit 2; }
+git rev-parse --verify --quiet "$base" >/dev/null \
+  || { echo "некорректный BASE: $base" >&2; exit 2; }
+git rev-parse --verify --quiet "$head" >/dev/null \
+  || { echo "некорректный HEAD: $head" >&2; exit 2; }
+
+if [[ ! "$max_bytes" =~ ^[0-9]+$ ]] || [ "$max_bytes" -le 0 ]; then
+  echo "SDD_REVIEW_PACKAGE_MAX_BYTES должен быть целым положительным числом" >&2
+  exit 2
+fi
+
+if [ $# -eq 4 ]; then
+  out=$4
+else
+  dir=$("$(cd "$(dirname "$0")" && pwd)/sdd-workspace" "$plan")
+  out="$dir/review-$(git rev-parse --short "$base")..$(git rev-parse --short "$head").diff"
+fi
+
+out_dir=$(dirname "$out")
+mkdir -p "$out_dir"
+tmp_out=$(mktemp "${out}.tmp.XXXXXX")
+
+cleanup() {
+  rm -f "$tmp_out"
+}
+trap cleanup EXIT
+
+classify_path() {
+  local path=$1
+  local name=${path##*/}
+
+  case "$name" in
+    package-lock.json|npm-shrinkwrap.json|pnpm-lock.yaml|yarn.lock|\
+    bun.lock|bun.lockb|Cargo.lock|Gemfile.lock|composer.lock|poetry.lock|\
+    Pipfile.lock|uv.lock|go.sum|flake.lock|Podfile.lock)
+      echo "lock-file"
+      return 0
+      ;;
+  esac
+
+  case "$path" in
+    *.min.js|*.min.css|*.map)
+      echo "minified"
+      return 0
+      ;;
+    dist/*|*/dist/*|build/*|*/build/*|coverage/*|*/coverage/*|\
+    *.generated.*|*.gen.*)
+      echo "generated"
+      return 0
+      ;;
+  esac
+
+  return 1
+}
+
+manifest_entry() {
+  local path=$1
+  local old_path=$2
+  local change_status=$3
+  local category=$4
+  local added=$5
+  local deleted=$6
+  local size
+  local sha_line
+  local sha
+
+  if git cat-file -e "${head}:${path}" 2>/dev/null; then
+    size=$(git cat-file -s "${head}:${path}")
+    sha_line=$(git show "${head}:${path}" | shasum -a 256)
+    sha=${sha_line%% *}
+  else
+    size="deleted"
+    sha="deleted"
+  fi
+
+  if [ "$old_path" != "$path" ]; then
+    printf -- '- path=%q old_path=%q category=%s size=%s sha256=%s status=%s numstat=%s/%s\n' \
+      "$path" "$old_path" "$category" "$size" "$sha" "$change_status" \
+      "${added:-?}" "${deleted:-?}"
+  else
+    printf -- '- path=%q category=%s size=%s sha256=%s status=%s numstat=%s/%s\n' \
+      "$path" "$category" "$size" "$sha" "$change_status" \
+      "${added:-?}" "${deleted:-?}"
+  fi
+}
+
+{
+  echo "# Пакет ревью: ${base}..${head}"
+  echo
+  echo "## Фиксации Git"
+  git log --oneline "${base}..${head}"
+  echo
+  echo "## Изменённые файлы"
+  git diff --stat "$base" "$head"
+  echo
+  echo "## Исключённое"
+} > "$tmp_out"
+
+excluded_count=0
+included_pathspecs=()
+while IFS= read -r -d '' change_status; do
+  IFS= read -r -d '' first_path
+  old_path=$first_path
+  new_path=$first_path
+
+  case "$change_status" in
+    R*|C*)
+      IFS= read -r -d '' new_path
+      ;;
+  esac
+
+  effective_path=$new_path
+  case "$change_status" in
+    D*)
+      effective_path=$old_path
+      ;;
+  esac
+
+  change_pathspecs=("$old_path")
+  if [ "$new_path" != "$old_path" ]; then
+    change_pathspecs+=("$new_path")
+  fi
+
+  added="?"
+  deleted="?"
+  rest=""
+  IFS=$'\t' read -r added deleted rest \
+    < <(git diff --numstat -M "$base" "$head" -- "${change_pathspecs[@]}")
+
+  category=""
+  if category=$(classify_path "$effective_path"); then
+    manifest_entry "$effective_path" "$old_path" "$change_status" \
+      "$category" "$added" "$deleted" >> "$tmp_out"
+    excluded_count=$((excluded_count + 1))
+  elif [ "$added" = "-" ] && [ "$deleted" = "-" ]; then
+    manifest_entry "$effective_path" "$old_path" "$change_status" \
+      "binary" "$added" "$deleted" >> "$tmp_out"
+    excluded_count=$((excluded_count + 1))
+  else
+    included_pathspecs+=("$old_path")
+    if [ "$new_path" != "$old_path" ]; then
+      included_pathspecs+=("$new_path")
+    fi
+  fi
+done < <(git diff --name-status -z -M "$base" "$head")
+
+if [ "$excluded_count" -eq 0 ]; then
+  echo "- нет" >> "$tmp_out"
+fi
+
+{
+  echo
+  echo "## Изменения обычных файлов"
+} >> "$tmp_out"
+
+if [ "${#included_pathspecs[@]}" -eq 0 ]; then
+  echo "- нет" >> "$tmp_out"
+else
+  git diff -U10 -M "$base" "$head" -- "${included_pathspecs[@]}" >> "$tmp_out"
+fi
+
+package_bytes=$(wc -c < "$tmp_out" | tr -d ' ')
+if [ "$package_bytes" -gt "$max_bytes" ]; then
+  echo "пакет ${base}..${head} занимает ${package_bytes} байт и превышает предел ${max_bytes} байт; сузьте рабочий блок или разделите пакет" >&2
+  exit 4
+fi
+
+mv "$tmp_out" "$out"
+tmp_out=""
+commits=$(git rev-list --count "${base}..${head}")
+echo "записан ${out}: фиксаций Git — ${commits}, байт — ${package_bytes}, исключено файлов — ${excluded_count}"

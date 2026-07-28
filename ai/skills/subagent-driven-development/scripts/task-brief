@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Извлекает одну задачу плана в отдельный файл, чтобы не копировать её в
+# контекст управляющего агента.
+#
+# Использование: task-brief PLAN_FILE TASK_NUMBER [OUTFILE]
+# OUTFILE по умолчанию: .superpowers/sdd/{план}/task-{N}-brief.md
+set -euo pipefail
+
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
+  echo "использование: task-brief PLAN_FILE TASK_NUMBER [OUTFILE]" >&2
+  exit 2
+fi
+
+plan=$1
+n=$2
+[ -f "$plan" ] || { echo "нет файла плана: $plan" >&2; exit 2; }
+if [[ ! "$n" =~ ^[1-9][0-9]*$ ]]; then
+  echo "TASK_NUMBER должен быть положительным целым числом: $n" >&2
+  exit 2
+fi
+
+if [ $# -eq 3 ]; then
+  out=$3
+else
+  dir=$("$(cd "$(dirname "$0")" && pwd)/sdd-workspace" "$plan")
+  out="$dir/task-${n}-brief.md"
+fi
+
+awk -v n="$n" '
+  /^```/ { infence = !infence }
+  !infence && /^#+[ \t]+(Task|Задача)[ \t]+[0-9]+/ {
+    intask = ($0 ~ ("^#+[ \t]+(Task|Задача)[ \t]+" n "([^0-9]|$)"))
+  }
+  intask { print }
+' "$plan" > "$out"
+
+if [ ! -s "$out" ]; then
+  echo "задача ${n} не найдена в ${plan} (ожидался заголовок «Task ${n}» или «Задача ${n}»)" >&2
+  exit 3
+fi
+
+echo "записан ${out}: строк — $(wc -l < "$out" | tr -d ' ')"
