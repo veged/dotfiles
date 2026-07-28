@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
-# Extract one task's full text from an implementation plan into a file the
-# implementer reads in one call, so the task text never has to be pasted
-# through the controller's context.
+# Извлекает одну задачу плана в отдельный файл, чтобы не копировать её в
+# контекст управляющего агента.
 #
-# Usage: task-brief PLAN_FILE TASK_NUMBER [OUTFILE]
-# Default OUTFILE: <repo-root>/.superpowers/sdd/<plan-basename>/task-<N>-brief.md
-# (per plan and per worktree; concurrent runs of the SAME plan in the same
-# working tree share it).
+# Использование: task-brief PLAN_FILE TASK_NUMBER [OUTFILE]
+# OUTFILE по умолчанию: .superpowers/sdd/{план}/task-{N}-brief.md
 set -euo pipefail
 
 if [ $# -lt 2 ] || [ $# -gt 3 ]; then
@@ -38,7 +35,7 @@ awk -v n="$n" '
 ' "$plan" > "$out"
 
 if [ ! -s "$out" ]; then
-  echo "задача ${n} не найдена в ${plan} (ожидался заголовок 'Task ${n}' или 'Задача ${n}')" >&2
+  echo "задача ${n} не найдена в ${plan} (ожидался заголовок «Task ${n}» или «Задача ${n}»)" >&2
   exit 3
 fi
 

@@ -1,23 +1,8 @@
 #!/usr/bin/env bash
-# Resolve and ensure the working-tree directory SDD uses for one plan's
-# short-lived artifacts: task briefs, implementer reports, review packages,
-# and the progress ledger. Print the plan directory's absolute path.
+# Возвращает рабочую область одного плана для заданий, отчётов, пакетов и
+# журнала. Каталог находится в рабочем дереве и скрыт от Git файлом .gitignore.
 #
-# One directory per plan (.superpowers/sdd/<plan-basename>/) so a follow-up
-# plan in the same working tree can never read or overwrite another plan's
-# artifacts. A stale ledger misread as current progress makes controllers
-# skip whole task sequences — plan-scoping removes that failure structurally.
-#
-# The workspace lives in the working tree (not under .git/) because Claude Code
-# treats .git/ as a protected path and denies agent writes there — which blocks
-# an implementer subagent from writing its report file. A self-ignoring
-# .gitignore at .superpowers/sdd/ keeps every plan's workspace out of
-# `git status` and out of accidental commits without modifying any tracked file.
-#
-# Single source of truth for the workspace location, so task-brief and
-# review-package cannot drift to different directories.
-#
-# Usage: sdd-workspace PLAN_FILE
+# Использование: sdd-workspace PLAN_FILE
 set -euo pipefail
 
 if [ $# -ne 1 ]; then
@@ -30,7 +15,7 @@ plan=$1
 
 slug=$(basename "$plan" .md)
 [ -n "$slug" ] && [ "$slug" != "." ] && [ "$slug" != ".." ] \
-  || { echo "не удалось получить имя workspace из пути: $plan" >&2; exit 2; }
+  || { echo "не удалось получить имя рабочей области из пути: $plan" >&2; exit 2; }
 
 root=$(git rev-parse --show-toplevel)
 base="$root/.superpowers/sdd"

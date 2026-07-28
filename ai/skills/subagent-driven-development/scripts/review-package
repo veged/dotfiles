@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
-# Собирает атомарный пакет ревью: список коммитов, общую статистику,
-# манифест тяжёлого/производного содержимого и diff обычных исходных файлов.
+# Создаёт атомарный пакет: фиксации Git, статистику, манифест исключённого
+# содержимого и изменения обычных файлов.
 #
 # Использование: review-package PLAN_FILE BASE HEAD [OUTFILE]
-# По умолчанию OUTFILE находится в workspace данного плана.
-#
-# SDD_REVIEW_PACKAGE_MAX_BYTES переопределяет предел 204800 байт. Обычный
-# исходный код не усекается: при переполнении скрипт завершается кодом 4 и
-# не заменяет готовый OUTFILE.
+# SDD_REVIEW_PACKAGE_MAX_BYTES переопределяет предел 204800 байт.
+# При переполнении скрипт возвращает 4 и сохраняет прежний OUTFILE.
 set -euo pipefail
 
 if [ $# -lt 3 ] || [ $# -gt 4 ]; then
@@ -109,13 +106,13 @@ manifest_entry() {
 {
   echo "# Пакет ревью: ${base}..${head}"
   echo
-  echo "## Коммиты"
+  echo "## Фиксации Git"
   git log --oneline "${base}..${head}"
   echo
   echo "## Изменённые файлы"
   git diff --stat "$base" "$head"
   echo
-  echo "## Исключённое содержимое"
+  echo "## Исключённое"
 } > "$tmp_out"
 
 excluded_count=0
@@ -172,7 +169,7 @@ fi
 
 {
   echo
-  echo "## Diff обычных файлов"
+  echo "## Изменения обычных файлов"
 } >> "$tmp_out"
 
 if [ "${#included_pathspecs[@]}" -eq 0 ]; then
@@ -183,11 +180,11 @@ fi
 
 package_bytes=$(wc -c < "$tmp_out" | tr -d ' ')
 if [ "$package_bytes" -gt "$max_bytes" ]; then
-  echo "пакет ревью ${base}..${head} занимает ${package_bytes} байт и превышает предел ${max_bytes} байт; сузьте рабочий блок или сформируйте несколько явных пакетов" >&2
+  echo "пакет ${base}..${head} занимает ${package_bytes} байт и превышает предел ${max_bytes} байт; сузьте рабочий блок или разделите пакет" >&2
   exit 4
 fi
 
 mv "$tmp_out" "$out"
 tmp_out=""
 commits=$(git rev-list --count "${base}..${head}")
-echo "записан ${out}: коммитов — ${commits}, байт — ${package_bytes}, исключено файлов — ${excluded_count}"
+echo "записан ${out}: фиксаций Git — ${commits}, байт — ${package_bytes}, исключено файлов — ${excluded_count}"

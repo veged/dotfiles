@@ -1,76 +1,66 @@
-# Message для scoped re-review Work Unit
+# Сообщение для повторной проверки Work Unit
 
-Основной путь — `followup_task` тому же reviewer, который вынес исходные
-замечания. Это не новый dispatch и не новая позиция fresh-agent budget.
+Продолжай исходного проверяющего через `followup_task`. Это не новый агент и
+не новая позиция `fresh-agent budget`.
 
 ```yaml
 target: "[REVIEWER_ID]"
 message: |
   Повторно проверь исправления Work Unit N.
 
-  ## Исходные требования
+  Требования: [BRIEF_FILES]
+  Открытые замечания: [FINDINGS]
+  Отчёт исполнителя: [REPORT_FILE]
+  База исправления: [FIX_BASE_SHA]
+  HEAD: [HEAD_SHA]
+  Пакет исправлений: [DIFF_FILE]
 
-  [BRIEF_FILES]
+  Для каждого замечания укажи ADDRESSED или NOT ADDRESSED со ссылкой
+  `file:line`.
 
-  ## Открытые замечания
+  Проверяй только замечания и изменения из пакета. Добавь новую регрессию
+  уровня Critical или Important, только если её породило исправление.
+  Наблюдения вне пакета пометь как «вне области проверки» и не расширяй ими
+  цикл.
 
-  [FINDINGS]
+  Не повторяй тесты из актуального отчёта. Узкий тест допустим только при
+  новом конкретном сомнении.
 
-  ## Исправление
+  Ничего не меняй в `worktree`, индексе Git, `HEAD` или ветке.
 
-  Report implementer: [REPORT_FILE]
-  Fix base: [FIX_BASE_SHA]
-  Head: [HEAD_SHA]
-  Scoped review package: [DIFF_FILE]
-
-  Прочитай последние fix-записи report и package. Для каждого замечания
-  вынеси ADDRESSED или NOT ADDRESSED с `file:line`.
-
-  Проверяй только список замечаний и новый fix diff. Новую
-  Critical/Important-регрессию внутри fix diff добавь к открытым
-  замечаниям. Наблюдение вне fix diff пометь как Out-of-Scope и не расширяй
-  им цикл.
-
-  Не повторяй тесты из актуального report. Узкий тест допустим только при
-  конкретном новом сомнении.
-
-  Review только для чтения. Не меняй worktree, index, HEAD или branch.
-
-  ## Формат ответа
+  ## Ответ
 
   ### Вердикты замечаний
-  - [замечание] — ADDRESSED | NOT ADDRESSED; file:line
+  - {замечание} — ADDRESSED | NOT ADDRESSED; file:line
 
-  ### Новые регрессии в fix diff
-  - Critical/Important/Minor или «нет»
+  ### Новые регрессии
+  - Critical | Important | Minor | нет
 
-  ### Наблюдения вне scope
-  - [...] или «нет»
+  ### Наблюдения вне пакета
+  - {список} | нет
 
   ### Итог
-  Fix round: all addressed | findings remain
+  Раунд: все замечания закрыты | остались замечания
 
-  Начни сразу с первого вердикта, без рассказа о процессе.
+  Начни с первого вердикта. Не описывай процесс ревью.
 ```
 
-## Fallback при недоступном reviewer
+## Замена недоступного проверяющего
 
-Только если исходный reviewer завершён и его нельзя продолжить:
+Если исходного проверяющего нельзя продолжить:
 
-1. пересчитай `fresh-agent budget`;
-2. запиши причину новой позиции в ledger;
-3. создай одного replacement reviewer с явными
-   `fork_turns: "none"` и `model`;
-4. передай ему этот message, исходный review report и все перечисленные
-   ниже файлы.
+1. Пересчитай `fresh-agent budget`
+2. Запиши причину замены в журнал
+3. Создай одного агента с явными `fork_turns: "none"` и `model`
+4. Передай ему это сообщение, исходное ревью и перечисленные файлы
 
-Не используй fallback только потому, что новый dispatch привычнее.
+Не создавай замену только потому, что новый запуск привычнее.
 
-## Плейсхолдеры
+## Поля шаблона
 
-- `[REVIEWER_ID]` — идентификатор исходного reviewer для `followup_task`.
-- `[BRIEF_FILES]` — те же brief-файлы `Work Unit`.
-- `[FINDINGS]` — Critical/Important и реальные spec gaps без пересказа.
-- `[REPORT_FILE]` — тот же report с дописанной fix-секцией.
-- `[FIX_BASE_SHA]`, `[HEAD_SHA]` — только диапазон исправления.
-- `[DIFF_FILE]` — scoped package, созданный `scripts/review-package`.
+* `[REVIEWER_ID]` — исходный проверяющий для `followup_task`
+* `[BRIEF_FILES]` — файлы задач рабочего блока
+* `[FINDINGS]` — открытые замечания
+* `[REPORT_FILE]` — отчёт с исправлениями
+* `[FIX_BASE_SHA]`, `[HEAD_SHA]` — диапазон исправления
+* `[DIFF_FILE]` — результат `scripts/review-package`
