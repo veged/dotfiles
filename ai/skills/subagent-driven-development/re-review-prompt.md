@@ -1,106 +1,66 @@
-# Scoped Re-Review Prompt Template
+# Шаблон scoped re-review для Work Unit
 
-Use this template when dispatching a re-review after a fix round. The
-re-reviewer verifies the findings were addressed and checks the fix diff for
-new breakage. It is not a fresh review — the full review already happened.
+Продолжай исходного reviewer после общей волны исправлений. Это проверка
+открытых замечаний и fix diff, а не новое полное ревью.
 
-**Purpose:** Verify each finding from the previous review was addressed, and
-that the fix itself broke nothing.
+```yaml
+description: "Повторно проверить Work Unit N, раунд R"
+fork_turns: "none"
+model: "[MODEL — явно; обычно дешёвая или средняя модель]"
+message: |
+  Ты повторно проверяешь исправления Work Unit N.
 
-```
-Subagent (general-purpose):
-  description: "Re-review Task N fix round R"
-  model: [MODEL — REQUIRED: choose per SKILL.md Model Selection; an omitted
-         model silently inherits the session's most expensive one]
-  prompt: |
-    You are re-reviewing one task's fix round. A previous review produced
-    findings; an implementer has attempted to fix them. Your job is to
-    verdict each finding and inspect the fix diff — nothing else.
+  ## Исходные требования
 
-    ## The Task
+  [BRIEF_FILES]
 
-    Read the task brief: [BRIEF_FILE]
+  ## Открытые замечания
 
-    ## The Findings Under Verification
+  [FINDINGS]
 
-    [FINDINGS]
+  ## Исправление
 
-    ## The Fix
+  Report implementer: [REPORT_FILE]
+  Fix base: [FIX_BASE_SHA]
+  Head: [HEAD_SHA]
+  Scoped review package: [DIFF_FILE]
 
-    Read the implementer's report (fix reports are appended at the end):
-    [REPORT_FILE]
+  Прочитай последние fix-записи report и package. Для каждого замечания
+  вынеси ADDRESSED или NOT ADDRESSED с `file:line`.
 
-    **Fix base:** [FIX_BASE_SHA] (the head the previous review saw)
-    **Head:** [HEAD_SHA]
-    **Diff file:** [DIFF_FILE]
+  Проверяй только список замечаний и новый fix diff. Новую
+  Critical/Important-регрессию внутри fix diff добавь к открытым
+  замечаниям. Наблюдение вне fix diff пометь как Out-of-Scope и не расширяй
+  им цикл.
 
-    Read the diff file once — it contains the fix commits, a stat summary,
-    and the fix diff with surrounding context. Do not re-run git commands.
-    If the diff file is missing, fetch the diff yourself:
-    `git diff --stat [FIX_BASE_SHA]..[HEAD_SHA]` and
-    `git diff [FIX_BASE_SHA]..[HEAD_SHA]`.
+  Не повторяй тесты из актуального report. Узкий тест допустим только при
+  конкретном новом сомнении.
 
-    Your review is read-only on this checkout. Do not mutate the working
-    tree, the index, HEAD, or branch state in any way.
+  Review только для чтения. Не меняй worktree, index, HEAD или branch.
 
-    ## Scope
+  ## Формат ответа
 
-    Your scope is the findings list and the fix diff. Verdict every finding.
-    Inspect the fix diff for new problems the fix itself introduced. Do NOT
-    re-review code the fix did not touch: if you notice an issue entirely
-    outside the fix diff, report it under Out-of-Scope Observations — it
-    does not block this task and does not extend the loop. A broad
-    whole-branch review happens after all tasks are complete.
+  ### Вердикты замечаний
+  - [замечание] — ADDRESSED | NOT ADDRESSED; file:line
 
-    ## Tests
+  ### Новые регрессии в fix diff
+  - Critical/Important/Minor или «нет»
 
-    The implementer re-ran the tests covering the amended code and appended
-    the results to the report file. Treat the report as unverified claims:
-    confirm the fix report names the covering tests and shows their output,
-    and verify the claims against the diff. Do not re-run the suite to
-    confirm their report. Run a test only when reading the code raises a
-    specific doubt that no existing run answers — and then a focused test,
-    never a package-wide suite.
+  ### Наблюдения вне scope
+  - [...] или «нет»
 
-    ## Output Format
+  ### Итог
+  Fix round: all addressed | findings remain
 
-    Your final message is the report itself: begin directly with the first
-    finding's verdict. Every line is a verdict, a finding with file:line,
-    or a check you ran — no preamble, no process narration.
-
-    ### Finding Verdicts
-
-    For each finding in The Findings Under Verification, in order:
-    - **[finding one-liner]** — ADDRESSED | NOT ADDRESSED, with file:line
-      evidence. "Attempted" is not addressed: the specific defect must no
-      longer exist.
-
-    ### New Breakage in the Fix Diff
-
-    Anything the fix itself broke or introduced, with severity
-    (Critical/Important/Minor) and file:line. "None" if clean.
-
-    ### Out-of-Scope Observations
-
-    Issues you noticed entirely outside the fix diff. Non-blocking; the
-    controller ledgers these for the final review. "None" if none.
-
-    ### Verdict
-
-    **Fix round:** [All findings addressed, no new Critical/Important
-    breakage | Findings remain open] — list the open ones.
+  Начни сразу с первого вердикта, без рассказа о процессе.
 ```
 
-**Placeholders:**
-- `[MODEL]` — REQUIRED: reviewer model per SKILL.md Model Selection; scoped
-  re-reviews of small fix diffs take a cheap-to-mid tier
-- `[BRIEF_FILE]` — the task brief file (same file the implementer worked from)
-- `[FINDINGS]` — the Critical/Important findings and spec gaps from the
-  previous review, copied verbatim, one per bullet
-- `[REPORT_FILE]` — the implementer's report file (fix reports appended)
-- `[FIX_BASE_SHA]` — the head the previous review saw
-- `[HEAD_SHA]` — current commit
-- `[DIFF_FILE]` — the path `scripts/review-package PLAN_FILE FIX_BASE HEAD` printed
+## Плейсхолдеры
 
-**Re-reviewer returns:** per-finding verdicts (ADDRESSED / NOT ADDRESSED),
-new breakage in the fix diff, out-of-scope observations, and a round verdict.
+- `[MODEL]` — явно выбранная модель; при продолжении используется модель
+  уже существующего reviewer.
+- `[BRIEF_FILES]` — те же brief-файлы `Work Unit`.
+- `[FINDINGS]` — Critical/Important и реальные spec gaps без пересказа.
+- `[REPORT_FILE]` — тот же report с дописанной fix-секцией.
+- `[FIX_BASE_SHA]`, `[HEAD_SHA]` — только диапазон исправления.
+- `[DIFF_FILE]` — scoped package, созданный `scripts/review-package`.
