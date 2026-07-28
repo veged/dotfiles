@@ -19,6 +19,8 @@ required=(
   'human-signoff'
   'ровно одно итоговое ревью'
   'SDD_REVIEW_PACKAGE_MAX_BYTES'
+  'Excluded-content validation'
+  '[REPORT_FILES]'
 )
 
 for phrase in "${required[@]}"; do
@@ -33,6 +35,11 @@ for obsolete in \
     fail "осталось безусловное правило: $obsolete"
   fi
 done
+
+if ugrep -Fq 'description: "Повторно проверить Work Unit' \
+  "$skill_dir/re-review-prompt.md"; then
+  fail 'основной re-review всё ещё оформлен как новый dispatch'
+fi
 
 for prompt in \
   implementer-prompt.md \

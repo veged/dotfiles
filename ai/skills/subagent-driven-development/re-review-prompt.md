@@ -1,14 +1,12 @@
-# Шаблон scoped re-review для Work Unit
+# Message для scoped re-review Work Unit
 
-Продолжай исходного reviewer после общей волны исправлений. Это проверка
-открытых замечаний и fix diff, а не новое полное ревью.
+Основной путь — `followup_task` тому же reviewer, который вынес исходные
+замечания. Это не новый dispatch и не новая позиция fresh-agent budget.
 
 ```yaml
-description: "Повторно проверить Work Unit N, раунд R"
-fork_turns: "none"
-model: "[MODEL — явно; обычно дешёвая или средняя модель]"
+target: "[REVIEWER_ID]"
 message: |
-  Ты повторно проверяешь исправления Work Unit N.
+  Повторно проверь исправления Work Unit N.
 
   ## Исходные требования
 
@@ -55,10 +53,22 @@ message: |
   Начни сразу с первого вердикта, без рассказа о процессе.
 ```
 
+## Fallback при недоступном reviewer
+
+Только если исходный reviewer завершён и его нельзя продолжить:
+
+1. пересчитай `fresh-agent budget`;
+2. запиши причину новой позиции в ledger;
+3. создай одного replacement reviewer с явными
+   `fork_turns: "none"` и `model`;
+4. передай ему этот message, исходный review report и все перечисленные
+   ниже файлы.
+
+Не используй fallback только потому, что новый dispatch привычнее.
+
 ## Плейсхолдеры
 
-- `[MODEL]` — явно выбранная модель; при продолжении используется модель
-  уже существующего reviewer.
+- `[REVIEWER_ID]` — идентификатор исходного reviewer для `followup_task`.
 - `[BRIEF_FILES]` — те же brief-файлы `Work Unit`.
 - `[FINDINGS]` — Critical/Important и реальные spec gaps без пересказа.
 - `[REPORT_FILE]` — тот же report с дописанной fix-секцией.

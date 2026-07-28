@@ -67,6 +67,16 @@ message: |
   - результат self-review;
   - concerns или blocker.
 
+  Обязательно добавь секцию `Excluded-content validation`:
+
+  - перечисли каждый изменённый lock-файл;
+  - для каждого укажи детерминированную команду package manager, сборки или
+    иной проверки, её существенный результат и полный commit `HEAD`;
+  - если lock-файлы не менялись, явно напиши `lock-files: none`.
+
+  Статус DONE недопустим, если изменённый lock-файл не имеет актуального
+  доказательства проверки.
+
   В финальном сообщении верни не более 15 строк:
 
   - Status: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT

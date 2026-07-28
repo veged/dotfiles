@@ -41,19 +41,15 @@ fi
 out_dir=$(dirname "$out")
 mkdir -p "$out_dir"
 tmp_out=$(mktemp "${out}.tmp.XXXXXX")
-included_paths=$(mktemp "${out}.included.XXXXXX")
 
 cleanup() {
-  rm -f "$tmp_out" "$included_paths"
+  rm -f "$tmp_out"
 }
 trap cleanup EXIT
 
 classify_path() {
   local path=$1
   local name=${path##*/}
-  local added
-  local deleted
-  local rest
 
   case "$name" in
     package-lock.json|npm-shrinkwrap.json|pnpm-lock.yaml|yarn.lock|\
@@ -76,28 +72,19 @@ classify_path() {
       ;;
   esac
 
-  while IFS=$'\t' read -r added deleted rest; do
-    if [ "$added" = "-" ] && [ "$deleted" = "-" ]; then
-      echo "binary"
-      return 0
-    fi
-  done < <(git diff --numstat "$base" "$head" -- "$path")
-
   return 1
 }
 
 manifest_entry() {
   local path=$1
-  local category=$2
-  local added="?"
-  local deleted="?"
-  local rest
+  local old_path=$2
+  local change_status=$3
+  local category=$4
+  local added=$5
+  local deleted=$6
   local size
   local sha_line
   local sha
-
-  IFS=$'\t' read -r added deleted rest \
-    < <(git diff --numstat "$base" "$head" -- "$path")
 
   if git cat-file -e "${head}:${path}" 2>/dev/null; then
     size=$(git cat-file -s "${head}:${path}")
@@ -108,8 +95,15 @@ manifest_entry() {
     sha="deleted"
   fi
 
-  printf -- '- path=%q category=%s size=%s sha256=%s numstat=%s/%s\n' \
-    "$path" "$category" "$size" "$sha" "${added:-?}" "${deleted:-?}"
+  if [ "$old_path" != "$path" ]; then
+    printf -- '- path=%q old_path=%q category=%s size=%s sha256=%s status=%s numstat=%s/%s\n' \
+      "$path" "$old_path" "$category" "$size" "$sha" "$change_status" \
+      "${added:-?}" "${deleted:-?}"
+  else
+    printf -- '- path=%q category=%s size=%s sha256=%s status=%s numstat=%s/%s\n' \
+      "$path" "$category" "$size" "$sha" "$change_status" \
+      "${added:-?}" "${deleted:-?}"
+  fi
 }
 
 {
@@ -125,15 +119,52 @@ manifest_entry() {
 } > "$tmp_out"
 
 excluded_count=0
-while IFS= read -r -d '' path; do
+included_pathspecs=()
+while IFS= read -r -d '' change_status; do
+  IFS= read -r -d '' first_path
+  old_path=$first_path
+  new_path=$first_path
+
+  case "$change_status" in
+    R*|C*)
+      IFS= read -r -d '' new_path
+      ;;
+  esac
+
+  effective_path=$new_path
+  case "$change_status" in
+    D*)
+      effective_path=$old_path
+      ;;
+  esac
+
+  change_pathspecs=("$old_path")
+  if [ "$new_path" != "$old_path" ]; then
+    change_pathspecs+=("$new_path")
+  fi
+
+  added="?"
+  deleted="?"
+  rest=""
+  IFS=$'\t' read -r added deleted rest \
+    < <(git diff --numstat -M "$base" "$head" -- "${change_pathspecs[@]}")
+
   category=""
-  if category=$(classify_path "$path"); then
-    manifest_entry "$path" "$category" >> "$tmp_out"
+  if category=$(classify_path "$effective_path"); then
+    manifest_entry "$effective_path" "$old_path" "$change_status" \
+      "$category" "$added" "$deleted" >> "$tmp_out"
+    excluded_count=$((excluded_count + 1))
+  elif [ "$added" = "-" ] && [ "$deleted" = "-" ]; then
+    manifest_entry "$effective_path" "$old_path" "$change_status" \
+      "binary" "$added" "$deleted" >> "$tmp_out"
     excluded_count=$((excluded_count + 1))
   else
-    printf '%s\0' "$path" >> "$included_paths"
+    included_pathspecs+=("$old_path")
+    if [ "$new_path" != "$old_path" ]; then
+      included_pathspecs+=("$new_path")
+    fi
   fi
-done < <(git diff --name-only -z "$base" "$head")
+done < <(git diff --name-status -z -M "$base" "$head")
 
 if [ "$excluded_count" -eq 0 ]; then
   echo "- нет" >> "$tmp_out"
@@ -144,14 +175,10 @@ fi
   echo "## Diff обычных файлов"
 } >> "$tmp_out"
 
-included_count=0
-while IFS= read -r -d '' path; do
-  git diff -U10 "$base" "$head" -- "$path" >> "$tmp_out"
-  included_count=$((included_count + 1))
-done < "$included_paths"
-
-if [ "$included_count" -eq 0 ]; then
+if [ "${#included_pathspecs[@]}" -eq 0 ]; then
   echo "- нет" >> "$tmp_out"
+else
+  git diff -U10 -M "$base" "$head" -- "${included_pathspecs[@]}" >> "$tmp_out"
 fi
 
 package_bytes=$(wc -c < "$tmp_out" | tr -d ' ')

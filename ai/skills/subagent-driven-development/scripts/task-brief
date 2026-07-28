@@ -10,13 +10,17 @@
 set -euo pipefail
 
 if [ $# -lt 2 ] || [ $# -gt 3 ]; then
-  echo "usage: task-brief PLAN_FILE TASK_NUMBER [OUTFILE]" >&2
+  echo "использование: task-brief PLAN_FILE TASK_NUMBER [OUTFILE]" >&2
   exit 2
 fi
 
 plan=$1
 n=$2
-[ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
+[ -f "$plan" ] || { echo "нет файла плана: $plan" >&2; exit 2; }
+if [[ ! "$n" =~ ^[1-9][0-9]*$ ]]; then
+  echo "TASK_NUMBER должен быть положительным целым числом: $n" >&2
+  exit 2
+fi
 
 if [ $# -eq 3 ]; then
   out=$3
@@ -27,15 +31,15 @@ fi
 
 awk -v n="$n" '
   /^```/ { infence = !infence }
-  !infence && /^#+[ \t]+Task[ \t]+[0-9]+/ {
-    intask = ($0 ~ ("^#+[ \t]+Task[ \t]+" n "([^0-9]|$)"))
+  !infence && /^#+[ \t]+(Task|Задача)[ \t]+[0-9]+/ {
+    intask = ($0 ~ ("^#+[ \t]+(Task|Задача)[ \t]+" n "([^0-9]|$)"))
   }
   intask { print }
 ' "$plan" > "$out"
 
 if [ ! -s "$out" ]; then
-  echo "task ${n} not found in ${plan} (no heading matching 'Task ${n}')" >&2
+  echo "задача ${n} не найдена в ${plan} (ожидался заголовок 'Task ${n}' или 'Задача ${n}')" >&2
   exit 3
 fi
 
-echo "wrote ${out}: $(wc -l < "$out" | tr -d ' ') lines"
+echo "записан ${out}: строк — $(wc -l < "$out" | tr -d ' ')"

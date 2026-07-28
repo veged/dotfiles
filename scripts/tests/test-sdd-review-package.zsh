@@ -36,9 +36,12 @@ git -C "$fixture" config user.email test@example.com
 print '# План' > "$fixture/plan.md"
 print 'export const value = 1' > "$fixture/app.js"
 print '{"lockfileVersion": 3}' > "$fixture/package-lock.json"
+print '# secret-deleted-lock-content' > "$fixture/yarn.lock"
 print 'console.log("old")' > "$fixture/dist/app.min.js"
 print 'export const generated = "old"' > "$fixture/build/generated.js"
 printf '\x00\x01old-binary' > "$fixture/assets/logo.bin"
+print 'export const renamed = "ordinary"' > "$fixture/old-source.js"
+print 'export const moved = "secret-renamed-to-generated"' > "$fixture/move-me.js"
 git -C "$fixture" add .
 git -C "$fixture" commit -qm base
 base=$(git -C "$fixture" rev-parse HEAD)
@@ -53,6 +56,9 @@ print 'export const value = 2' > "$fixture/app.js"
 print 'export const generated = "secret-generated-content"' \
   > "$fixture/build/generated.js"
 printf '\x00\x01new-binary-secret' > "$fixture/assets/logo.bin"
+git -C "$fixture" mv old-source.js new-source.js
+git -C "$fixture" mv move-me.js build/moved.js
+git -C "$fixture" rm -q yarn.lock
 git -C "$fixture" add .
 git -C "$fixture" commit -qm head
 head_commit=$(git -C "$fixture" rev-parse HEAD)
@@ -68,9 +74,19 @@ assert_contains "$review_out" 'path=package-lock.json category=lock-file'
 assert_contains "$review_out" 'path=dist/app.min.js category=minified'
 assert_contains "$review_out" 'path=build/generated.js category=generated'
 assert_contains "$review_out" 'path=assets/logo.bin category=binary'
+assert_contains "$review_out" 'path=build/moved.js'
+assert_contains "$review_out" 'old_path=move-me.js'
+assert_contains "$review_out" 'category=generated'
+assert_contains "$review_out" 'numstat=0/0'
+assert_contains "$review_out" 'path=yarn.lock category=lock-file'
+assert_contains "$review_out" 'size=deleted sha256=deleted'
+assert_contains "$review_out" 'rename from old-source.js'
+assert_contains "$review_out" 'rename to new-source.js'
 assert_not_contains "$review_out" 'secret-lock-content'
+assert_not_contains "$review_out" 'secret-deleted-lock-content'
 assert_not_contains "$review_out" 'secret-minified-content'
 assert_not_contains "$review_out" 'secret-generated-content'
+assert_not_contains "$review_out" 'secret-renamed-to-generated'
 assert_not_contains "$review_out" 'new-binary-secret'
 
 lock_size=$(git -C "$fixture" cat-file -s "$head_commit:package-lock.json")

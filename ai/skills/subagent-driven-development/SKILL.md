@@ -77,7 +77,7 @@ digraph applicability {
 
 - безопасность, аутентификация или авторизация;
 - миграция данных, разрушительная либо необратимая операция;
-- публичный API или внешний формат данных;
+- публичный API или формат данных, используемый вне изменяемого модуля;
 - конкурентность, синхронизация или распределённое состояние;
 - архитектурное либо сквозное изменение нескольких подсистем;
 - последующие блоки непосредственно строятся на корректности этого блока.
@@ -210,8 +210,14 @@ scripts/task-brief PLAN_FILE TASK_NUMBER
 Для `normal`:
 
 1. проверь, что report содержит тесты и self-review;
-2. запиши `Work Unit <N>: task-review skipped — normal risk`;
-3. переходи к следующему блоку.
+2. получи список изменённых lock-файлов через
+   `git diff --name-only BASE HEAD`;
+3. для каждого lock-файла проверь в секции
+   `Excluded-content validation` точную детерминированную команду, успешный
+   результат и commit `HEAD`, на котором она выполнялась;
+4. report без актуального доказательства верни исходному implementer;
+5. запиши `Work Unit <N>: task-review skipped — normal risk`;
+6. переходи к следующему блоку.
 
 Для `high`:
 
@@ -221,8 +227,10 @@ scripts/task-brief PLAN_FILE TASK_NUMBER
    scripts/review-package PLAN_FILE BASE HEAD
    ```
 
-2. передай reviewer список brief, report, package и глобальные ограничения;
-3. используй [task-reviewer-prompt.md](task-reviewer-prompt.md).
+2. до dispatch примени к lock-файлам тот же
+   `Excluded-content validation` gate, что и для `normal`;
+3. передай reviewer список brief, report, package и глобальные ограничения;
+4. используй [task-reviewer-prompt.md](task-reviewer-prompt.md).
 
 Implementer self-review обязателен для всех блоков. Независимый task-review
 обязателен только для `high`; итоговое ревью покрывает все блоки.
@@ -305,8 +313,9 @@ numstat. Это позволяет reviewer увидеть масштаб и п�
 отдельно при названном риске, не загружая его автоматически.
 
 Lock-файл должен быть проверен package manager, сборкой или другой
-детерминированной командой в report implementer. Манифест не является
-доказательством валидности.
+детерминированной командой в секции `Excluded-content validation` отчёта
+implementer. Запись содержит путь, команду, результат и проверенный commit
+`HEAD`. Манифест не является доказательством валидности.
 
 Обычный исходный код никогда не усекается молча. Если пакет превышает
 предел, скрипт завершается кодом `4`: сузь `Work Unit` или сформируй
@@ -341,8 +350,9 @@ SDD_REVIEW_PACKAGE_MAX_BYTES=<байты> scripts/review-package PLAN BASE HEAD
 1. Получи `MERGE_BASE`.
 2. Собери `review-package PLAN_FILE MERGE_BASE HEAD`.
 3. Запусти одного наиболее способного reviewer с `fork_turns: "none"`.
-4. Передай ему package, глобальные ограничения и deferred/parked строки
-   ledger.
+4. Передай ему package, глобальные ограничения, пути ко всем отчётам
+   `[REPORT_FILES]` и deferred/parked строки ledger. Reviewer сверяет
+   lock-evidence с актуальным `HEAD`, не повторяя подтверждённую команду.
 
 Если итоговый reviewer нашёл Critical/Important, передай весь список одному
 fixer, предпочтительно исходному implementer подходящего блока. После одной
