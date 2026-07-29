@@ -1,0 +1,525 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+usage() {
+  printf 'использование: openspec-orchestrate SNAPSHOT_JSON STATE_FILE [OPENSPEC_CLI]\n' >&2
+  exit 2
+}
+
+fail() {
+  printf 'openspec-orchestrate: %s\n' "$1" >&2
+  exit "${2:-3}"
+}
+
+[[ $# -ge 2 && $# -le 3 ]] || usage
+
+snapshot_file=$1
+state_file=$2
+openspec_cli=${3:-}
+
+[[ -f $snapshot_file && ! -L $snapshot_file ]] \
+  || fail 'нет локального снимка JSON'
+[[ -f $state_file && ! -L $state_file ]] \
+  || fail 'нет безопасного state.md'
+
+snapshot=$(<"$snapshot_file")
+if ! jq -e '
+  type == "object" and
+  (.event | type == "string" and length > 0)
+' >/dev/null <<<"$snapshot"; then
+  fail 'некорректный снимок JSON'
+fi
+
+event=$(jq -r '.event' <<<"$snapshot")
+
+update_state() {
+  local updates=$1
+  local state_dir updates_file output_file
+
+  if ! jq -e '
+    type == "object" and
+    all(to_entries[];
+      (.key | test("^[a-z][a-z0-9-]*$")) and
+      ((.value | type) == "string" or
+        (.value | type) == "number" or
+        (.value | type) == "boolean") and
+      (.value | tostring | test("[[:cntrl:]]") | not)
+    )
+  ' >/dev/null <<<"$updates"; then
+    fail 'небезопасное обновление state.md'
+  fi
+
+  [[ $(jq 'length' <<<"$updates") -gt 0 ]] || return 0
+
+  state_dir=$(dirname "$state_file")
+  updates_file=$(mktemp "$state_dir/.openspec-updates.XXXXXX")
+  output_file=$(mktemp "$state_dir/.state.md.XXXXXX")
+  trap 'rm -f "$updates_file" "$output_file"' RETURN
+
+  jq -r 'to_entries[] | [.key, (.value | tostring)] | @tsv' \
+    <<<"$updates" >"$updates_file"
+
+  awk -F '\t' '
+    NR == FNR {
+      values[$1] = $2
+      order[++count] = $1
+      next
+    }
+
+    function emit_missing(leading_blank,    i, key, added) {
+      for (i = 1; i <= count; i++) {
+        key = order[i]
+        if (!(key in seen)) {
+          if (!added && leading_blank) {
+            print ""
+          }
+          print key ": " values[key]
+          seen[key] = 1
+          added = 1
+        }
+      }
+      return added
+    }
+
+    {
+      if (before_sections && /^## /) {
+        if (emit_missing(0)) {
+          print ""
+        }
+        before_sections = 0
+      }
+
+      if (before_sections && /^[a-z][a-z0-9-]*:/) {
+        key = $0
+        sub(/:.*/, "", key)
+        if (key in values) {
+          print key ": " values[key]
+          seen[key] = 1
+          next
+        }
+      }
+
+      print
+    }
+
+    BEGIN {
+      before_sections = 1
+    }
+
+    END {
+      if (before_sections) {
+        emit_missing(1)
+      }
+    }
+  ' "$updates_file" "$state_file" >"$output_file"
+
+  mv "$output_file" "$state_file"
+  rm -f "$updates_file"
+  trap - RETURN
+}
+
+finish() {
+  local updates=$1
+  local result=$2
+
+  update_state "$updates"
+  printf '%s\n' "$result"
+  exit 0
+}
+
+require_cli() {
+  [[ -n $openspec_cli && -x $openspec_cli ]] \
+    || fail 'CLI OpenSpec не передан или не исполняем'
+}
+
+read_change() {
+  local change_name=$1
+  local status_json apply_json
+
+  status_json=$("$openspec_cli" status "$change_name" --json) \
+    || fail 'команда openspec status завершилась ошибкой'
+  apply_json=$("$openspec_cli" instructions apply "$change_name" --json) \
+    || fail 'команда openspec instructions apply завершилась ошибкой'
+
+  jq -e 'type == "object"' >/dev/null <<<"$status_json" \
+    || fail 'openspec status вернул некорректный JSON'
+  jq -e 'type == "object"' >/dev/null <<<"$apply_json" \
+    || fail 'openspec instructions apply вернул некорректный JSON'
+}
+
+case "$event" in
+  discover)
+    explicit=$(jq -r '.explicit // false' <<<"$snapshot")
+    [[ $explicit == true || $explicit == false ]] \
+      || fail 'поле explicit должно быть логическим'
+
+    if [[ $explicit == false ]]; then
+      finish '{}' \
+        '{"decision":"disabled","stage":"unchanged","actions":[]}'
+    fi
+
+    require_cli
+    list_json=$("$openspec_cli" list --json) \
+      || fail 'команда openspec list завершилась ошибкой'
+    if ! changes=$(jq -ce '
+      if type == "array" then .
+      elif type == "object" and (.changes | type == "array") then .changes
+      else error("нет массива changes")
+      end
+      | if all(.[];
+          ((.name // .id) | type == "string") and
+          ((.name // .id) | test("^[a-z0-9]+(-[a-z0-9]+)*$"))
+        )
+        then .
+        else error("некорректное имя изменения")
+        end
+    ' <<<"$list_json"); then
+      fail 'openspec list вернул некорректный JSON'
+    fi
+
+    change_count=$(jq 'length' <<<"$changes")
+    selected_change=$(jq -r '.selectedChange // empty' <<<"$snapshot")
+
+    if [[ $change_count -eq 0 ]]; then
+      new_change=$(jq -r '.newChange // empty' <<<"$snapshot")
+      [[ $new_change =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]] \
+        || fail 'для создания нужно безопасное имя изменения'
+      result=$(jq -cn --arg change "$new_change" '
+        {
+          decision: "create-change",
+          stage: "discover",
+          changeName: $change,
+          actions: ["create-change"]
+        }
+      ')
+      finish '{"stage":"discover"}' "$result"
+    fi
+
+    if [[ $change_count -gt 1 && -z $selected_change ]]; then
+      candidates=$(jq -c '[.[] | (.name // .id)]' <<<"$changes")
+      result=$(jq -cn --argjson candidates "$candidates" '
+        {
+          decision: "choose-change",
+          stage: "discover",
+          candidates: $candidates,
+          actions: ["ask-user"]
+        }
+      ')
+      finish '{"stage":"discover"}' "$result"
+    fi
+
+    if [[ -z $selected_change ]]; then
+      selected_change=$(jq -r '.[0] | (.name // .id)' <<<"$changes")
+    fi
+    matches=$(jq --arg selected "$selected_change" \
+      '[.[] | select((.name // .id) == $selected)] | length' <<<"$changes")
+    [[ $matches -eq 1 ]] || fail 'выбранное изменение не найдено'
+
+    read_change "$selected_change"
+    updates=$(jq -cn --arg change "$selected_change" '
+      {"stage":"planning","active-change":$change}
+    ')
+    result=$(jq -cn --arg change "$selected_change" '
+      {
+        decision: "continue-change",
+        stage: "planning",
+        changeName: $change,
+        actions: ["load-status","load-apply","continue-planning"]
+      }
+    ')
+    finish "$updates" "$result"
+    ;;
+
+  recover)
+    if ! jq -e '
+      (.role | type == "string" and IN("planner", "executor", "reviewer")) and
+      (.idAvailable | type == "boolean") and
+      (.currentBudget | type == "number" and floor == . and . >= 0)
+    ' >/dev/null <<<"$snapshot"; then
+      fail 'некорректный снимок восстановления'
+    fi
+
+    role=$(jq -r '.role' <<<"$snapshot")
+    current_budget=$(jq -r '.currentBudget' <<<"$snapshot")
+    if [[ $(jq -r '.idAvailable' <<<"$snapshot") == true ]]; then
+      result=$(jq -cn --arg role "$role" --argjson budget "$current_budget" '
+        {
+          decision: "resume-role",
+          role: $role,
+          freshAgentBudget: $budget,
+          actions: ["followup-delta"]
+        }
+      ')
+      finish '{}' "$result"
+    fi
+
+    if ! jq -e '
+      (.reason | type == "string" and length > 0) and
+      (.files | type == "array" and length > 0 and
+        all(.[]; type == "string" and length > 0))
+    ' >/dev/null <<<"$snapshot"; then
+      fail 'для замены роли нужны причина и файлы'
+    fi
+
+    next_budget=$((current_budget + 1))
+    updates=$(jq -cn --arg role "$role" --argjson budget "$next_budget" '
+      {($role):"replacement-pending","fresh-agent-budget":$budget}
+    ')
+    result=$(jq -cn --arg role "$role" --argjson budget "$next_budget" '
+      {
+        decision: "replace-role",
+        role: $role,
+        freshAgentBudget: $budget,
+        restoreFromFiles: true,
+        actions: ["record-replacement-reason","restore-from-files","spawn-once"]
+      }
+    ')
+    finish "$updates" "$result"
+    ;;
+
+  route)
+    if ! jq -e '
+      (.blocks | type == "array" and length > 0) and
+      all(.blocks[];
+        (.taskIds | type == "array" and length > 0 and
+          all(.[]; type == "string" and test("^[A-Za-z0-9]+([._-][A-Za-z0-9]+)*$"))) and
+        (.briefFiles | type == "array" and length > 0 and
+          all(.[]; type == "string" and length > 0 and
+            (test("[[:cntrl:]]") | not)))
+      )
+    ' >/dev/null <<<"$snapshot"; then
+      fail 'некорректные рабочие блоки'
+    fi
+
+    while IFS= read -r brief_file; do
+      [[ -f $brief_file ]] || fail "нет файла краткого задания: $brief_file"
+    done < <(jq -r '.blocks[].briefFiles[]' <<<"$snapshot")
+
+    block_count=$(jq '.blocks | length' <<<"$snapshot")
+    brief_files=$(jq -c '[.blocks[].briefFiles[]]' <<<"$snapshot")
+    if [[ $block_count -eq 1 ]]; then
+      mode=single
+      sdd_path=none
+      caller_return=false
+    else
+      mode=sdd
+      sdd_path=$(jq -r '.sddWorkspace // empty' <<<"$snapshot")
+      [[ -n $sdd_path && -d $sdd_path ]] \
+        || fail 'для режима sdd нужна готовая рабочая область'
+      caller_return=true
+    fi
+
+    updates=$(jq -cn --arg mode "$mode" --arg workspace "$sdd_path" '
+      {"stage":"execution","implementation":$mode,"sdd-workspace":$workspace}
+    ')
+    result=$(jq -cn \
+      --arg mode "$mode" \
+      --argjson count "$block_count" \
+      --argjson briefs "$brief_files" \
+      --argjson caller "$caller_return" '
+      {
+        decision: "execute",
+        stage: "execution",
+        mode: $mode,
+        executorCount: $count,
+        briefFiles: $briefs,
+        callerControlledReturn: $caller,
+        actions: ["use-external-briefs","dispatch-by-block"]
+      }
+    ')
+    finish "$updates" "$result"
+    ;;
+
+  review)
+    if ! jq -e '
+      (.mode | type == "string" and IN("single", "sdd")) and
+      (.callerControlledReturn | type == "boolean")
+    ' >/dev/null <<<"$snapshot"; then
+      fail 'некорректный снимок ревью'
+    fi
+
+    mode=$(jq -r '.mode' <<<"$snapshot")
+    caller_return=$(jq -r '.callerControlledReturn' <<<"$snapshot")
+    if [[ $mode == sdd ]]; then
+      reviewer_owner=sdd
+    else
+      reviewer_owner=openspec
+    fi
+    result=$(jq -cn \
+      --arg owner "$reviewer_owner" \
+      --argjson caller "$caller_return" '
+      {
+        decision: "review",
+        stage: "review",
+        reviewerCount: 1,
+        reviewerOwner: $owner,
+        callerControlledReturn: $caller,
+        actions: ["dispatch-final-review-once"]
+      }
+    ')
+    finish '{"stage":"review"}' "$result"
+    ;;
+
+  review-complete)
+    if ! jq -e '
+      (.mode | type == "string" and IN("single", "sdd")) and
+      (.clean | type == "boolean") and
+      (.callerControlledReturn | type == "boolean")
+    ' >/dev/null <<<"$snapshot"; then
+      fail 'некорректный результат ревью'
+    fi
+
+    clean=$(jq -r '.clean' <<<"$snapshot")
+    mode=$(jq -r '.mode' <<<"$snapshot")
+    caller_return=$(jq -r '.callerControlledReturn' <<<"$snapshot")
+    if [[ $clean == true ]]; then
+      if [[ $mode == sdd && $caller_return == true ]]; then
+        decision=caller-return
+        actions='["return-to-caller"]'
+      else
+        decision=review-clean
+        actions='["fresh-verification"]'
+      fi
+      result=$(jq -cn --arg decision "$decision" --argjson actions "$actions" '
+        {
+          decision: $decision,
+          stage: "fresh-verification",
+          newReviewerCount: 0,
+          cleanup: false,
+          actions: $actions
+        }
+      ')
+      finish '{"stage":"fresh-verification"}' "$result"
+    fi
+
+    finish '{"stage":"review"}' \
+      '{"decision":"findings-required","stage":"review","newReviewerCount":0,"cleanup":false,"actions":["route-findings"]}'
+    ;;
+
+  findings)
+    if ! jq -e '
+      (.artifactFindings | type == "array" and length > 0 and
+        all(.[]; type == "string" and length > 0)) and
+      (.implementationFindings | type == "array" and length > 0 and
+        all(.[]; type == "string" and length > 0)) and
+      (.affectedTaskIds | type == "array" and length > 0 and
+        all(.[]; type == "string" and test("^[A-Za-z0-9]+([._-][A-Za-z0-9]+)*$")))
+    ' >/dev/null <<<"$snapshot"; then
+      fail 'некорректный пакет смешанных замечаний'
+    fi
+
+    reopened=$(jq -c '.affectedTaskIds' <<<"$snapshot")
+    reopened_text=$(jq -r '.affectedTaskIds | join(",")' <<<"$snapshot")
+    updates=$(jq -cn --arg reopened "$reopened_text" '
+      {"stage":"planning","reopened-tasks":$reopened}
+    ')
+    result=$(jq -cn --argjson reopened "$reopened" '
+      {
+        decision: "findings-cycle",
+        stage: "planning",
+        reopenedTaskIds: $reopened,
+        newReviewerCount: 0,
+        actions: ["planner","reopen-affected-tasks","executor-batch","re-review"]
+      }
+    ')
+    finish "$updates" "$result"
+    ;;
+
+  verify)
+    if ! jq -e '
+      (.reviewedHead | type == "string" and test("^[0-9a-f]{7,40}$")) and
+      (.currentHead | type == "string" and test("^[0-9a-f]{7,40}$")) and
+      (.checksPassed | type == "boolean")
+    ' >/dev/null <<<"$snapshot"; then
+      fail 'некорректный снимок свежей проверки'
+    fi
+
+    reviewed_head=$(jq -r '.reviewedHead' <<<"$snapshot")
+    current_head=$(jq -r '.currentHead' <<<"$snapshot")
+    checks_passed=$(jq -r '.checksPassed' <<<"$snapshot")
+    if [[ $reviewed_head == "$current_head" && $checks_passed == true ]]; then
+      updates=$(jq -cn --arg head "$current_head" '
+        {"stage":"ready-for-merge","verified-head":$head}
+      ')
+      result=$(jq -cn --arg head "$current_head" '
+        {
+          decision: "verified",
+          stage: "ready-for-merge",
+          verifiedHead: $head,
+          actions: ["ready-for-merge"]
+        }
+      ')
+      finish "$updates" "$result"
+    fi
+
+    finish '{"stage":"fresh-verification","verified-head":"none"}' \
+      '{"decision":"stale-verification","stage":"fresh-verification","verifiedHead":"none","actions":["rerun-current-head"]}'
+    ;;
+
+  archive-guard)
+    if ! jq -e '
+      (.repo | type == "string" and length > 0) and
+      (.defaultBranch | type == "string" and length > 0) and
+      (.changeHead | type == "string" and test("^[0-9a-f]{7,40}$")) and
+      (.tasksComplete | type == "boolean")
+    ' >/dev/null <<<"$snapshot"; then
+      fail 'некорректный снимок архивации'
+    fi
+
+    repo=$(jq -r '.repo' <<<"$snapshot")
+    default_branch=$(jq -r '.defaultBranch' <<<"$snapshot")
+    change_head=$(jq -r '.changeHead' <<<"$snapshot")
+    tasks_complete=$(jq -r '.tasksComplete' <<<"$snapshot")
+    [[ -d $repo ]] || fail 'репозиторий архивации не найден'
+
+    current_branch=$(git -C "$repo" branch --show-current) \
+      || fail 'не удалось определить текущую ветку'
+    worktree_status=$(git -C "$repo" status --porcelain) \
+      || fail 'не удалось проверить рабочую копию'
+    reasons='[]'
+    if [[ $current_branch != "$default_branch" ]]; then
+      reasons=$(jq -c '. + ["wrong-branch"]' <<<"$reasons")
+    fi
+    if [[ -n $worktree_status ]]; then
+      reasons=$(jq -c '. + ["dirty-worktree"]' <<<"$reasons")
+    fi
+    if ! git -C "$repo" merge-base --is-ancestor "$change_head" HEAD; then
+      reasons=$(jq -c '. + ["not-merged"]' <<<"$reasons")
+    fi
+    if [[ $tasks_complete != true ]]; then
+      reasons=$(jq -c '. + ["tasks-incomplete"]' <<<"$reasons")
+    fi
+
+    if [[ $(jq 'length' <<<"$reasons") -eq 0 ]]; then
+      finish '{}' \
+        '{"decision":"archive-ready","reasons":[],"actions":["run-openspec-archive"]}'
+    fi
+    result=$(jq -cn --argjson reasons "$reasons" '
+      {
+        decision: "archive-blocked",
+        reasons: $reasons,
+        actions: ["stop-archive"]
+      }
+    ')
+    finish '{}' "$result"
+    ;;
+
+  archive-impact)
+    if ! jq -e '(.implementationAffected | type == "boolean")' \
+      >/dev/null <<<"$snapshot"; then
+      fail 'некорректная оценка влияния архива'
+    fi
+
+    if [[ $(jq -r '.implementationAffected' <<<"$snapshot") == true ]]; then
+      finish '{"stage":"planning"}' \
+        '{"decision":"return-development","stage":"planning","retryArchive":false,"actions":["return-development"]}'
+    fi
+    finish '{}' \
+      '{"decision":"retry-archive","retryArchive":true,"actions":["rerun-archive-guard"]}'
+    ;;
+
+  *)
+    fail "неизвестное событие: $event"
+    ;;
+esac

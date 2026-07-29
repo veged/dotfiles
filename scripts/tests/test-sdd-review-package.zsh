@@ -101,7 +101,8 @@ head_short=$(git -C "$fixture" rev-parse --short "$head_commit")
   cd "$fixture"
   "$review_package" plan.md "$base" "$head_commit"
 )
-default_out="$fixture/.superpowers/sdd/plan/review-${base_short}..${head_short}.diff"
+plan_hash=$(print -n -- 'plan.md' | git -C "$fixture" hash-object --stdin)
+default_out="$fixture/.superpowers/sdd/plan-${plan_hash[1,8]}/review-${base_short}..${head_short}.diff"
 [[ -f "$default_out" ]] || fail 'не создан совместимый OUTFILE по умолчанию'
 
 {

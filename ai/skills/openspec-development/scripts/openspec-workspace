@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+fail() {
+  printf '%s\n' "$1" >&2
+  exit 2
+}
+
+if [[ $# -ne 1 ]]; then
+  fail 'укажи одно имя изменения в kebab-case'
+fi
+
+change_name=$1
+if [[ ! $change_name =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+  fail 'имя изменения должно быть непустым kebab-case'
+fi
+
+if ! repo_root=$(git rev-parse --show-toplevel 2>/dev/null); then
+  fail 'не найден корень Git'
+fi
+
+workspace="$repo_root/.superpowers/openspec/$change_name"
+mkdir -p "$workspace"
+printf '*\n' > "$repo_root/.superpowers/openspec/.gitignore"
+
+state_file="$workspace/state.md"
+temporary_state=$(mktemp "$workspace/.state.XXXXXX")
+trap 'rm -f "$temporary_state"' EXIT
+cat > "$temporary_state" <<EOF
+# Состояние OpenSpec — изменение: $change_name
+
+stage: discover
+planner: unavailable
+executor: unavailable
+reviewer: unavailable
+implementation: unset
+sdd-workspace: none
+verified-head: none
+
+## Отчёты
+
+## Открытые замечания
+EOF
+
+if ln "$temporary_state" "$state_file" 2>/dev/null; then
+  rm -f "$temporary_state"
+else
+  rm -f "$temporary_state"
+  [[ -e $state_file ]] || fail 'не удалось атомарно создать state.md'
+fi
+trap - EXIT
+
+printf '%s\n' "$workspace"

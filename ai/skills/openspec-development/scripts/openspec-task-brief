@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+fail() {
+  printf '%s\n' "$1" >&2
+  exit "$2"
+}
+
+if [[ $# -lt 2 || $# -gt 3 ]]; then
+  fail 'укажи JSON, идентификатор задачи и необязательный путь вывода' 2
+fi
+
+apply_json=$1
+task_id=$2
+if [[ -f $apply_json ]]; then
+  apply_json=$(<"$apply_json")
+fi
+
+if ! jq -e '
+  def safe_id:
+    (type == "string" or type == "number") and
+    (tostring | test("^[A-Za-z0-9]+([._-][A-Za-z0-9]+)*$"));
+  def safe_path:
+    type == "string" and
+    length > 0 and
+    (startswith("/") | not) and
+    (contains("\\") | not) and
+    test("^[^[:cntrl:]]+$") and
+    (split("/") | all(.[]; length > 0 and . != "." and . != ".."));
+  (.changeName | type == "string" and test("^[a-z0-9]+(-[a-z0-9]+)*$")) and
+  (.state | type == "string") and
+  (.contextFiles | type == "object") and
+  all(.contextFiles[];
+    type == "array" and all(.[]; safe_path)
+  ) and
+  (.tasks | type == "array") and
+  all(.tasks[];
+    type == "object" and
+    (.id | safe_id) and
+    (.description | type == "string" and length > 0) and
+    (.done | type == "boolean")
+  )
+' >/dev/null <<<"$apply_json"; then
+  fail 'некорректный JSON OpenSpec' 3
+fi
+
+if [[ ! $task_id =~ ^[A-Za-z0-9]+([._-][A-Za-z0-9]+)*$ ]]; then
+  fail 'небезопасный идентификатор рабочего пункта' 3
+fi
+
+if ! task=$(jq -ec --arg id "$task_id" '
+  [.tasks[] | select((.id | tostring) == $id)]
+  | select(length == 1)
+  | .[0]
+' <<<"$apply_json"); then
+  fail 'рабочий пункт не найден' 3
+fi
+
+if [[ $(jq -r '.done' <<<"$task") != false ]]; then
+  fail 'рабочий пункт уже завершён' 3
+fi
+
+if ! repo_root=$(git rev-parse --show-toplevel 2>/dev/null); then
+  fail 'не найден корень Git' 2
+fi
+
+change_name=$(jq -r '.changeName' <<<"$apply_json")
+if [[ $# -eq 3 ]]; then
+  output=$3
+else
+  output="$repo_root/.superpowers/openspec/$change_name/task-$task_id-brief.md"
+fi
+
+mkdir -p "$(dirname "$output")"
+temporary_output=$(mktemp "$(dirname "$output")/.task-brief.XXXXXX")
+trap 'rm -f "$temporary_output"' EXIT
+
+{
+  printf '# Рабочий пункт %s\n\n' "$task_id"
+  printf 'Изменение: `%s`\n' "$change_name"
+  printf 'Состояние: `done: false`\n\n'
+  printf '## Требование\n\n'
+  jq -r '.description' <<<"$task"
+  printf '\n\n## Контекст\n\n'
+  jq -r '.contextFiles | to_entries[] | .value[] | "* `\(.)`"' \
+    <<<"$apply_json"
+} > "$temporary_output"
+
+mv "$temporary_output" "$output"
+trap - EXIT
+printf '%s\n' "$output"

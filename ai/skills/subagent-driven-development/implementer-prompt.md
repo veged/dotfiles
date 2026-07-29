@@ -1,14 +1,14 @@
-# Шаблон исполнителя для Work Unit
+# Шаблон исполнителя рабочего блока
 
 Шаблон описывает один независимо принимаемый рабочий блок. Его задачи
 передаются отдельными файлами.
 
 ```yaml
-description: "Реализовать Work Unit N: {название}"
+description: "Реализовать рабочий блок N: {название}"
 fork_turns: "none"
 model: "[MODEL — выбрать по SKILL.md]"
 message: |
-  Реализуй Work Unit N: {название}.
+  Реализуй рабочий блок N: {название}.
 
   ## Требования
 
@@ -64,7 +64,7 @@ message: |
 
   Финальный ответ — не более 15 строк:
 
-  - Status: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
+  - Статус: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
   - фиксации Git
   - результат тестов
   - сомнения

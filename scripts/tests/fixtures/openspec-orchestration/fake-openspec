@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+: "${OPEN_SPEC_FIXTURE_DIR:?не задан каталог тестовых данных}"
+: "${OPEN_SPEC_COMMAND_LOG:?не задан журнал команд}"
+
+printf '%s\n' "$*" >>"$OPEN_SPEC_COMMAND_LOG"
+
+case "${1:-} ${2:-}" in
+  'list --json')
+    file=${OPEN_SPEC_LIST_FIXTURE:-list-one.json}
+    ;;
+  'status add-dark-mode')
+    [[ ${3:-} == '--json' ]] || exit 2
+    file=status.json
+    ;;
+  'instructions apply')
+    [[ ${3:-} == 'add-dark-mode' && ${4:-} == '--json' ]] || exit 2
+    file=apply.json
+    ;;
+  *)
+    printf 'неожиданная команда подменённого CLI OpenSpec: %s\n' "$*" >&2
+    exit 2
+    ;;
+esac
+
+exec cat "$OPEN_SPEC_FIXTURE_DIR/$file"

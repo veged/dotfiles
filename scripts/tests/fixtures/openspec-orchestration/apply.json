@@ -1,0 +1,30 @@
+{
+  "changeName": "add-dark-mode",
+  "state": "ready",
+  "contextFiles": {
+    "proposal": [
+      "openspec/changes/add-dark-mode/proposal.md"
+    ],
+    "specs": [
+      "openspec/changes/add-dark-mode/specs/theme/spec.md"
+    ],
+    "design": [
+      "openspec/changes/add-dark-mode/design.md"
+    ],
+    "tasks": [
+      "openspec/changes/add-dark-mode/tasks.md"
+    ]
+  },
+  "tasks": [
+    {
+      "id": "1",
+      "description": "Добавить хранилище темы",
+      "done": false
+    },
+    {
+      "id": "2",
+      "description": "Добавить переключатель",
+      "done": false
+    }
+  ]
+}

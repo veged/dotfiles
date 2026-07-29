@@ -21,11 +21,42 @@ required=(
   'SDD_REVIEW_PACKAGE_MAX_BYTES'
   'Excluded-content validation'
   '[REPORT_FILES]'
+  'готовые файлы кратких заданий'
+  '[REQUIREMENT_FILES]'
+  'final-reviewer-prompt.md'
+  'второе полное ревью'
+  'Вызывающий навык получает итоговый отчёт'
+  'не запускает второго проверяющего'
+  '[CALLER_CONTROLLED_RETURN]'
+  'сохрани рабочую область и отчёты'
+  'верни управление вызывающему навыку'
+  'не используй `finishing-a-development-branch`'
+  '`fresh-verification`'
+  '`ready-for-merge`'
 )
 
 for phrase in "${required[@]}"; do
   ugrep -Fq -- "$phrase" "$skill" \
     || fail "нет обязательного правила: $phrase"
+done
+
+final_reviewer="$skill_dir/final-reviewer-prompt.md"
+for phrase in \
+  '[REQUIREMENT_FILES]' \
+  '[REPORT_FILES]' \
+  '[DIFF_FILE]' \
+  'BASE' \
+  'HEAD' \
+  'artifact {id}' \
+  'implementation' \
+  'external' \
+  'Critical' \
+  'Important' \
+  'Minor' \
+  'file:line' \
+  'единственное разрешённое изменение'; do
+  ugrep -Fq -- "$phrase" "$final_reviewer" \
+    || fail "нет обязательного правила итогового проверяющего: $phrase"
 done
 
 for obsolete in \
@@ -46,10 +77,13 @@ for prompt in \
   task-reviewer-prompt.md \
   re-review-prompt.md; do
   prompt_path="$skill_dir/$prompt"
-  ugrep -Fq 'Work Unit' "$prompt_path" \
-    || fail "шаблон $prompt не переведён на Work Unit"
+  ugrep -Eq 'рабоч(ий|его) блок' "$prompt_path" \
+    || fail "шаблон $prompt не использует русский термин рабочего блока"
   ugrep -Fq '[BRIEF_FILES]' "$prompt_path" \
     || fail "шаблон $prompt не принимает список brief-файлов"
+  if ugrep -Fq 'Work Unit' "$prompt_path"; then
+    fail "шаблон $prompt содержит нелокализованный термин Work Unit"
+  fi
 done
 
 print 'test-adaptive-sdd-skill: ok'
