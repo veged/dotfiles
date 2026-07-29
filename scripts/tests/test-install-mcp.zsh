@@ -154,6 +154,8 @@ fi
 [[ "$(jq -r '.mcpServers.wiki.command' "$claude_user_path")" == "ya" ]] || fail "~/.claude.json wiki command"
 [[ "$(jq -r '.mcpServers.wiki.args | length' "$claude_user_path")" == "4" ]] || fail "~/.claude.json wiki args length"
 [[ "$(jq -r '.mcpServers.fff.type' "$claude_user_path")" == "stdio" ]] || fail "~/.claude.json fff type"
+[[ "$(jq -r '.mcpServers.btt.url' "$claude_user_path")" == "http://127.0.0.1:64832/mcp" ]] || fail "~/.claude.json btt url"
+[[ "$(jq -r '.mcpServers.btt.headers.Authorization' "$claude_user_path")" == 'Bearer ${BTT_MCP_TOKEN}' ]] || fail "~/.claude.json btt auth header"
 [[ "$(jq -r '.mcpServers.sourcecraft.type' "$claude_user_path")" == "http" ]] || fail "~/.claude.json sourcecraft type"
 [[ "$(jq -r '.mcpServers.sourcecraft.url' "$claude_user_path")" == "https://api.sourcecraft.tech/mcp" ]] || fail "~/.claude.json sourcecraft url"
 [[ "$(jq -r '.mcpServers.sourcecraft.headers.Authorization' "$claude_user_path")" == 'Bearer ${SOURCECRAFT_PAT}' ]] || fail "~/.claude.json sourcecraft auth header"
@@ -193,6 +195,8 @@ jq -e . "$opencode_config_path" >/dev/null || fail "generated opencode config mu
 [[ "$(jq -r '.mcpServers.fff.command' "$cursor_manifest_path")" == "$home_dir/.local/bin/fff-mcp" ]] || fail "unexpected fff command"
 [[ "$(jq -r '.mcpServers.context7.disabled' "$cursor_manifest_path")" == "true" ]] || fail "context7 must be disabled"
 [[ "$(jq -r '.mcpServers.playwright.disabled' "$cursor_manifest_path")" == "true" ]] || fail "playwright must be disabled"
+[[ "$(jq -r '.mcpServers.btt.url' "$cursor_manifest_path")" == "http://127.0.0.1:64832/mcp" ]] || fail "unexpected btt url"
+[[ "$(jq -r '.mcpServers.btt.headers.Authorization' "$cursor_manifest_path")" == 'Bearer ${env:BTT_MCP_TOKEN}' ]] || fail "unexpected btt auth header"
 [[ "$(jq -r '.mcpServers.sourcecraft.url' "$cursor_manifest_path")" == "https://api.sourcecraft.tech/mcp" ]] || fail "unexpected sourcecraft url"
 [[ "$(jq -r '.mcpServers.sourcecraft.type' "$cursor_manifest_path")" == "sse" ]] || fail "unexpected sourcecraft type"
 [[ "$(jq -r '.mcpServers.sourcecraft.headers.Authorization' "$cursor_manifest_path")" == 'Bearer ${env:SOURCECRAFT_PAT}' ]] || fail "unexpected sourcecraft auth header"
@@ -200,6 +204,8 @@ grep -Fq 'personality = "pragmatic"' "$codex_config_path" || fail "missing codex
 if grep -Fq '[mcp_servers.fff]' "$codex_config_path"; then
   fail "fff should be disabled for codex"
 fi
+ugrep -Fq '[mcp_servers.btt]' "$codex_config_path" || fail "missing btt codex block"
+ugrep -Fq 'bearer_token_env_var = "BTT_MCP_TOKEN"' "$codex_config_path" || fail "missing btt bearer token env"
 grep -Fq '[mcp_servers.sourcecraft]' "$codex_config_path" || fail "missing sourcecraft codex block"
 grep -Fq 'bearer_token_env_var = "SOURCECRAFT_PAT"' "$codex_config_path" || fail "missing sourcecraft bearer token env"
 grep -Fq '[mcp_servers.sourcecraft.tools.GetCubeLogs]' "$codex_config_path" || fail "missing sourcecraft tool approvals"
@@ -216,6 +222,8 @@ if grep -Fq '[mcp_servers.playwright]' "$codex_config_path"; then
   fail "playwright must be absent from codex output"
 fi
 [[ "$(jq -c '.plugin' "$opencode_config_path")" == '["oh-my-openagent"]' ]] || fail "unexpected opencode plugin section"
+[[ "$(jq -r '.mcp.btt.url' "$opencode_config_path")" == "http://127.0.0.1:64832/mcp" ]] || fail "unexpected opencode btt url"
+[[ "$(jq -r '.mcp.btt.headers.Authorization' "$opencode_config_path")" == 'Bearer {env:BTT_MCP_TOKEN}' ]] || fail "unexpected opencode btt auth header"
 [[ "$(jq -r '.mcp.sourcecraft.type' "$opencode_config_path")" == "remote" ]] || fail "unexpected opencode sourcecraft type"
 [[ "$(jq -r '.mcp.sourcecraft.url' "$opencode_config_path")" == "https://api.sourcecraft.tech/mcp" ]] || fail "unexpected opencode sourcecraft url"
 [[ "$(jq -r '.mcp.sourcecraft.headers.Authorization' "$opencode_config_path")" == 'Bearer {env:SOURCECRAFT_PAT}' ]] || fail "unexpected opencode sourcecraft auth header"

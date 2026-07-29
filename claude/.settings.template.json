@@ -162,13 +162,20 @@
     "github@claude-plugins-official": true,
     "context7@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
-    "visual-explainer@visual-explainer-marketplace": true
+    "visual-explainer@visual-explainer-marketplace": true,
+    "miro@miro-ai": true
   },
   "extraKnownMarketplaces": {
     "visual-explainer-marketplace": {
       "source": {
         "source": "github",
         "repo": "nicobailon/visual-explainer"
+      }
+    },
+    "miro-ai": {
+      "source": {
+        "source": "github",
+        "repo": "miroapp/miro-ai"
       }
     }
   },

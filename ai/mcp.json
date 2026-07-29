@@ -1,4 +1,13 @@
 {
+  "btt": {
+    "enabled": true,
+    "transport": "remote",
+    "url": "http://127.0.0.1:64832/mcp",
+    "auth": {
+      "type": "bearer_env",
+      "env": "BTT_MCP_TOKEN"
+    }
+  },
   "fff": {
     "enabled": true,
     "transport": "local",
