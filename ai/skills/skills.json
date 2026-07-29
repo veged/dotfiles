@@ -14,11 +14,13 @@
     "frontend-design",
     "web-artifacts-builder"
   ],
+  "pbakaus/impeccable": "impeccable",
   "emilkowalski/skill": "*",
   "Leonxlnx/taste-skill": "*",
   "obra/superpowers": [
     "!test-driven-development",
-    "!subagent-driven-development"
+    "!subagent-driven-development",
+    "!brainstorming"
   ],
   "nicobailon/visual-explainer": "*",
   "openai/skills": [
@@ -31,5 +33,6 @@
   ],
   "openai/codex/tree/main/codex-rs/skills/src/assets/samples/plugin-creator": "*",
   "~/arcadia/ai/artifacts/skills/infra/arc": "*",
+  "~/arcadia/ai/artifacts/skills/community/lpc-custom-js": "*",
   "ssh://ssh.sourcecraft.dev/veged/slidev-theme-practicum.git": "slidev-practicum"
 }
