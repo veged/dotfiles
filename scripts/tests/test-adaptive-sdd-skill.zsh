@@ -15,7 +15,14 @@ fail() {
 required=(
   'fork_turns: "none"'
   'fresh-agent budget'
+  'agent-turn budget'
+  'Агентский ход'
   'минимум два независимых рабочих блока'
+  'один раунд исправлений'
+  'Не закладывай три или пять раундов заранее'
+  'state=frozen'
+  'координатор и исполнители не меняют'
+  'свежего узкого'
   'human-signoff'
   'ровно одно итоговое ревью'
   'SDD_REVIEW_PACKAGE_MAX_BYTES'
@@ -61,21 +68,27 @@ done
 
 for obsolete in \
   'Fresh subagent per task + task review' \
-  'Never skip the task review'; do
+  'Never skip the task review' \
+  'Продолжение живого агента через `followup_task` не расходует бюджет' \
+  'По умолчанию допустимы три раунда' \
+  'Продление до пяти раундов'; do
   if ugrep -Fq -- "$obsolete" "$skill"; then
     fail "осталось безусловное правило: $obsolete"
   fi
 done
 
-if ugrep -Fq 'description: "Повторно проверить Work Unit' \
-  "$skill_dir/re-review-prompt.md"; then
-  fail 'основной re-review всё ещё оформлен как новый dispatch'
-fi
+for phrase in \
+  'fork_turns: "none"' \
+  'новый узкий контекст' \
+  'STALE_SNAPSHOT' \
+  '[REQUIREMENT_EXCERPTS]'; do
+  ugrep -Fq -- "$phrase" "$skill_dir/re-review-prompt.md" \
+    || fail "нет обязательного правила узкой перепроверки: $phrase"
+done
 
 for prompt in \
   implementer-prompt.md \
-  task-reviewer-prompt.md \
-  re-review-prompt.md; do
+  task-reviewer-prompt.md; do
   prompt_path="$skill_dir/$prompt"
   ugrep -Eq 'рабоч(ий|его) блок' "$prompt_path" \
     || fail "шаблон $prompt не использует русский термин рабочего блока"
@@ -84,6 +97,28 @@ for prompt in \
   if ugrep -Fq 'Work Unit' "$prompt_path"; then
     fail "шаблон $prompt содержит нелокализованный термин Work Unit"
   fi
+done
+
+for prompt in \
+  task-reviewer-prompt.md \
+  re-review-prompt.md \
+  final-reviewer-prompt.md; do
+  ugrep -Fq 'STALE_SNAPSHOT' "$skill_dir/$prompt" \
+    || fail "шаблон $prompt не отклоняет устаревший снимок"
+done
+
+instructions="$repo_root/ai/instructions/agents.md"
+for phrase in \
+  'Агентский ход' \
+  'один агент получает один рабочий ход' \
+  'второй раунд исправлений' \
+  'Неизменяемый снимок' \
+  'Не превращай одну агентскую сессию в постоянную роль валидатора' \
+  'один цикл' \
+  'Не опрашивай агента часто' \
+  'сообщений «заверши сейчас»'; do
+  ugrep -Fq -- "$phrase" "$instructions" \
+    || fail "нет глобального правила оркестрации: $phrase"
 done
 
 print 'test-adaptive-sdd-skill: ok'

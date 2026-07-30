@@ -12,12 +12,12 @@ personal_required_path() {
   print -r -- "${PERSONAL_REQUIRED_PATH:-$_PERSONAL_REPO_ROOT/personal.required}"
 }
 
-personal_required_vars() {
+personal_required_vars_from_path() {
   emulate -L zsh
   set -euo pipefail
 
-  local manifest_path line name
-  manifest_path=$(personal_required_path)
+  local manifest_path=${1:-} line name
+  [[ -n "$manifest_path" ]] || personal_die "personal: missing required variables manifest path"
   [[ -f "$manifest_path" ]] || personal_die "personal: missing required variables manifest: $manifest_path"
 
   while IFS= read -r line || [[ -n "$line" ]]; do
@@ -26,6 +26,13 @@ personal_required_vars() {
     personal_validate_name "$name"
     print -r -- "$name"
   done < "$manifest_path"
+}
+
+personal_required_vars() {
+  emulate -L zsh
+  set -euo pipefail
+
+  personal_required_vars_from_path "$(personal_required_path)"
 }
 
 personal_validate_name() {
@@ -178,6 +185,18 @@ personal_load_named_env() {
   done
 }
 
+personal_load_manifest() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local manifest_path=${1:-}
+  local names
+  [[ -n "$manifest_path" ]] || personal_die "Usage: personal_load_manifest MANIFEST_PATH"
+
+  names=("${(@f)$(personal_required_vars_from_path "$manifest_path")}")
+  personal_load_named_env "${names[@]}"
+}
+
 personal_set() {
   emulate -L zsh
   set -euo pipefail
@@ -285,7 +304,7 @@ personal_load_env() {
   set -euo pipefail
 
   local personal_vars=("${(@f)$(personal_required_vars)}")
-  local launchctl_vars=(SOURCECRAFT_PAT SOURCECRAFT_ENTERPRISE_PAT)
+  local launchctl_vars=(BTT_MCP_TOKEN SOURCECRAFT_PAT SOURCECRAFT_ENTERPRISE_PAT)
 
   personal_load_named_env "${personal_vars[@]}"
 

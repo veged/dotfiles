@@ -21,6 +21,10 @@ instruction_projection_agents_path() {
   print -r -- "${1:A}/codex/AGENTS.md"
 }
 
+instruction_projection_live_dir() {
+  print -r -- "${HOME:A}/.agents/instructions"
+}
+
 instruction_projection_requirements() {
   local name
 
@@ -152,9 +156,45 @@ instruction_projection_sync_opencode() {
     | instruction_projection_write_if_changed "$(instruction_projection_opencode_path "$root")"
 }
 
+instruction_projection_sync_live_files() {
+  local root=${1:A} live_dir source_path source_file target_file link_target
+
+  live_dir=$(instruction_projection_live_dir)
+  mkdir -p "$live_dir"
+
+  for target_file in "$live_dir"/*.md(N); do
+    [[ -L "$target_file" ]] || continue
+    link_target=$(readlink "$target_file")
+    [[ "$link_target" == "$root/ai/instructions/"* ]] || continue
+    rm "$target_file"
+  done
+
+  instruction_projection_source_paths "$root" | while IFS= read -r source_path; do
+    source_file="$root/$source_path"
+    target_file="$live_dir/${source_path:t}"
+    ln -s "$source_file" "$target_file"
+  done
+}
+
+instruction_projection_check_live_files() {
+  local root=${1:A} live_dir source_path source_file target_file
+
+  live_dir=$(instruction_projection_live_dir)
+
+  instruction_projection_source_paths "$root" | while IFS= read -r source_path; do
+    source_file="$root/$source_path"
+    target_file="$live_dir/${source_path:t}"
+    [[ -L "$target_file" ]] \
+      || die "instruction-projection: missing projected instruction: $target_file"
+    [[ "${target_file:A}" == "$source_file" ]] \
+      || die "instruction-projection: stale projected instruction: $target_file"
+  done
+}
+
 instruction_projection_sync() {
   local root=${1:A}
 
+  instruction_projection_sync_live_files "$root"
   instruction_projection_sync_claude "$root"
   instruction_projection_sync_opencode "$root"
   instruction_projection_sync_agents "$root"
@@ -164,6 +204,7 @@ instruction_projection_check() {
   local root=${1:A}
 
   instruction_projection_requirements
+  instruction_projection_check_live_files "$root"
   instruction_projection_render_claude "$root" \
     | instruction_projection_check_file "$(instruction_projection_claude_path "$root")"
   instruction_projection_render_opencode "$root" \

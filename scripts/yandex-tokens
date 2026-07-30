@@ -1,0 +1,322 @@
+#!/usr/bin/env zsh
+
+typeset -g _YANDEX_TOKENS_SCRIPT_PATH="${${(%):-%x}:A}"
+typeset -g _YANDEX_TOKENS_REPO_ROOT="${_YANDEX_TOKENS_SCRIPT_PATH:h:h}"
+typeset -gr _YANDEX_TOKENS_MULTITOOL_CLIENT_ID="949451ff7a7c49b59fe25860d36f2187"
+typeset -gr _YANDEX_TOKENS_MCP_STORE_CLIENT_ID="ff5e570368ff4c80a70c569edffabcd9"
+typeset -gr _YANDEX_TOKENS_VALUE_RE='^[-A-Za-z0-9_+/=.]{20,}$'
+
+source "$_YANDEX_TOKENS_REPO_ROOT/scripts/personal"
+
+yandex_tokens_required_path() {
+  print -r -- "${YANDEX_TOKENS_REQUIRED_PATH:-$_YANDEX_TOKENS_REPO_ROOT/personal.required.yandex-tokens}"
+}
+
+yandex_tokens_group_names() {
+  print -rl -- multitool datalens mcp ya
+}
+
+yandex_tokens_group_vars() {
+  emulate -L zsh
+
+  local group=${1:-}
+  case "$group" in
+    multitool)
+      print -rl -- \
+        ABT_TOKEN \
+        ACHIEVERY_TOKEN \
+        ARC_TOKEN \
+        BILIM_TOKEN \
+        CI_TOKEN \
+        DATACATALOG_TOKEN \
+        DEEPAGENT_TOKEN \
+        DOCS_TOKEN \
+        IDM_TOKEN \
+        INTRASEARCH_TOKEN \
+        LABA_TOKEN \
+        MEETING_NOTES_TOKEN \
+        NIRVANA_TOKEN \
+        QUQU_TOKEN \
+        STAFF_TOKEN \
+        STARTREK_TOKEN \
+        TANKER_TOKEN \
+        TARIFF_EDITOR_TOKEN \
+        WIKI_TOKEN \
+        YANDEX_CALENDAR_TOKEN \
+        YANDEX_FORMS_TOKEN \
+        YQL_TOKEN \
+        YT_TOKEN
+      ;;
+    datalens)
+      print -r -- DATALENS_TOKEN
+      ;;
+    mcp)
+      print -rl -- IDP_MCP_TOKEN TANKER_MCP_TOKEN
+      ;;
+    ya)
+      print -r -- YA_TOKEN
+      ;;
+    *)
+      personal_die "yandex-tokens: неизвестная группа токенов: $group"
+      ;;
+  esac
+}
+
+yandex_tokens_store_group_value() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local group=${1:-}
+  local value=${2:-}
+  local count=0 name
+  [[ -n "$group" ]] || personal_die "Использование: yandex_tokens_store_group_value GROUP VALUE"
+  [[ -n "$value" ]] || personal_die "yandex-tokens: пустое значение для группы $group"
+
+  for name in "${(@f)$(yandex_tokens_group_vars "$group")}"; do
+    personal_storage_set "$name" "$value"
+    count=$((count + 1))
+  done
+
+  print -r -- "$group: сохранено для $count переменных"
+}
+
+yandex_tokens_group_current_value() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local group=${1:-}
+  local value="" name candidate
+
+  for name in "${(@f)$(yandex_tokens_group_vars "$group")}"; do
+    candidate=${(P)name:-}
+    [[ -n "$candidate" ]] || continue
+
+    if [[ -z "$value" ]]; then
+      value=$candidate
+      continue
+    fi
+
+    [[ "$candidate" == "$value" ]] || personal_die "yandex-tokens: в текущем env у группы $group разные значения"
+  done
+
+  [[ -n "$value" ]] || return 1
+  print -r -- "$value"
+}
+
+yandex_tokens_validate_value() {
+  emulate -L zsh
+
+  local value=${1:-}
+  [[ "$value" =~ "$_YANDEX_TOKENS_VALUE_RE" ]]
+}
+
+yandex_tokens_ya_fetch_token() {
+  emulate -L zsh
+  set -euo pipefail
+
+  (( $+commands[ya] )) || return 1
+
+  local output
+  output=$(ya tool fetch-token "$@" 2>/dev/null < /dev/null) || return 1
+  yandex_tokens_validate_value "$output" || return 1
+  print -r -- "$output"
+}
+
+yandex_tokens_secret_value() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local name=${1:-}
+  local value
+  [[ -n "$name" ]] || personal_die "yandex-tokens: не указано имя секрета"
+
+  value=$(personal_get "$name" 2>/dev/null) || return 1
+  [[ -n "$value" ]] || return 1
+  print -r -- "$value"
+}
+
+yandex_tokens_fetch_multitool_token() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local client_secret
+  client_secret=$(yandex_tokens_secret_value YANDEX_TOKENS_MULTITOOL_CLIENT_SECRET) || return 1
+
+  yandex_tokens_ya_fetch_token \
+    -client-id "$_YANDEX_TOKENS_MULTITOOL_CLIENT_ID" \
+    -client-secret "$client_secret"
+}
+
+yandex_tokens_fetch_mcp_store_token() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local client_secret
+  client_secret=$(yandex_tokens_secret_value YANDEX_TOKENS_MCP_STORE_CLIENT_SECRET) || return 1
+
+  yandex_tokens_ya_fetch_token \
+    -client-id "$_YANDEX_TOKENS_MCP_STORE_CLIENT_ID" \
+    -client-secret "$client_secret"
+}
+
+yandex_tokens_ya_token_file() {
+  print -r -- "${YANDEX_TOKENS_YA_TOKEN_FILE:-$HOME/.ya_token}"
+}
+
+yandex_tokens_read_ya_token_file() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local path
+  local value
+
+  path=$(yandex_tokens_ya_token_file)
+  [[ -r "$path" ]] || return 1
+  value=$(<"$path")
+  yandex_tokens_validate_value "$value" || return 1
+  print -r -- "$value"
+}
+
+yandex_tokens_refresh_ya_token_file() {
+  emulate -L zsh
+  set -euo pipefail
+
+  (( $+commands[ya] )) || return 1
+  ya whoami --save-token >/dev/null 2>&1 < /dev/null || return 1
+}
+
+yandex_tokens_resolve_ya_token() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local multitool_value=${1:-}
+  local override=${YANDEX_TOKENS_YA_TOKEN:-}
+
+  if [[ -n "$override" ]]; then
+    yandex_tokens_validate_value "$override" || personal_die "yandex-tokens: YANDEX_TOKENS_YA_TOKEN не похож на токен"
+    print -r -- "$override"
+    return
+  fi
+
+  yandex_tokens_refresh_ya_token_file >/dev/null 2>&1 || true
+  if yandex_tokens_read_ya_token_file >/dev/null 2>&1; then
+    yandex_tokens_read_ya_token_file
+    return
+  fi
+
+  [[ -n "$multitool_value" ]] || return 1
+  print -r -- "$multitool_value"
+}
+
+yandex_tokens_load_env() {
+  emulate -L zsh
+  set -euo pipefail
+
+  personal_load_manifest "$(yandex_tokens_required_path)"
+}
+
+yandex_tokens_check() {
+  emulate -L zsh
+  set -euo pipefail
+
+  PERSONAL_REQUIRED_PATH="$(yandex_tokens_required_path)" personal_check
+}
+
+yandex_tokens_import_current() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local group value
+  for group in "${(@f)$(yandex_tokens_group_names)}"; do
+    value=$(yandex_tokens_group_current_value "$group") || personal_die "yandex-tokens: в текущем env нет значения для группы $group"
+    yandex_tokens_store_group_value "$group" "$value"
+  done
+}
+
+yandex_tokens_sync() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local multitool_value="" mcp_value="" ya_value=""
+  local had_errors=0
+
+  if multitool_value=$(yandex_tokens_fetch_multitool_token); then
+    yandex_tokens_store_group_value multitool "$multitool_value"
+  else
+    print -u2 -- "yandex-tokens: не удалось автоматически получить multitool-токен через `ya tool fetch-token`"
+    had_errors=1
+  fi
+
+  if mcp_value=$(yandex_tokens_fetch_mcp_store_token); then
+    yandex_tokens_store_group_value mcp "$mcp_value"
+  else
+    print -u2 -- "yandex-tokens: не удалось автоматически получить токен MCP Store через `ya tool fetch-token`"
+    had_errors=1
+  fi
+
+  if ya_value=$(yandex_tokens_resolve_ya_token "$multitool_value"); then
+    yandex_tokens_store_group_value ya "$ya_value"
+  else
+    print -u2 -- "yandex-tokens: не удалось получить YA_TOKEN из ~/.ya_token или из multitool-токена"
+    had_errors=1
+  fi
+
+  if ! personal_get DATALENS_TOKEN >/dev/null 2>&1; then
+    print -u2 -- "yandex-tokens: DATALENS_TOKEN всё ещё отсутствует; этот токен пока задаётся только вручную"
+  fi
+
+  return "$had_errors"
+}
+
+yandex_tokens_manual() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local value=${YANDEX_TOKENS_DATALENS_TOKEN:-}
+
+  if [[ -z "$value" ]]; then
+    print -n -- "Токен DataLens: "
+    read -rs value
+    print
+  fi
+
+  yandex_tokens_validate_value "$value" || personal_die "yandex-tokens: токен DataLens не похож на токен"
+  yandex_tokens_store_group_value datalens "$value"
+}
+
+yandex_tokens_usage() {
+  cat <<'EOF'
+Usage: ./scripts/yandex-tokens COMMAND
+
+Commands:
+  check           Проверить, что все управляемые токены доступны.
+  import-current  Сохранить текущие значения env в хранилище секретов.
+  sync            Заново получить доступные через CLI токены и сохранить их.
+  manual          Сохранить токены, которые пока задаются вручную.
+EOF
+}
+
+yandex_tokens_main() {
+  emulate -L zsh
+  set -euo pipefail
+
+  local command=${1:-}
+  [[ -n "$command" ]] || {
+    yandex_tokens_usage
+    return 1
+  }
+  shift
+
+  case "$command" in
+    check) yandex_tokens_check "$@" ;;
+    import-current) yandex_tokens_import_current "$@" ;;
+    sync) yandex_tokens_sync "$@" ;;
+    manual) yandex_tokens_manual "$@" ;;
+    help|--help|-h) yandex_tokens_usage ;;
+    *) personal_die "yandex-tokens: неизвестная команда: $command" ;;
+  esac
+}
+
+if [[ "${ZSH_EVAL_CONTEXT:-}" != *:file ]]; then
+  yandex_tokens_main "$@"
+fi

@@ -364,3 +364,23 @@ if [ -f ~/sourcecraft/path.zsh.inc ]; then source ~/sourcecraft/path.zsh.inc; fi
 
 # The next line enables shell command completion for src.
 if [ -f ~/sourcecraft/completion.zsh.inc ]; then source ~/sourcecraft/completion.zsh.inc; fi
+
+# Сервисные токены загружаем из keychain через scripts/yandex-tokens.
+if [[ -f "$HOME/dotfiles/scripts/yandex-tokens" ]]; then
+  source "$HOME/dotfiles/scripts/yandex-tokens"
+  yandex_tokens_load_env
+fi
+export PATH="$HOME/.local/bin:$PATH"
+
+# Интерпретатор для скриптов скиллов Стефании (объявлен у них в requires-env).
+# Строка `export` нужна буквально в ~/.zshrc: SessionStart-хук Стефании грепает
+# этот файл на `export ИМЯ` и пробрасывает в сессию только найденное — значения
+# из ~/.profile и из функций (personal_load_env, yandex_tokens_load_env) в
+# Bash-подпроцессы агента не попадают.
+# venv Стефании, а не системный python3: в нём лежат зависимости скиллов
+# (websockets для MCP-мостика, tomlkit, json5 и пр.).
+export STEFANIA_PYTHON="$HOME/.venvs/stefania/bin/python3"
+
+# >>> stefania-launchers >>>
+stefania() { CLAUDE_CONFIG_DIR=/Users/veged/.stefania-standalone/.claude claude "$@"; }
+# <<< stefania-launchers <<<

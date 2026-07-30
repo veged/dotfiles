@@ -59,6 +59,10 @@ HOME="$home_dir" zsh -c "source '$fixture_root/scripts/lib/instruction-projectio
 [[ -f "$fixture_root/claude/CLAUDE.md" ]] || fail "missing generated Claude file"
 [[ -f "$fixture_root/config/opencode/.opencode.template.jsonc" ]] || fail "missing generated OpenCode template"
 [[ -f "$fixture_root/codex/AGENTS.md" ]] || fail "missing generated Codex AGENTS"
+[[ -L "$home_dir/.agents/instructions/one.md" ]] || fail "missing projected first instruction"
+[[ -L "$home_dir/.agents/instructions/two.md" ]] || fail "missing projected second instruction"
+[[ "$(< "$home_dir/.agents/instructions/one.md")" == $'# One\n\nFirst instruction.' ]] \
+  || fail "unexpected projected first instruction"
 
 expected_claude=$'# Глобальные инструкции\n\n@~/.agents/instructions/one.md\n@~/.agents/instructions/two.md'
 actual_claude=$(< "$fixture_root/claude/CLAUDE.md")

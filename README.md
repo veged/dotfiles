@@ -24,6 +24,7 @@ cd ~/dotfiles
 | Значение | Где искать | Что сделать |
 | --- | --- | --- |
 | Обязательные персональные переменные | `personal.required` | Заполнить через `./scripts/personal setup`; значения сохраняются в системное хранилище секретов. |
+| Сервисные токены | `personal.required.yandex-tokens` | Получить автоматически через `./scripts/yandex-tokens sync`; для `DATALENS_TOKEN` отдельно выполнить `./scripts/yandex-tokens manual`. |
 | URL форка | `README.md` | Если публикуешь свой форк, заменить команду `git clone`. |
 
 Всё остальное — состав конфига. `Brewfile`, темы, shell-настройки, AI-инструкции, skills, plugins и MCP-серверы можно оставлять как есть или менять по вкусу.
@@ -37,7 +38,14 @@ cd ~/dotfiles
 ./scripts/personal check
 ./scripts/personal set GIT_EMAIL
 ./scripts/personal unset SOURCECRAFT_PAT
+./scripts/personal set YANDEX_TOKENS_MULTITOOL_CLIENT_SECRET
+./scripts/personal set YANDEX_TOKENS_MCP_STORE_CLIENT_SECRET
+./scripts/yandex-tokens sync
+./scripts/yandex-tokens manual
+./scripts/yandex-tokens check
 ```
+
+Перед первым `sync` сохрани OAuth client secrets двумя командами `personal set` выше: они не должны попадать в Git. `./scripts/yandex-tokens sync` повторяет CLI-потоки получения токенов для значений, которые умеют получаться автоматически, и складывает результат в то же хранилище (`macOS Keychain` / `secret-tool`). Для `DATALENS_TOKEN` остаётся отдельный ручной шаг: `./scripts/yandex-tokens manual`. Одноразовая миграция уже экспортированных значений: `./scripts/yandex-tokens import-current`.
 
 Для проверки оставшихся жёстко прошитых личных маркеров:
 
@@ -60,6 +68,7 @@ ug -n -I --hidden 'OLD_NAME|OLD_EMAIL|OLD_TOKEN_FRAGMENT' README.md home ai code
 | `claude/*` | `~/.claude/*` | Тонкая Claude-обёртка и template настроек. |
 | `codex/*` | `~/.codex/*` | Codex-инструкции и template настроек. |
 | `personal.required` | system secret storage | Имена обязательных персональных переменных. |
+| `personal.required.yandex-tokens` | system secret storage | Имена сервисных токенов, загружаемых через `scripts/yandex-tokens`. |
 | `scripts/*` | — | Синхронизация AI-слоёв, MCP и remark toolchain. |
 
 Чтобы добавить новый конфигурационный файл, обычно достаточно положить его в нужную папку.

@@ -15,7 +15,9 @@
     "web-artifacts-builder"
   ],
   "pbakaus/impeccable": "impeccable",
-  "emilkowalski/skill": "*",
+  "emilkowalski/skill": [
+    "!prototype"
+  ],
   "Leonxlnx/taste-skill": "*",
   "obra/superpowers": [
     "!test-driven-development",
