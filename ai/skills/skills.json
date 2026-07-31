@@ -3,6 +3,7 @@
   "vercel-labs/skills": "*",
   "slidevjs/slidev": "*",
   "mattpocock/skills": [
+    "!code-review",
     "!github-triage",
     "!qa",
     "!triage"
@@ -22,7 +23,8 @@
   "obra/superpowers": [
     "!test-driven-development",
     "!subagent-driven-development",
-    "!brainstorming"
+    "!brainstorming",
+    "!executing-plans"
   ],
   "nicobailon/visual-explainer": "*",
   "openai/skills": [

@@ -16,8 +16,11 @@ required=(
   'fork_turns: "none"'
   'fresh-agent budget'
   'agent-turn budget'
+  'coordination budget'
+  'nested-turns'
   'Агентский ход'
   'минимум два независимых рабочих блока'
+  '{DELEGATION_POLICY}'
   'один раунд исправлений'
   'Не закладывай три или пять раундов заранее'
   'state=frozen'
@@ -27,19 +30,23 @@ required=(
   'ровно одно итоговое ревью'
   'SDD_REVIEW_PACKAGE_MAX_BYTES'
   'Excluded-content validation'
-  '[REPORT_FILES]'
+  '{REPORT_FILES}'
   'готовые файлы кратких заданий'
-  '[REQUIREMENT_FILES]'
+  '{REQUIREMENT_FILES}'
   'final-reviewer-prompt.md'
   'второе полное ревью'
   'Вызывающий навык получает итоговый отчёт'
   'не запускает второго проверяющего'
-  '[CALLER_CONTROLLED_RETURN]'
+  '{CALLER_CONTROLLED_RETURN}'
   'сохрани рабочую область и отчёты'
-  'верни управление вызывающему навыку'
-  'не используй `finishing-a-development-branch`'
+  'верни управление'
+  '`finishing-a-development-branch`'
   '`fresh-verification`'
   '`ready-for-merge`'
+  '`wait_agent`'
+  '`list_agents`'
+  '`send_message`'
+  '`max` и `ultra`'
 )
 
 for phrase in "${required[@]}"; do
@@ -49,9 +56,10 @@ done
 
 final_reviewer="$skill_dir/final-reviewer-prompt.md"
 for phrase in \
-  '[REQUIREMENT_FILES]' \
-  '[REPORT_FILES]' \
-  '[DIFF_FILE]' \
+  '{REQUIREMENT_FILES}' \
+  '{REPORT_FILES}' \
+  '{DIFF_FILE}' \
+  '{DELEGATION_POLICY}' \
   'BASE' \
   'HEAD' \
   'artifact {id}' \
@@ -81,7 +89,8 @@ for phrase in \
   'fork_turns: "none"' \
   'новый узкий контекст' \
   'STALE_SNAPSHOT' \
-  '[REQUIREMENT_EXCERPTS]'; do
+  '{REQUIREMENT_EXCERPTS}' \
+  '{DELEGATION_POLICY}'; do
   ugrep -Fq -- "$phrase" "$skill_dir/re-review-prompt.md" \
     || fail "нет обязательного правила узкой перепроверки: $phrase"
 done
@@ -92,8 +101,10 @@ for prompt in \
   prompt_path="$skill_dir/$prompt"
   ugrep -Eq 'рабоч(ий|его) блок' "$prompt_path" \
     || fail "шаблон $prompt не использует русский термин рабочего блока"
-  ugrep -Fq '[BRIEF_FILES]' "$prompt_path" \
+  ugrep -Fq '{BRIEF_FILES}' "$prompt_path" \
     || fail "шаблон $prompt не принимает список brief-файлов"
+  ugrep -Fq '{DELEGATION_POLICY}' "$prompt_path" \
+    || fail "шаблон $prompt не задаёт политику делегирования"
   if ugrep -Fq 'Work Unit' "$prompt_path"; then
     fail "шаблон $prompt содержит нелокализованный термин Work Unit"
   fi
@@ -115,8 +126,12 @@ for phrase in \
   'Неизменяемый снимок' \
   'Не превращай одну агентскую сессию в постоянную роль валидатора' \
   'один цикл' \
-  'Не опрашивай агента часто' \
-  'сообщений «заверши сейчас»'; do
+  '`wait_agent`' \
+  '`list_agents`' \
+  '`send_message`' \
+  '«заверши сейчас»' \
+  '`nested turns` не запрещает вложенную делегацию вообще' \
+  '`max` и `ultra` не являются значением по умолчанию'; do
   ugrep -Fq -- "$phrase" "$instructions" \
     || fail "нет глобального правила оркестрации: $phrase"
 done
