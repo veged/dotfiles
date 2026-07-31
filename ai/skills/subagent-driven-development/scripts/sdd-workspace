@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Возвращает рабочую область одного плана для заданий, отчётов, пакетов и
-# журнала. Каталог находится в рабочем дереве и скрыт от Git файлом .gitignore.
+# Возвращает рабочую область одного плана для заданий, отчётов, пакетов
+# и журнала. Каталог находится в рабочем дереве и скрыт от Git файлом .gitignore.
 #
-# Использование: sdd-workspace PLAN_FILE
+# Использование: sdd-workspace ФАЙЛ_ПЛАНА
 set -euo pipefail
 
 if [ $# -ne 1 ]; then
-  echo "использование: sdd-workspace PLAN_FILE" >&2
+  echo "использование: sdd-workspace ФАЙЛ_ПЛАНА" >&2
   exit 2
 fi
 
@@ -28,7 +28,7 @@ esac
 relative_plan=${canonical_plan#"$root"/}
 slug=$(basename "$canonical_plan" .md)
 [ -n "$slug" ] && [ "$slug" != "." ] && [ "$slug" != ".." ] \
-  || { echo "не удалось получить имя рабочей области из пути: $plan" >&2; exit 2; }
+  || { echo "не удалось получить имя рабочей области из пути: $plan" >&2; exit 2; }
 
 path_hash=$(printf '%s' "$relative_plan" | git -C "$root" hash-object --stdin)
 path_hash=${path_hash:0:8}

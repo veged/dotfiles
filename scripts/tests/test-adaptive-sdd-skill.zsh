@@ -4,136 +4,111 @@ emulate -LR zsh
 set -euo pipefail
 
 repo_root=${0:A:h:h:h}
-skill_dir="$repo_root/ai/skills/subagent-driven-development"
-skill="$skill_dir/SKILL.md"
+sdd_dir="$repo_root/ai/skills/subagent-driven-development"
+instructions="$repo_root/ai/instructions/agents.md"
 
 fail() {
   print -u2 -- "$1"
   exit 1
 }
 
-required=(
-  'fork_turns: "none"'
-  'fresh-agent budget'
-  'agent-turn budget'
-  'coordination budget'
-  'nested-turns'
-  'Агентский ход'
-  'минимум два независимых рабочих блока'
-  '{DELEGATION_POLICY}'
-  'один раунд исправлений'
-  'Не закладывай три или пять раундов заранее'
-  'state=frozen'
-  'координатор и исполнители не меняют'
-  'свежего узкого'
-  'human-signoff'
-  'ровно одно итоговое ревью'
-  'SDD_REVIEW_PACKAGE_MAX_BYTES'
-  'Excluded-content validation'
-  '{REPORT_FILES}'
-  'готовые файлы кратких заданий'
-  '{REQUIREMENT_FILES}'
-  'final-reviewer-prompt.md'
-  'второе полное ревью'
-  'Вызывающий навык получает итоговый отчёт'
-  'не запускает второго проверяющего'
-  '{CALLER_CONTROLLED_RETURN}'
-  'сохрани рабочую область и отчёты'
-  'верни управление'
-  '`finishing-a-development-branch`'
-  '`fresh-verification`'
-  '`ready-for-merge`'
-  '`wait_agent`'
-  '`list_agents`'
-  '`send_message`'
-  '`max` и `ultra`'
+skill_files=(
+  "$repo_root/ai/skills/executing-plans/SKILL.md"
+  "$repo_root/ai/skills/code-review/SKILL.md"
+  "$sdd_dir/SKILL.md"
 )
 
-for phrase in "${required[@]}"; do
-  ugrep -Fq -- "$phrase" "$skill" \
-    || fail "нет обязательного правила: $phrase"
+prompt_files=(
+  "$sdd_dir/implementer-prompt.md"
+  "$sdd_dir/task-reviewer-prompt.md"
+  "$sdd_dir/re-review-prompt.md"
+  "$sdd_dir/final-reviewer-prompt.md"
+)
+
+metadata_files=(
+  "$repo_root/ai/skills/executing-plans/agents/openai.yaml"
+  "$repo_root/ai/skills/code-review/agents/openai.yaml"
+)
+
+documents=(
+  "$instructions"
+  "${skill_files[@]}"
+  "${prompt_files[@]}"
+  "${metadata_files[@]}"
+)
+
+service_words='благодаря|вместо|вокруг|вдоль|между|около|перед|после|прежде|против|сквозь|спустя|среди|через|возле|из-за|из-под|кроме|мимо|ради|или|без|для|над|под|при|про|как|обо|во|до|за|из|ко|на|не|ни|но|об|от|по|со|а|в|да|и|к|ли|о|с|у'
+
+for file in "${documents[@]}"; do
+  [[ -f "$file" ]] || fail "нет файла: $file"
 done
 
-final_reviewer="$skill_dir/final-reviewer-prompt.md"
-for phrase in \
-  '{REQUIREMENT_FILES}' \
-  '{REPORT_FILES}' \
-  '{DIFF_FILE}' \
-  '{DELEGATION_POLICY}' \
-  'BASE' \
-  'HEAD' \
-  'artifact {id}' \
-  'implementation' \
-  'external' \
-  'Critical' \
-  'Important' \
-  'Minor' \
-  'file:line' \
-  'единственное разрешённое изменение'; do
-  ugrep -Fq -- "$phrase" "$final_reviewer" \
-    || fail "нет обязательного правила итогового проверяющего: $phrase"
+for script in sdd-workspace task-brief review-package; do
+  [[ -x "$sdd_dir/scripts/$script" ]] \
+    || fail "скрипт не исполняемый: $script"
 done
 
-for obsolete in \
-  'Fresh subagent per task + task review' \
-  'Never skip the task review' \
-  'Продолжение живого агента через `followup_task` не расходует бюджет' \
-  'По умолчанию допустимы три раунда' \
-  'Продление до пяти раундов'; do
-  if ugrep -Fq -- "$obsolete" "$skill"; then
-    fail "осталось безусловное правило: $obsolete"
+for spec in \
+  "executing-plans:$repo_root/ai/skills/executing-plans/SKILL.md" \
+  "code-review:$repo_root/ai/skills/code-review/SKILL.md" \
+  "subagent-driven-development:$sdd_dir/SKILL.md"; do
+  name=${spec%%:*}
+  file=${spec#*:}
+  ugrep -Fq -- "name: $name" "$file" \
+    || fail "неверное имя навыка: $name"
+done
+
+for file in "${documents[@]}"; do
+  if ugrep -Pn '\{[^}\n]*[A-Za-z][^}\n]*\}' "$file" >/dev/null; then
+    fail "английский плейсхолдер: $file"
+  fi
+
+  if ugrep -Pn '\[(?![ xX]\])[^]]+\](?!\()' "$file" >/dev/null; then
+    fail "квадратный плейсхолдер: $file"
+  fi
+
+  if ugrep -Fq ' — ' "$file"; then
+    fail "обычный пробел перед тире: $file"
+  fi
+
+  if ugrep -Pni "(^|[[:space:]]| )(${service_words})( |$)" "$file" >/dev/null; then
+    fail "обычный пробел после служебного слова: $file"
+  fi
+done
+
+for token in wait_agent list_agents send_message fork_turns; do
+  if ugrep -Fq -- "$token" "$instructions"; then
+    fail "общая политика зависит от платформенного поля: $token"
   fi
 done
 
 for phrase in \
-  'fork_turns: "none"' \
-  'новый узкий контекст' \
-  'STALE_SNAPSHOT' \
-  '{REQUIREMENT_EXCERPTS}' \
-  '{DELEGATION_POLICY}'; do
-  ugrep -Fq -- "$phrase" "$skill_dir/re-review-prompt.md" \
-    || fail "нет обязательного правила узкой перепроверки: $phrase"
-done
-
-for prompt in \
-  implementer-prompt.md \
-  task-reviewer-prompt.md; do
-  prompt_path="$skill_dir/$prompt"
-  ugrep -Eq 'рабоч(ий|его) блок' "$prompt_path" \
-    || fail "шаблон $prompt не использует русский термин рабочего блока"
-  ugrep -Fq '{BRIEF_FILES}' "$prompt_path" \
-    || fail "шаблон $prompt не принимает список brief-файлов"
-  ugrep -Fq '{DELEGATION_POLICY}' "$prompt_path" \
-    || fail "шаблон $prompt не задаёт политику делегирования"
-  if ugrep -Fq 'Work Unit' "$prompt_path"; then
-    fail "шаблон $prompt содержит нелокализованный термин Work Unit"
+  'agent-turn budget' \
+  'coordination budget' \
+  'fresh-agent budget' \
+  'Excluded-content validation' \
+  'task-review skipped' \
+  'normal risk' \
+  'high-risk review clean' \
+  'Cannot verify'; do
+  if ugrep -Fq -- "$phrase" "${documents[@]}"; then
+    fail "остался англоязычный пользовательский текст: $phrase"
   fi
 done
 
-for prompt in \
-  task-reviewer-prompt.md \
-  re-review-prompt.md \
-  final-reviewer-prompt.md; do
-  ugrep -Fq 'STALE_SNAPSHOT' "$skill_dir/$prompt" \
-    || fail "шаблон $prompt не отклоняет устаревший снимок"
-done
+registry="$repo_root/ai/skills/skills.json"
+jq -e '
+  (."mattpocock/skills" | index("!code-review") != null)
+  and
+  (."obra/superpowers" | index("!executing-plans") != null)
+' "$registry" >/dev/null \
+  || fail 'локальные навыки не исключают одноимённые внешние копии'
 
-instructions="$repo_root/ai/instructions/agents.md"
-for phrase in \
-  'Агентский ход' \
-  'один агент получает один рабочий ход' \
-  'второй раунд исправлений' \
-  'Неизменяемый снимок' \
-  'Не превращай одну агентскую сессию в постоянную роль валидатора' \
-  'один цикл' \
-  '`wait_agent`' \
-  '`list_agents`' \
-  '`send_message`' \
-  '«заверши сейчас»' \
-  '`nested turns` не запрещает вложенную делегацию вообще' \
-  '`max` и `ultra` не являются значением по умолчанию'; do
-  ugrep -Fq -- "$phrase" "$instructions" \
-    || fail "нет глобального правила оркестрации: $phrase"
+for index in {1..${#metadata_files[@]}}; do
+  skill=${skill_files[$index]:h:t}
+  metadata=${metadata_files[$index]}
+  ugrep -Fq "\$$skill" "$metadata" \
+    || fail "начальный запрос не активирует навык: $skill"
 done
 
 print 'test-adaptive-sdd-skill: ok'

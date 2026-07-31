@@ -13,22 +13,27 @@ ACQUISITION_SOURCE_BASE_DIR="$repo_root"
 skills_root="$repo_root/ai/skills"
 registry_path="$skills_root/skills.json"
 force=0
+local_only=0
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/install-skills [--update|--force]
+Использование: ./scripts/install-skills [--local-only|--update|--force]
 
-Syncs local skill packages from ai/skills/* and external skill dependencies from
-ai/skills/skills.json into ~/.agents/skills, then refreshes assistant-specific
-discovery layers (~/.claude/skills, ~/.codex/skills, ~/.cursor/skills).
+Синхронизирует локальные навыки из ai/skills/* и внешние зависимости
+из ai/skills/skills.json с ~/.agents/skills, затем обновляет проекции
+для ассистентов в ~/.claude/skills, ~/.codex/skills и ~/.cursor/skills.
 
-Options:
-  --update, --force  Reinstall external skills from sources before syncing.
+Параметры:
+  --local-only      Обновить только локальные навыки и проекции.
+  --update, --force Переустановить внешние навыки перед синхронизацией.
 EOF
 }
 
 while (( $# > 0 )); do
   case "$1" in
+    --local-only)
+      local_only=1
+      ;;
     --update|--refresh)
       force=1
       ;;
@@ -40,13 +45,20 @@ while (( $# > 0 )); do
       exit 0
       ;;
     *)
-      die "install-skills: unknown argument: $1"
+      die "install-skills: неизвестный параметр: $1"
       ;;
   esac
   shift
 done
 
-require_commands jq npx fd diff git
+(( local_only && force )) \
+  && die "install-skills: параметры --local-only и --update несовместимы"
+
+if (( local_only )); then
+  require_commands diff
+else
+  require_commands jq npx fd diff git
+fi
 
 mkdir -p "$AGENT_SKILLS_CANONICAL_DIR"
 
@@ -75,14 +87,14 @@ register_external_skill() {
   local name=$1
   local source=$2
 
-  [[ -n "$name" ]] || die "install-skills: empty external skill name from source: $source"
+  [[ -n "$name" ]] || die "install-skills: пустое имя внешнего навыка из источника: $source"
 
   if [[ -n ${local_skill_dirs[$name]-} ]]; then
-    die "install-skills: skill name conflict: external skill '$name' from $source conflicts with local skill at ${local_skill_dirs[$name]}"
+    die "install-skills: конфликт имени: внешний навык '$name' из $source совпадает с локальным навыком ${local_skill_dirs[$name]}"
   fi
 
   if [[ -n ${external_skill_sources[$name]-} ]]; then
-    die "install-skills: skill name conflict: external skill '$name' from $source conflicts with ${external_skill_sources[$name]}"
+    die "install-skills: конфликт имени: внешний навык '$name' из $source совпадает с ${external_skill_sources[$name]}"
   fi
 
   external_skill_sources[$name]=$source
@@ -96,6 +108,12 @@ for skill_dir in "$skills_root"/*(N-/); do
   sync_local_skill_dir "$AGENT_SKILLS_CANONICAL_DIR/$name" "$skill_dir"
   managed_names+=("$name")
 done
+
+if (( local_only )); then
+  agent_skills_reconcile_layer
+  print "install-skills: синхронизировано локальных навыков: ${#managed_names[@]}"
+  exit 0
+fi
 
 if [[ -f "$registry_path" ]]; then
   skill_entries=("${(@f)$(acquisition_skill_specs "$registry_path")}")
@@ -115,17 +133,17 @@ if [[ -f "$registry_path" ]]; then
     ((source_index += 1))
 
     requested_names=("${selected_skills[@]}")
-    (( install_all || ${#requested_names[@]} )) || die "install-skills: empty skill list for source: $source"
+    (( install_all || ${#requested_names[@]} )) || die "install-skills: пустой список навыков для источника: $source"
 
     if (( install_all )); then
-      print "install-skills: fetching: $source"
+      print "install-skills: загрузка: $source"
       acquisition_stage_skills "$stage_dir" "$source" "${selected_skills[@]}"
 
       staged_paths=("${(@f)$(acquisition_staged_skill_paths "$stage_dir")}")
       if (( ${#staged_paths[@]} == 1 )) && [[ -z ${staged_paths[1]} ]]; then
         staged_paths=()
       fi
-      (( ${#staged_paths[@]} )) || die "install-skills: no skills staged for source: $source"
+      (( ${#staged_paths[@]} )) || die "install-skills: источник не подготовил навыки: $source"
 
       typeset -A excluded_skill_names
       excluded_skill_names=()
@@ -138,7 +156,7 @@ if [[ -f "$registry_path" ]]; then
         [[ -n ${excluded_skill_names[$name]-} ]] && continue
         register_external_skill "$name" "$source"
         if [[ -L "$AGENT_SKILLS_CANONICAL_DIR/$name" ]]; then
-          print "install-skills: local override: $name"
+          print "install-skills: локальное переопределение: $name"
           managed_names+=("$name")
           continue
         fi
@@ -152,7 +170,8 @@ if [[ -f "$registry_path" ]]; then
       register_external_skill "$name" "$source"
     done
 
-    # A manual symlink at the canonical dir is a local dev override — keep it as-is.
+    # Ручная символическая ссылка в каноническом каталоге считается локальным
+    # переопределением и сохраняется без изменений.
     typeset -a override_names install_names
     override_names=()
     install_names=()
@@ -165,7 +184,7 @@ if [[ -f "$registry_path" ]]; then
     done
 
     if (( ${#override_names[@]} )); then
-      print "install-skills: local override: ${override_names[*]}"
+      print "install-skills: локальное переопределение: ${override_names[*]}"
       managed_names+=("${override_names[@]}")
     fi
 
@@ -180,15 +199,15 @@ if [[ -f "$registry_path" ]]; then
 
     if (( ! needs_install )); then
       managed_names+=("${install_names[@]}")
-      print "install-skills: already present: $source"
+      print "install-skills: уже установлено: $source"
       continue
     fi
 
-    print "install-skills: fetching: $source"
+    print "install-skills: загрузка: $source"
     acquisition_stage_skills "$stage_dir" "$source" "${install_names[@]}"
 
     for name in "${install_names[@]}"; do
-      [[ -d "$stage_dir/.agents/skills/$name" ]] || die "install-skills: staged skill not found: $source#$name"
+      [[ -d "$stage_dir/.agents/skills/$name" ]] || die "install-skills: подготовленный навык не найден: $source#$name"
       replace_dir "$AGENT_SKILLS_CANONICAL_DIR/$name" "$stage_dir/.agents/skills/$name"
       managed_names+=("$name")
     done
@@ -201,4 +220,4 @@ prune_dir_except "$AGENT_SKILLS_CANONICAL_DIR" "${managed_names[@]}"
 
 agent_skills_reconcile_layer
 
-print "install-skills: synced ${#managed_names[@]} skills"
+print "install-skills: синхронизировано навыков: ${#managed_names[@]}"

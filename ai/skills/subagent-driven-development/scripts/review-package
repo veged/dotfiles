@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Создаёт атомарный пакет: фиксации Git, статистику, манифест исключённого
-# содержимого и изменения обычных файлов.
+# содержимого и изменения обычных файлов.
 #
-# Использование: review-package PLAN_FILE BASE HEAD [OUTFILE]
+# Использование: review-package ФАЙЛ_ПЛАНА ИСХОДНАЯ_ВЕРСИЯ ПРОВЕРЯЕМАЯ_ВЕРСИЯ [ВЫХОДНОЙ_ФАЙЛ]
 # SDD_REVIEW_PACKAGE_MAX_BYTES переопределяет предел 204800 байт.
-# При переполнении скрипт возвращает 4 и сохраняет прежний OUTFILE.
+# При переполнении скрипт возвращает 4 и сохраняет прежний выходной файл.
 set -euo pipefail
 
 if [ $# -lt 3 ] || [ $# -gt 4 ]; then
-  echo "использование: review-package PLAN_FILE BASE HEAD [OUTFILE]" >&2
+  echo "использование: review-package ФАЙЛ_ПЛАНА ИСХОДНАЯ_ВЕРСИЯ ПРОВЕРЯЕМАЯ_ВЕРСИЯ [ВЫХОДНОЙ_ФАЙЛ]" >&2
   exit 2
 fi
 
@@ -19,9 +19,9 @@ max_bytes=${SDD_REVIEW_PACKAGE_MAX_BYTES:-204800}
 
 [ -f "$plan" ] || { echo "нет файла плана: $plan" >&2; exit 2; }
 git rev-parse --verify --quiet "$base" >/dev/null \
-  || { echo "некорректный BASE: $base" >&2; exit 2; }
+  || { echo "некорректная исходная версия: $base" >&2; exit 2; }
 git rev-parse --verify --quiet "$head" >/dev/null \
-  || { echo "некорректный HEAD: $head" >&2; exit 2; }
+  || { echo "некорректная проверяемая версия: $head" >&2; exit 2; }
 
 if [[ ! "$max_bytes" =~ ^[0-9]+$ ]] || [ "$max_bytes" -le 0 ]; then
   echo "SDD_REVIEW_PACKAGE_MAX_BYTES должен быть целым положительным числом" >&2
@@ -180,11 +180,11 @@ fi
 
 package_bytes=$(wc -c < "$tmp_out" | tr -d ' ')
 if [ "$package_bytes" -gt "$max_bytes" ]; then
-  echo "пакет ${base}..${head} занимает ${package_bytes} байт и превышает предел ${max_bytes} байт; сузьте рабочий блок или разделите пакет" >&2
+  echo "пакет ${base}..${head} занимает ${package_bytes} байт и превышает предел ${max_bytes} байт; сузьте рабочий блок или разделите пакет" >&2
   exit 4
 fi
 
 mv "$tmp_out" "$out"
 tmp_out=""
 commits=$(git rev-list --count "${base}..${head}")
-echo "записан ${out}: фиксаций Git — ${commits}, байт — ${package_bytes}, исключено файлов — ${excluded_count}"
+echo "записан ${out}: фиксаций Git — ${commits}, байт — ${package_bytes}, исключено файлов — ${excluded_count}"
