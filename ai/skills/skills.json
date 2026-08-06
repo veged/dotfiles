@@ -41,6 +41,8 @@
   ],
   "openai/codex#57f42a81131ccf5933e7ec5dc659c381eeb5d72b:codex-rs/skills/src/assets/samples/plugin-creator": "*",
   "~/arcadia/ai/artifacts/skills/infra/arc": "*",
+  "~/arcadia/ai/artifacts/skills/community/intrasearch": "*",
   "~/arcadia/ai/artifacts/skills/community/lpc-custom-js": "*",
+  "~/arcadia/ai/artifacts/skills/teams/techplatform/arc-code-search": "*",
   "ssh://ssh.sourcecraft.dev/veged/slidev-theme-practicum.git#588ec50a03b24cc6212443c9606ee1809940bbb9": "slidev-practicum"
 }
