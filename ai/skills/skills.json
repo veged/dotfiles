@@ -15,6 +15,13 @@
     "frontend-design",
     "web-artifacts-builder"
   ],
+  "murphytrueman/design-system-ops": "*",
+  "plugin87/ux-ui-agent-skills": [
+    "!brandkit",
+    "!image-to-code",
+    "!prototype"
+  ],
+  "albertzhangz10/design-system-skill": "*",
   "pbakaus/impeccable": "impeccable",
   "emilkowalski/skill": [
     "!prototype"
