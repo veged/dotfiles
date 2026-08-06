@@ -13,6 +13,7 @@ if [[ -f "$repo_root/scripts/personal" ]]; then
 fi
 
 manifest_path="$repo_root/ai/mcp.json"
+plugins_manifest_path="$repo_root/ai/plugins/plugins.json"
 cursor_dir="$HOME/.cursor"
 cursor_manifest_path="$cursor_dir/mcp.json"
 claude_dir="$HOME/.claude"
@@ -26,6 +27,8 @@ opencode_dir="$HOME/.config/opencode"
 opencode_template_path="$repo_root/config/opencode/.opencode.template.jsonc"
 opencode_config_path="$opencode_dir/opencode.jsonc"
 render_home=${DOTFILES_RENDER_HOME:-$HOME}
+claude_plugins_catalog_path="$render_home/.agents/plugins/dotfiles-local/.claude-plugin/marketplace.json"
+claude_plugins_catalog_kind="marketplace"
 mode=default
 
 if (( $# > 1 )); then
@@ -45,6 +48,11 @@ fi
 
 require_commands diff jq
 [[ -f "$manifest_path" ]] || die "install-mcp: missing manifest: $manifest_path"
+[[ -f "$plugins_manifest_path" ]] || die "install-mcp: missing plugin manifest: $plugins_manifest_path"
+if [[ ! -f "$claude_plugins_catalog_path" ]]; then
+  claude_plugins_catalog_path="$plugins_manifest_path"
+  claude_plugins_catalog_kind="none"
+fi
 
 normalized_manifest_path=$(mktemp "${TMPDIR:-/tmp}/mcp-manifest.XXXXXX")
 trap 'rm -f "$normalized_manifest_path"' EXIT
@@ -283,7 +291,9 @@ jq '
   }
 ' "$normalized_manifest_path" > "$cursor_manifest_path"
 
-jq -s '
+jq -s \
+  --arg home "$render_home" \
+  --arg plugins_catalog_kind "$claude_plugins_catalog_kind" '
   def derived_claude_allow_tools($manifest):
     reduce (
       $manifest
@@ -304,10 +314,34 @@ jq -s '
     | map(select((type != "string") or (startswith("mcp__") | not)));
 
   .[0] as $manifest
-  | .[1]
+  | .[1] as $settings
+  | .[2] as $plugins_catalog
+  | (
+      if $plugins_catalog_kind == "marketplace" then
+        [$plugins_catalog.plugins[]?.name]
+      else
+        []
+      end
+    ) as $managed_claude_plugins
+  | $settings
   | .permissions = ((.permissions // {})
       | .allow = (drop_mcp_allow_entries(.allow) + derived_claude_allow_tools($manifest)))
-' "$normalized_manifest_path" "$claude_template_path" > "$claude_settings_path"
+  | .enabledPlugins = (
+      (.enabledPlugins // {})
+      + ($managed_claude_plugins | map({key: (. + "@dotfiles-local"), value: true}) | from_entries)
+    )
+  | .extraKnownMarketplaces = (
+      (.extraKnownMarketplaces // {})
+      + {
+          "dotfiles-local": {
+            source: {
+              source: "directory",
+              path: ($home + "/.agents/plugins/dotfiles-local")
+            }
+          }
+        }
+    )
+' "$normalized_manifest_path" "$claude_template_path" "$claude_plugins_catalog_path" > "$claude_settings_path"
 
 codex_marker_count=$(grep -Fxc '# __MCP_SERVERS__' "$codex_template_path" || true)
 if [[ "$codex_marker_count" -eq 0 ]]; then
@@ -317,7 +351,25 @@ if [[ "$codex_marker_count" -ne 1 ]]; then
   die "install-mcp: expected exactly one codex marker in template: $codex_template_path"
 fi
 
+codex_plugins_marker_count=$(grep -Fxc '# __DOTFILES_PLUGINS__' "$codex_template_path" || true)
+if [[ "$codex_plugins_marker_count" -eq 0 ]]; then
+  die "install-mcp: missing Codex plugin marker in template: $codex_template_path"
+fi
+if [[ "$codex_plugins_marker_count" -ne 1 ]]; then
+  die "install-mcp: expected exactly one Codex plugin marker in template: $codex_template_path"
+fi
+
 codex_fragment_path=$(mktemp "${TMPDIR:-/tmp}/codex-mcp.XXXXXX")
+codex_plugins_fragment_path=$(mktemp "${TMPDIR:-/tmp}/codex-plugins.XXXXXX")
+
+jq -r '
+  keys
+  | map(
+      (. + "@dotfiles-local") as $id
+      | "[plugins.\($id | @json)]\nenabled = true"
+    )
+  | join("\n\n")
+' "$plugins_manifest_path" > "$codex_plugins_fragment_path"
 
 jq -r '
   def toml_array($items):
@@ -379,12 +431,22 @@ jq -r '
   ] | join("\n\n")
 ' "$normalized_manifest_path" > "$codex_fragment_path"
 
-awk -v fragment_path="$codex_fragment_path" -v home="$render_home" '
+awk \
+  -v mcp_fragment_path="$codex_fragment_path" \
+  -v plugins_fragment_path="$codex_plugins_fragment_path" \
+  -v home="$render_home" '
   $0 == "# __MCP_SERVERS__" {
-    while ((getline line < fragment_path) > 0) {
+    while ((getline line < mcp_fragment_path) > 0) {
       print line
     }
-    close(fragment_path)
+    close(mcp_fragment_path)
+    next
+  }
+  $0 == "# __DOTFILES_PLUGINS__" {
+    while ((getline line < plugins_fragment_path) > 0) {
+      print line
+    }
+    close(plugins_fragment_path)
     next
   }
   {
@@ -393,7 +455,7 @@ awk -v fragment_path="$codex_fragment_path" -v home="$render_home" '
   }
 ' "$codex_template_path" > "$codex_config_path"
 
-rm -f "$codex_fragment_path"
+rm -f "$codex_fragment_path" "$codex_plugins_fragment_path"
 
 opencode_fragment_path=$(mktemp "${TMPDIR:-/tmp}/opencode-mcp.XXXXXX")
 opencode_base_path=$(mktemp "${TMPDIR:-/tmp}/opencode-base.XXXXXX")

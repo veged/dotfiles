@@ -25,11 +25,15 @@ ai/skills/
 
 `source`:
 
-* `owner/repo`
-* `owner/repo/tree/...`
-* полный `https://github.com/...`
-* git-URL (`*.git`, `ssh://...`, `git://...`) — клонируется напрямую через `git`; навык ищется по имени в корне репозитория, `skills/` или `.claude/skills/`
+* `owner/repo#<full-commit-sha>`
+* `owner/repo#<full-commit-sha>:path/to/subdirectory`
+* полный Git URL с тем же суффиксом `#<sha>[:path]`
+* git-URL (`*.git`, `ssh://...`, `git://...`) — навык ищется по имени в корне репозитория, `skills/` или `.claude/skills/`
 * явный локальный путь: `~/...`, `/...`, `./...` или `../...`
+
+Удалённые источники канонического реестра должны быть закреплены полным SHA.
+Форма без SHA поддерживается как legacy-ввод, который `/dotfiles:install`
+нормализует перед записью.
 
 `spec`:
 
@@ -47,6 +51,7 @@ ai/skills/
 * для разработки внешнего skill можно вручную заменить его каталог в `~/.agents/skills/<name>` symlink-ом на рабочую копию — `install-skills` уважает такой override и не перетирает его
 * конфликт имени между локальным и внешним skill — жёсткая ошибка
 * конфликт имён между внешними источниками — жёсткая ошибка
+* источник с commands, manifests или общими ресурсами регистрируется целиком в `plugins.json`, а не разрезается на отдельные skills
 * `./scripts/bootstrap-agent-skills` при необходимости мигрирует `codex-primary-runtime` из `~/.codex/skills` в канонический слой, обычно вызывается из `install-skills`
 
 ## Установка

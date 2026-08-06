@@ -28,7 +28,8 @@ prompt = '''<dotfiles_uninstall>
    ai/skills/skills.json, ai/plugins/plugins.json, ai/mcp.json и релевантные install-скрипты.
    Проверь рабочее дерево до изменений.
 2. Разреши вход против управляемого инвентаря:
-   - URL/путь нормализуй и сопоставь с source в реестрах;
+   - URL/путь нормализуй и сопоставь с source в реестрах; если вход не содержит
+     ревизию, при сравнении отдели суффикс #<sha>[:subdirectory] канонической записи;
    - название/слаг сопоставь с ключами, package names и manifests;
    - естественное описание сопоставь с description во frontmatter SKILL.md,
      plugin manifests, MCP entries, commands и instructions;
@@ -39,7 +40,8 @@ prompt = '''<dotfiles_uninstall>
    - весь внешний skill source → удалить его запись из ai/skills/skills.json;
    - один skill из "*" → добавить !name; из явного списка → удалить имя;
      пустую после этого запись удалить целиком;
-   - plugin → удалить его запись из ai/plugins/plugins.json;
+   - plugin → удалить его единственную запись из ai/plugins/plugins.json вместе
+     со всеми skills, commands, agents и общими ресурсами этого пакета;
    - MCP → удалить его ключ из ai/mcp.json;
    - локальный tracked package, instruction или command → удалить точные исходные файлы.
    Если локальный пакет, общий source или смешанная запись затрагивает дополнительные
@@ -47,8 +49,8 @@ prompt = '''<dotfiles_uninstall>
 5. Сначала измени source of truth. Сохрани стиль, валидность и минимальный diff.
 6. Синхронизируй затронутые runtime-слои:
    - skills: ./scripts/install-skills --update;
-   - plugins: ./scripts/install-plugins --update; при необходимости штатно удали
-     установленный plugin из Codex;
+   - plugins: ./scripts/install-plugins --update; штатно удали установленный plugin
+     из Codex и Claude Code и проверь удаление локальной Cursor-проекции;
    - MCP: ./scripts/install-mcp --sync-only;
    - иной слой: его документированный reconcile/check.
    Не удаляй оставшиеся binaries или secrets автоматически; перечисли их как retained artifacts.

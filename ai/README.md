@@ -6,11 +6,14 @@
 
 * `ai/instructions/*` — общие Markdown-инструкции
 * `ai/skills/*` + `ai/skills/skills.json` — локальные skill-пакеты и внешние зависимости, см. [`skills/README.md`](skills/README.md)
-* `ai/plugins/plugins.json` — реестр локальных плагинов Codex, см. [`plugins/README.md`](plugins/README.md)
+* `ai/plugins/plugins.json` — реестр составных AI-пакетов, см. [`plugins/README.md`](plugins/README.md)
 * `ai/mcp.json` — реестр MCP-серверов в формате `server-name → { enabled, transport, command/url, install, clients }` для Codex, Cursor, Claude и OpenCode
 * `claude/.settings.template.json`, `codex/.config.template.toml`, `config/opencode/.opencode.template.jsonc` — шаблоны non-MCP настроек клиентов
 
-Для GitHub-источников в реестрах допустима короткая форма `owner/repo` или `owner/repo/tree/...`.
+Удалённый Git-источник фиксируется полным commit SHA прямо в locator:
+`owner/repo#<sha>` или `owner/repo#<sha>:path/to/subdirectory`. Часть после
+двоеточия использует семантику Git `revision:path`. Плавающие ветки и теги
+оркестратор разрешает до записи в реестр.
 Локальные источники навыков и плагинов задаются явным путём: `~/...`, `/...`, `./...` или `../...`.
 
 ## AI-инструкции
@@ -31,6 +34,7 @@ Claude, Codex и OpenCode instruction lists генерируются из markdo
 * `~/.agents/instructions` — projected Markdown-инструкции
 * `~/.agents/skills` — единственный source of truth общих навыков
 * `~/.agents/plugins/marketplace.json` — локальный каталог плагинов Codex
+* `~/.agents/plugins/dotfiles-local/` — общая Claude/Cursor-проекция составных пакетов
 * `~/.claude/skills`, `~/.codex/skills`, `~/.cursor/skills` — assistant-specific discovery-слои, symlink-и на `~/.agents/skills`
 * `~/.codex/plugins/dotfiles-local/*` — локальные bundle-ы плагинов Codex
 * `~/.claude/CLAUDE.md` — тонкая обёртка, импортирующая общий слой
@@ -40,7 +44,7 @@ Claude, Codex и OpenCode instruction lists генерируются из markdo
 ## Скрипты
 
 * `./scripts/install-skills` — синхронизирует `~/.agents/skills` и publish-ит его в discovery-слои
-* `./scripts/install-plugins` — собирает локальные plugin-bundle-ы и marketplace
+* `./scripts/install-plugins` — инвентаризирует полные source tree и строит проекции для Codex, Claude Code и Cursor
 * `./scripts/install-mcp` — ставит локальные MCP runtime-ы и материализует live-конфиги
 * `./scripts/bootstrap-agent-skills` — projection `~/.agents/skills → ~/.claude/skills, ~/.codex/skills, ~/.cursor/skills`, вызывается из `install-skills`, напрямую обычно не нужен
 

@@ -1,40 +1,37 @@
 {
-  "vercel-labs/agent-browser": "agent-browser",
-  "vercel-labs/skills": "*",
-  "slidevjs/slidev": "*",
-  "mattpocock/skills": [
+  "vercel-labs/agent-browser#acbc22bdc5d4f6c5a88d97d4a4745d3c5eb0591f": "agent-browser",
+  "vercel-labs/skills#a4d243c3d4f86cdf9385dd1b6a0733f6937e70b5": "*",
+  "slidevjs/slidev#050ba85bb2c99961d86bb352c2f8ba4034fb4d09": "*",
+  "mattpocock/skills#6acc160e4e0cd062dbbbd7a1b26ae92855edf07e:skills/engineering": [
     "!code-review",
     "!github-triage",
     "!qa",
     "!triage"
   ],
-  "terraphim/codex-skills": "rust-development",
-  "https://github.com/beaverbeard/slopotron.git": "slopotron",
-  "veged/caveman/tree/main/skills": "caveman",
-  "anthropics/skills": [
+  "mattpocock/skills#6acc160e4e0cd062dbbbd7a1b26ae92855edf07e:skills/in-progress": "*",
+  "mattpocock/skills#6acc160e4e0cd062dbbbd7a1b26ae92855edf07e:skills/misc": "*",
+  "mattpocock/skills#6acc160e4e0cd062dbbbd7a1b26ae92855edf07e:skills/productivity": "*",
+  "terraphim/codex-skills#047d5b01e6abad817d6ec64fd060741158a96c29": "rust-development",
+  "https://github.com/beaverbeard/slopotron.git#5edd02134a9c5ab0234d0e71fb0241fbf2273341": "slopotron",
+  "veged/caveman#f9a3eb1adbe2890217edffe48325619ae62a62e3:skills": "caveman",
+  "anthropics/skills#b29e7cf65e5cb78a5ac33d582270551bc74a14eb": [
     "frontend-design",
     "web-artifacts-builder"
   ],
-  "murphytrueman/design-system-ops": "*",
-  "plugin87/ux-ui-agent-skills": [
-    "!brandkit",
-    "!image-to-code",
+  "albertzhangz10/design-system-skill#dc0ad3fb8240353da114427bee256c5e9ae93333": "*",
+  "pbakaus/impeccable#a075d89bdbe60b2b00220cb0527fb5091e84215e": "impeccable",
+  "emilkowalski/skill#de33dbed000212b54400a33767d1e4d03654db2a": [
     "!prototype"
   ],
-  "albertzhangz10/design-system-skill": "*",
-  "pbakaus/impeccable": "impeccable",
-  "emilkowalski/skill": [
-    "!prototype"
-  ],
-  "Leonxlnx/taste-skill": "*",
-  "obra/superpowers": [
+  "Leonxlnx/taste-skill#e988add20dab0fa97d7a76781c48961c8184288e": "*",
+  "obra/superpowers#44c9b2d6e889982ac18c27d05a19fefe335194e1": [
     "!test-driven-development",
     "!subagent-driven-development",
     "!brainstorming",
     "!executing-plans"
   ],
-  "nicobailon/visual-explainer": "*",
-  "openai/skills": [
+  "nicobailon/visual-explainer#528b71feb85dab5d92b82c3554880826f50a75da": "*",
+  "openai/skills#49f948faa9258a0c61caceaf225e179651397431": [
     "imagegen",
     "openai-docs",
     "pdf",
@@ -42,8 +39,8 @@
     "skill-creator",
     "skill-installer"
   ],
-  "openai/codex/tree/main/codex-rs/skills/src/assets/samples/plugin-creator": "*",
+  "openai/codex#57f42a81131ccf5933e7ec5dc659c381eeb5d72b:codex-rs/skills/src/assets/samples/plugin-creator": "*",
   "~/arcadia/ai/artifacts/skills/infra/arc": "*",
   "~/arcadia/ai/artifacts/skills/community/lpc-custom-js": "*",
-  "ssh://ssh.sourcecraft.dev/veged/slidev-theme-practicum.git": "slidev-practicum"
+  "ssh://ssh.sourcecraft.dev/veged/slidev-theme-practicum.git#588ec50a03b24cc6212443c9606ee1809940bbb9": "slidev-practicum"
 }

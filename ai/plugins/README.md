@@ -1,46 +1,56 @@
-# Плагины
+# Составные AI-пакеты
 
-Канонический реестр локальных плагинов Codex в `ai/plugins/plugins.json`. Рабочие каталоги и общая архитектура — в [`../README.md`](../README.md).
+Канонический реестр находится в `ai/plugins/plugins.json`. Общая архитектура —
+в [`../README.md`](../README.md).
 
-Плагины — отдельный слой поверх общих навыков. Они нужны там, где плоского пространства имён не хватает, например при конфликте имён.
+Сюда попадают источники, которые нельзя безопасно разрезать на отдельные
+`SKILL.md`: готовые plugins, commands, agents, scripts, project kits и деревья
+с общими ресурсами. Источник всегда получается целиком.
 
-Реальные Codex slash-команды живут именно здесь: в plugin root под `commands/*.toml` или `commands/*.md`. Файлы в `ai/instructions/*.md` не регистрируют slash-команды клиента; они влияют только на prompt/instruction layer.
-
-По умолчанию держи один source of truth прямо в `commands/*.toml`. Отдельный instruction-источник или генератор добавляй только если один и тот же контент действительно должен обслуживать несколько разных рантаймов.
-
-Локальные plugin root для этого репозитория храни в `ai/plugins/<plugin-name>/`. Тогда `plugins.json` остаётся коротким реестром, а сам plugin лежит рядом.
+Локальные source tree этого репозитория храни в `ai/plugins/<name>/`.
+Настоящие команды клиента лежат в `commands/*.toml` или `commands/*.md`, а не
+в `ai/instructions/`.
 
 ## Формат `plugins.json`
 
-Словарь `plugin-name → spec`. `spec`:
+Реестр — словарь `package-name → spec`:
 
-* `"owner/repo"` — завернуть весь источник
-* `{ "source": "owner/repo", "skills": "*" }` — то же явно
-* `{ "source": "owner/repo", "skills": "skill-name" }` — один навык
-* `{ "source": "owner/repo", "skills": ["skill-a", "skill-b"] }` — список
-* `{ "source": "owner/repo", "skills": ["!skill-a", "!skill-b"] }` — весь источник, кроме перечисленных навыков
-* `{ "source": "owner/repo", "kind": "plugin" }` — подключить готовый Codex-plugin целиком (с `commands`/`agents`/`context`), а не набор skills
-* `{ "source": "./ai/plugins/name", "kind": "plugin" }` — локальный plugin root из этого репозитория; основной вариант для своих slash-команд и локальной разработки plugin
+* `"owner/repo#<sha>"` — автоматически инвентаризировать весь источник
+* `{ "source": "owner/repo#<sha>" }` — та же запись в явной форме
+* `{ "source": "owner/repo#<sha>", "skills": "skill-name" }` — намеренно собрать оболочку одного навыка
+* `{ "source": "owner/repo#<sha>", "skills": ["skill-a", "skill-b"] }` — выбрать несколько навыков
+* `{ "source": "owner/repo#<sha>", "skills": ["!skill-a", "!skill-b"] }` — взять все обнаруженные навыки, кроме перечисленных
+* `"./ai/plugins/name"` — локальный source tree
 
-В `skills` нельзя смешивать включения и исключения: `["skill-a", "!skill-b"]` считается ошибкой.
+В `skills` нельзя смешивать включения и исключения.
 
-Для `source` допустим и полный `https://github.com/...` или `ssh://...`, но короткая форма предпочтительнее.
+Пользователь не указывает тип пакета и список клиентов. Установщик определяет
+артефакты по manifests и структуре, сохраняет полное дерево и строит все
+поддерживаемые проекции. Поле `kind` читается только для совместимости со
+старыми записями и не записывается оркестратором.
 
-`kind: "plugin"` берёт source двумя способами:
+Приоритет инвентаризации:
 
-* **remote URL** (канонический, «для всех») → `install-plugins` клонирует репозиторий в `~/.codex/plugins/dotfiles-local/<name>` реальной папкой, как `kind: skills`;
-* **локальный путь** (`./...`, `~/...`) → симлинк на рабочую копию, правки видны сразу — для разработки своих плагинов (live: прокидывается в marketplace и installed cache Codex).
+1. `.codex-plugin`, `.claude-plugin` и `.cursor-plugin` manifests.
+2. `commands/`, `.claude/commands/`, skills и agents.
+3. Общие `context/`, `knowledge-notes/`, `tokens/`, `components/`, `workflows/` и `scripts/`.
+4. Если составных признаков нет — namespaced wrapper из найденных skills.
 
-Локальная подмена remote-плагина: замени чекаут `~/.codex/plugins/dotfiles-local/<name>` симлинком на свою рабочую копию — `install-plugins` уважает такой симлинк (`local override`) и не перетирает его при реинсталле.
+Недостающие manifests создаются в runtime-копии. Команды Claude, использующие
+`${CLAUDE_PLUGIN_ROOT}`, адаптируются к фактическому корню пакета. Upstream в
+репозитории при этом не изменяется.
 
-## Локальные maintenance-команды
+Локальная подмена remote-пакета: замени
+`~/.codex/plugins/dotfiles-local/<name>` симлинком на рабочую копию. Установщик
+не перетирает override; клиент без подходящего manifest явно отмечается как
+неполная проекция.
 
-Плагин `dotfiles` — namespace для формальных команд обслуживания AI-конфигурации:
+## Maintenance-команды
 
-* `/dotfiles:install <что установить>` — найти или исследовать компонент по описанию, слагу, ссылке или пути; классифицировать его как skill, plugin, MCP или другой поддерживаемый тип; записать в подходящий source of truth и установить штатным контуром
-* `/dotfiles:uninstall <что удалить>` — найти управляемый компонент по тем же формам ввода, удалить его каноническую декларацию и синхронизировать runtime-проекции без автоматического удаления данных, секретов и внешних binaries
+* `/dotfiles:install <что установить>` — найти компонент, получить полный SHA, инвентаризировать и записать минимальную декларацию.
+* `/dotfiles:uninstall <что удалить>` — удалить каноническую декларацию и синхронизировать runtime без удаления секретов, данных и внешних binaries.
 
-Новые команды обслуживания добавляй в `ai/plugins/dotfiles/commands/`, не создавая отдельные плагины для каждого действия.
+Новые maintenance-команды добавляй в `ai/plugins/dotfiles/commands/`.
 
 ## Установка
 
@@ -49,13 +59,17 @@
 ./scripts/install-plugins --update
 ```
 
-`--update` пересобирает локальные плагины из `plugins.json`. `--force` оставлен алиасом.
+`--update` пересобирает remote-пакеты; `--force` оставлен алиасом. Скрипт
+публикует Codex personal marketplace, Claude marketplace и Cursor local
+projection, а затем печатает все обнаруженные namespaced commands.
 
-Скрипт только публикует personal marketplace и локальные bundle-ы. Сам plugin затем ставится в Codex:
+Первичное включение пакета выполняется штатным CLI клиента:
 
-1. открыть `Plugins` или вызвать `/plugins`
-2. выбрать marketplace `Dotfiles Local`
-3. установить нужный plugin
-4. начать новый thread и вызывать plugin через `@`, например `@impeccable`
+```bash
+codex plugin add <name>@dotfiles-local
+claude plugin marketplace add ~/.agents/plugins/dotfiles-local --scope user
+claude plugin install <name>@dotfiles-local --scope user
+```
 
-Slash-команда вида `/impeccable` появляться не обязана — plugin не равен slash-команде.
+После установки нужен новый thread. Команды вызываются в namespaced форме,
+например `/design-system-ops:full-diagnostic`.

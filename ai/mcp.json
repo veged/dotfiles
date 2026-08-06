@@ -18,7 +18,7 @@
       "argv": [
         "/bin/sh",
         "-lc",
-        "tmp=\"$(mktemp)\" && gh api repos/dmtrKovalenko/fff.nvim/contents/install-mcp.sh --jq '.content' | base64 -d > \"$tmp\" && bash \"$tmp\" && rm -f \"$tmp\""
+        "tmp=\"$(mktemp)\" && gh api repos/dmtrKovalenko/fff.nvim/contents/install-mcp.sh?ref=3a0ce85c54875563bc55888b6b9829b44aeca911 --jq '.content' | base64 -d > \"$tmp\" && bash \"$tmp\" && rm -f \"$tmp\""
       ],
       "check_path": "$HOME/.local/bin/fff-mcp"
     },
@@ -114,7 +114,7 @@
     "command": "bunx",
     "args": [
       "-y",
-      "@upstash/context7-mcp@latest"
+      "@upstash/context7-mcp@3.2.5"
     ]
   },
   "websearch": {
@@ -133,7 +133,7 @@
     "command": "npx",
     "args": [
       "-y",
-      "@playwright/mcp@latest"
+      "@playwright/mcp@0.0.79"
     ]
   }
 }

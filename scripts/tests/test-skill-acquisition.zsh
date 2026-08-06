@@ -6,6 +6,7 @@ set -euo pipefail
 repo_root=${0:A:h:h:h}
 tmp_root=$(mktemp -d "${TMPDIR:-/tmp}/skill-acquisition.XXXXXX")
 trap 'rm -rf "$tmp_root"' EXIT
+original_path=$PATH
 
 fixture_root="$tmp_root/repo"
 stage_dir="$tmp_root/stage"
@@ -53,8 +54,7 @@ cat > "$fixture_root/ai/plugins/plugins.json" <<'JSON'
     "source": "https://example.com/plugin.git"
   },
   "local-root-plugin": {
-    "source": "./local-plugins/root",
-    "kind": "plugin"
+    "source": "./local-plugins/root"
   }
 }
 JSON
@@ -162,15 +162,15 @@ jq -e --arg source "$expected_relative_source" \
 
 plugin_specs=("${(@f)$(acquisition_plugin_specs "$fixture_root/ai/plugins/plugins.json")}")
 [[ ${#plugin_specs[@]} == 6 ]] || fail "expected 6 plugin specs, got ${#plugin_specs[@]}"
-assert_json "${plugin_specs[1]}" '.name == "string-plugin" and .source == "https://github.com/org/plugin-all" and .kind == "skills" and .install_all == true and (.skills | length) == 0' "string plugin spec"
-assert_json "${plugin_specs[2]}" '.name == "selected-plugin" and .source == "https://github.com/org/plugin-selected" and .kind == "skills" and .install_all == false and .skills == ["delta", "epsilon"]' "selected plugin spec"
-assert_json "${plugin_specs[3]}" '.name == "excluded-plugin" and .source == "https://github.com/org/plugin-excluded" and .kind == "skills" and .install_all == true and .skills == [] and .exclude == ["zeta", "eta"]' "excluded plugin spec"
-assert_json "${plugin_specs[4]}" '.name == "excluded-single-plugin" and .source == "https://github.com/org/plugin-excluded-one" and .kind == "skills" and .install_all == true and .skills == [] and .exclude == ["theta"]' "single excluded plugin spec"
-assert_json "${plugin_specs[5]}" '.name == "implicit-all-plugin" and .source == "https://example.com/plugin.git" and .kind == "skills" and .install_all == true and (.skills | length) == 0' "implicit all plugin spec"
+assert_json "${plugin_specs[1]}" '.name == "string-plugin" and .source == "https://github.com/org/plugin-all" and .selection_explicit == false and .install_all == true and (.skills | length) == 0' "string plugin spec"
+assert_json "${plugin_specs[2]}" '.name == "selected-plugin" and .source == "https://github.com/org/plugin-selected" and .selection_explicit == true and .install_all == false and .skills == ["delta", "epsilon"]' "selected plugin spec"
+assert_json "${plugin_specs[3]}" '.name == "excluded-plugin" and .source == "https://github.com/org/plugin-excluded" and .selection_explicit == true and .install_all == true and .skills == [] and .exclude == ["zeta", "eta"]' "excluded plugin spec"
+assert_json "${plugin_specs[4]}" '.name == "excluded-single-plugin" and .source == "https://github.com/org/plugin-excluded-one" and .selection_explicit == true and .install_all == true and .skills == [] and .exclude == ["theta"]' "single excluded plugin spec"
+assert_json "${plugin_specs[5]}" '.name == "implicit-all-plugin" and .source == "https://example.com/plugin.git" and .selection_explicit == false and .install_all == true and (.skills | length) == 0' "implicit all plugin spec"
 expected_plugin_root_source="$fixture_root/local-plugins/root"
 expected_plugin_root_source="${expected_plugin_root_source:A}"
 jq -e --arg source "$expected_plugin_root_source" \
-  '.name == "local-root-plugin" and .source == $source and .kind == "plugin" and .install_all == true and (.skills | length) == 0' \
+  '.name == "local-root-plugin" and .source == $source and .selection_explicit == false and .install_all == true and (.skills | length) == 0' \
   <<<"${plugin_specs[6]}" >/dev/null || fail "json assertion failed: local plugin-root spec"
 
 selected=("${(@f)$(acquisition_spec_skills "${plugin_specs[2]}")}")
@@ -189,6 +189,65 @@ print -r -- "# slopotron" > "$git_fixture_repo/.claude/skills/slopotron/SKILL.md
 GIT_FIXTURE_REPO="$git_fixture_repo" PATH="$bin_dir:$PATH" \
   acquisition_stage_skills "$git_stage_dir" "https://github.com/beaverbeard/slopotron.git" slopotron
 [[ -d "$git_stage_dir/.agents/skills/slopotron" ]] || fail "missing staged slopotron"
+
+pinned_repo="$tmp_root/pinned-repo"
+pinned_stage_dir="$tmp_root/pinned-stage"
+root_pinned_stage_dir="$tmp_root/root-pinned-stage"
+mkdir -p \
+  "$pinned_repo/nested/skills/pinned-skill" \
+  "$pinned_repo/packages/deep-skill"
+cat > "$pinned_repo/SKILL.md" <<'MD'
+---
+name: pinned-root
+description: Root skill used to verify manifest naming.
+---
+
+# Pinned root
+MD
+print -r -- "# pinned version" > "$pinned_repo/nested/skills/pinned-skill/SKILL.md"
+cat > "$pinned_repo/packages/deep-skill/SKILL.md" <<'MD'
+---
+name: deep-skill
+description: Deeply nested skill.
+---
+
+# Deep skill
+MD
+git -C "$pinned_repo" init -q
+git -C "$pinned_repo" add -A
+git -C "$pinned_repo" -c user.email=test@example.com -c user.name=test commit -q -m pinned
+pinned_sha=$(git -C "$pinned_repo" rev-parse HEAD)
+print -r -- "# floating version" > "$pinned_repo/nested/skills/pinned-skill/SKILL.md"
+git -C "$pinned_repo" add -A
+git -C "$pinned_repo" -c user.email=test@example.com -c user.name=test commit -q -m floating
+
+pinned_source="file://${pinned_repo:A}#$pinned_sha:nested/skills"
+PATH="$original_path" acquisition_stage_skills "$pinned_stage_dir" "$pinned_source" pinned-skill
+ugrep -Fq '# pinned version' "$pinned_stage_dir/.agents/skills/pinned-skill/SKILL.md" \
+  || fail "pinned source did not checkout the requested commit and subdirectory"
+
+PATH="$original_path" acquisition_stage_skills \
+  "$root_pinned_stage_dir" "file://${pinned_repo:A}#$pinned_sha"
+[[ -f "$root_pinned_stage_dir/.agents/skills/pinned-root/SKILL.md" ]] \
+  || fail "root skill was not named from SKILL.md frontmatter"
+[[ -f "$root_pinned_stage_dir/.agents/skills/deep-skill/SKILL.md" ]] \
+  || fail "deeply nested skill was not discovered"
+
+cat > "$fixture_root/ai/skills/invalid-revision.json" <<'JSON'
+{
+  "org/repo#deadbeef": "alpha"
+}
+JSON
+
+if (acquisition_skill_specs "$fixture_root/ai/skills/invalid-revision.json") >/dev/null 2>"$tmp_root/invalid-revision.err"; then
+  fail "short source revision unexpectedly passed"
+fi
+
+ugrep -q 'revision must be a full commit SHA' "$tmp_root/invalid-revision.err" || {
+  print -u2 "unexpected invalid revision error:"
+  cat "$tmp_root/invalid-revision.err" >&2
+  exit 1
+}
 
 acquisition_has_selected_skills "$stage_dir/.agents/skills" delta epsilon || fail "selected skills should be present"
 if acquisition_has_selected_skills "$stage_dir/.agents/skills" delta missing; then

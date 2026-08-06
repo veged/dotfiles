@@ -64,7 +64,7 @@ acquisition_skill_specs() {
   [[ -f "$registry_path" ]] || return 0
 
   for entry in "${(@f)$(jq -c 'to_entries[]' "$registry_path")}"; do
-    source=$(normalize_source "$(jq -r '.key' <<<"$entry")")
+    source=$(normalize_source "$(jq -r '.key' <<<"$entry")") || return 1
     selection_json=$(acquisition_skill_selection_json "$(jq -c '.value' <<<"$entry")" "source: $source")
     install_all=$(jq -r '.install_all' <<<"$selection_json")
     skills_json=$(jq -c '.skills' <<<"$selection_json")
@@ -85,41 +85,36 @@ acquisition_skill_specs() {
 
 acquisition_plugin_specs() {
   local registry_path=$1
-  local entry name value_type source source_spec kind skills_type install_all skills_json exclude_json selection_json
+  local entry name value_type source source_spec legacy_kind skills_type install_all skills_json exclude_json selection_json selection_explicit
 
   [[ -f "$registry_path" ]] || die "$SCRIPT_NAME: missing plugin registry: $registry_path"
 
   for entry in "${(@f)$(jq -c 'to_entries[]' "$registry_path")}"; do
     name=$(jq -r '.key' <<<"$entry")
     value_type=$(jq -r '.value | type' <<<"$entry")
-    kind=skills
     install_all=false
     skills_json='[]'
     exclude_json='[]'
+    selection_explicit=false
 
     case "$value_type" in
       string)
-        source=$(normalize_source "$(jq -r '.value' <<<"$entry")")
+        source=$(normalize_source "$(jq -r '.value' <<<"$entry")") || return 1
         install_all=true
         ;;
       object)
         source_spec=$(jq -er '.value.source' <<<"$entry" 2>/dev/null) || die "$SCRIPT_NAME: missing source for plugin: $name"
-        source=$(normalize_source "$source_spec")
-        kind=$(jq -r '.value.kind // "skills"' <<<"$entry")
-        [[ "$kind" == "skills" || "$kind" == "plugin" ]] || die "$SCRIPT_NAME: invalid plugin kind for $name: $kind"
+        source=$(normalize_source "$source_spec") || return 1
+        if jq -e '.value | has("kind")' <<<"$entry" >/dev/null; then
+          legacy_kind=$(jq -r '.value.kind' <<<"$entry")
+          [[ "$legacy_kind" == "skills" || "$legacy_kind" == "plugin" ]] \
+            || die "$SCRIPT_NAME: invalid legacy plugin kind for $name: $legacy_kind"
+        fi
 
-        if [[ "$kind" == "plugin" ]]; then
-          if jq -e '.value | has("skills")' <<<"$entry" >/dev/null; then
-            die "$SCRIPT_NAME: plugin kind must not declare skills: $name"
-          fi
-
-          install_all=true
-        else
+        if jq -e '.value | has("skills")' <<<"$entry" >/dev/null; then
+          selection_explicit=true
           skills_type=$(jq -r 'if .value.skills == null then "null" else (.value.skills | type) end' <<<"$entry")
           case "$skills_type" in
-            null)
-              install_all=true
-              ;;
             string|array)
               selection_json=$(acquisition_skill_selection_json "$(jq -c '.value.skills' <<<"$entry")" "plugin: $name")
               install_all=$(jq -r '.install_all' <<<"$selection_json")
@@ -130,6 +125,8 @@ acquisition_plugin_specs() {
               die "$SCRIPT_NAME: invalid skills spec for plugin: $name"
               ;;
           esac
+        else
+          install_all=true
         fi
         ;;
       *)
@@ -144,11 +141,11 @@ acquisition_plugin_specs() {
     jq -cn \
       --arg name "$name" \
       --arg source "$source" \
-      --arg kind "$kind" \
       --argjson install_all "$install_all" \
+      --argjson selection_explicit "$selection_explicit" \
       --argjson skills "$skills_json" \
       --argjson exclude "$exclude_json" \
-      '{name: $name, source: $source, kind: $kind, install_all: $install_all, skills: $skills, exclude: $exclude}'
+      '{name: $name, source: $source, selection_explicit: $selection_explicit, install_all: $install_all, skills: $skills, exclude: $exclude}'
   done
 }
 
@@ -170,8 +167,9 @@ acquisition_stage_skills() {
   shift 2
 
   mkdir -p "$stage_dir"
-  # Clone explicit git URLs directly; GitHub shorthands go through the skills CLI.
-  if [[ "$source" == *.git || ( "$source" == *://* && "$source" != https://github.com/* ) ]]; then
+  # Pinned and explicit git sources are materialized directly. Legacy unpinned
+  # GitHub shorthands stay on the skills CLI for backwards compatibility.
+  if [[ "$source" == *'#'* || "$source" == *.git || ( "$source" == *://* && "$source" != https://github.com/* ) ]]; then
     stage_skills_git "$stage_dir" "$source" "$@"
   else
     stage_skills "$stage_dir" "$source" "$@"

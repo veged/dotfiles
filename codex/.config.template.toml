@@ -17,23 +17,7 @@ enabled = true
 [plugins."google-drive@openai-curated"]
 enabled = true
 
-[plugins."anthropics@dotfiles-local"]
-enabled = true
-
-[plugins."impeccable@dotfiles-local"]
-enabled = true
-
-[plugins."mblode@dotfiles-local"]
-enabled = true
-
-[plugins."presentation-craft@dotfiles-local"]
-enabled = true
-
-[plugins."ppp@dotfiles-local"]
-enabled = true
-
-[plugins."dotfiles@dotfiles-local"]
-enabled = true
+# __DOTFILES_PLUGINS__
 
 # __MCP_SERVERS__
 

@@ -14,9 +14,11 @@ bad_fixture_root="$tmp_root/bad-repo"
 bad_home_dir="$tmp_root/bad-home"
 duplicate_marker_fixture_root="$tmp_root/duplicate-marker-repo"
 duplicate_marker_home_dir="$tmp_root/duplicate-marker-home"
+no_catalog_home_dir="$tmp_root/no-catalog-home"
 
 mkdir -p \
   "$fixture_root/ai/instructions" \
+  "$fixture_root/ai/plugins" \
   "$fixture_root/claude" \
   "$fixture_root/config/opencode" \
   "$fixture_root/codex" \
@@ -24,6 +26,7 @@ mkdir -p \
   "$fixture_root/scripts/tests" \
   "$home_dir" \
   "$bad_fixture_root/ai/instructions" \
+  "$bad_fixture_root/ai/plugins" \
   "$bad_fixture_root/claude" \
   "$bad_fixture_root/config/opencode" \
   "$bad_fixture_root/codex" \
@@ -31,17 +34,20 @@ mkdir -p \
   "$bad_fixture_root/scripts/tests" \
   "$bad_home_dir" \
   "$duplicate_marker_fixture_root/ai/instructions" \
+  "$duplicate_marker_fixture_root/ai/plugins" \
   "$duplicate_marker_fixture_root/claude" \
   "$duplicate_marker_fixture_root/config/opencode" \
   "$duplicate_marker_fixture_root/codex" \
   "$duplicate_marker_fixture_root/scripts/lib" \
   "$duplicate_marker_fixture_root/scripts/tests" \
   "$duplicate_marker_home_dir"
+mkdir -p "$no_catalog_home_dir"
 
 cp "$repo_root/scripts/install-mcp" "$fixture_root/scripts/install-mcp"
 cp "$repo_root/scripts/lib/install-common.zsh" "$fixture_root/scripts/lib/install-common.zsh"
 cp "$repo_root/scripts/lib/instruction-projection.zsh" "$fixture_root/scripts/lib/instruction-projection.zsh"
 cp "$repo_root/ai/mcp.json" "$fixture_root/ai/mcp.json"
+cp "$repo_root/ai/plugins/plugins.json" "$fixture_root/ai/plugins/plugins.json"
 cp "$repo_root"/ai/instructions/*.md "$fixture_root/ai/instructions/"
 cp "$repo_root/claude/.settings.template.json" "$fixture_root/claude/.settings.template.json"
 cp "$repo_root/config/opencode/.opencode.template.jsonc" "$fixture_root/config/opencode/.opencode.template.jsonc"
@@ -50,6 +56,7 @@ cp "$repo_root/scripts/install-mcp" "$bad_fixture_root/scripts/install-mcp"
 cp "$repo_root/scripts/lib/install-common.zsh" "$bad_fixture_root/scripts/lib/install-common.zsh"
 cp "$repo_root/scripts/lib/instruction-projection.zsh" "$bad_fixture_root/scripts/lib/instruction-projection.zsh"
 cp "$repo_root/ai/mcp.json" "$bad_fixture_root/ai/mcp.json"
+cp "$repo_root/ai/plugins/plugins.json" "$bad_fixture_root/ai/plugins/plugins.json"
 cp "$repo_root"/ai/instructions/*.md "$bad_fixture_root/ai/instructions/"
 cp "$repo_root/claude/.settings.template.json" "$bad_fixture_root/claude/.settings.template.json"
 cp "$repo_root/config/opencode/.opencode.template.jsonc" "$bad_fixture_root/config/opencode/.opencode.template.jsonc"
@@ -58,6 +65,7 @@ cp "$repo_root/scripts/install-mcp" "$duplicate_marker_fixture_root/scripts/inst
 cp "$repo_root/scripts/lib/install-common.zsh" "$duplicate_marker_fixture_root/scripts/lib/install-common.zsh"
 cp "$repo_root/scripts/lib/instruction-projection.zsh" "$duplicate_marker_fixture_root/scripts/lib/instruction-projection.zsh"
 cp "$repo_root/ai/mcp.json" "$duplicate_marker_fixture_root/ai/mcp.json"
+cp "$repo_root/ai/plugins/plugins.json" "$duplicate_marker_fixture_root/ai/plugins/plugins.json"
 cp "$repo_root"/ai/instructions/*.md "$duplicate_marker_fixture_root/ai/instructions/"
 cp "$repo_root/claude/.settings.template.json" "$duplicate_marker_fixture_root/claude/.settings.template.json"
 cp "$repo_root/config/opencode/.opencode.template.jsonc" "$duplicate_marker_fixture_root/config/opencode/.opencode.template.jsonc"
@@ -117,12 +125,28 @@ cat > "$claude_user_path" <<'EOF'
 EOF
 chmod 0600 "$claude_user_path"
 
+fixture_claude_marketplace_path="$home_dir/.agents/plugins/dotfiles-local/.claude-plugin/marketplace.json"
+mkdir -p "${fixture_claude_marketplace_path:h}"
+cat > "$fixture_claude_marketplace_path" <<'JSON'
+{
+  "name": "dotfiles-local",
+  "plugins": [
+    {"name": "design-system-ops"},
+    {"name": "ux-ui-agent-skills"}
+  ]
+}
+JSON
+
 HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --sync-only
 
 fail() {
   print -u2 -- "$1"
   exit 1
 }
+
+HOME="$no_catalog_home_dir" zsh "$fixture_root/scripts/install-mcp" --sync-only
+[[ "$(jq '[.enabledPlugins | keys[] | select(endswith("@dotfiles-local"))] | length' "$no_catalog_home_dir/.claude/settings.json")" == "0" ]] \
+  || fail "Claude activated registry packages before a compatible marketplace existed"
 
 install_conf_path="$repo_root/install.conf.yaml"
 
@@ -188,6 +212,22 @@ actual_claude_mcp_tools="$(
 jq -e . "$claude_settings_path" >/dev/null || fail "generated claude settings must be valid JSON"
 jq -e . "$opencode_config_path" >/dev/null || fail "generated opencode config must be valid JSON"
 [[ "$(jq -r '.enabledPlugins["superpowers@claude-plugins-official"]' "$claude_settings_path")" == "true" ]] || fail "missing preserved claude plugin"
+while IFS= read -r plugin_name; do
+  plugin_id="$plugin_name@dotfiles-local"
+  [[ "$(ugrep -Fxc "[plugins.\"$plugin_id\"]" "$codex_config_path")" == "1" ]] \
+    || fail "missing or duplicated managed Codex plugin activation: $plugin_id"
+done < <(jq -r 'keys[]' "$fixture_root/ai/plugins/plugins.json")
+while IFS= read -r plugin_name; do
+  plugin_id="$plugin_name@dotfiles-local"
+  [[ "$(jq -r --arg id "$plugin_id" '.enabledPlugins[$id]' "$claude_settings_path")" == "true" ]] \
+    || fail "missing managed Claude plugin activation: $plugin_id"
+done < <(jq -r '.plugins[].name' "$fixture_claude_marketplace_path")
+[[ "$(jq -r '.enabledPlugins["dotfiles@dotfiles-local"] // false' "$claude_settings_path")" == "false" ]] \
+  || fail "Claude activated a package without a compatible projection"
+[[ "$(jq -r '.extraKnownMarketplaces["dotfiles-local"].source.source' "$claude_settings_path")" == "directory" ]] \
+  || fail "missing managed Claude marketplace kind"
+[[ "$(jq -r '.extraKnownMarketplaces["dotfiles-local"].source.path' "$claude_settings_path")" == "$home_dir/.agents/plugins/dotfiles-local" ]] \
+  || fail "missing managed Claude marketplace path"
 [[ "$(jq -r '.extraKnownMarketplaces["visual-explainer-marketplace"].source.repo' "$claude_settings_path")" == "nicobailon/visual-explainer" ]] || fail "missing preserved claude marketplace"
 [[ "$(jq -r '.permissions.additionalDirectories[0]' "$claude_settings_path")" == "/private/tmp" ]] || fail "missing preserved claude additional directory"
 [[ "$(jq -r '.permissions.allow[]' "$claude_settings_path" | grep -Fx 'Bash(ugrep:*)')" == 'Bash(ugrep:*)' ]] || fail "missing preserved non-MCP claude permission"
@@ -235,7 +275,7 @@ initial_opencode_baseurl="$(jq -r '.provider["eliza-anthropic"].options.baseURL'
 [[ "$(jq -r '.mcp.fff.command[0]' "$opencode_config_path")" == "$home_dir/.local/bin/fff-mcp" ]] || fail "unexpected opencode fff command"
 [[ "$(jq -r '.mcp.fff.command | length' "$opencode_config_path")" == "1" ]] || fail "unexpected opencode fff command length"
 [[ "$(jq -r '.mcp.playwright.type' "$opencode_config_path")" == "local" ]] || fail "unexpected opencode playwright type"
-[[ "$(jq -r '.mcp.playwright.command[2]' "$opencode_config_path")" == "@playwright/mcp@latest" ]] || fail "unexpected opencode playwright command"
+[[ "$(jq -r '.mcp.playwright.command[2]' "$opencode_config_path")" == "@playwright/mcp@0.0.79" ]] || fail "unexpected opencode playwright command"
 if grep -Fq 'ELIZA_API_HOST' "$opencode_config_path"; then
   fail "opencode ELIZA_API_HOST placeholder leaked into generated config"
 fi

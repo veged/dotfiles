@@ -14,28 +14,30 @@ plugins_root_dir="$HOME/.codex/plugins"
 plugins_dir="$plugins_root_dir/dotfiles-local"
 agents_plugins_dir="$HOME/.agents/plugins"
 marketplace_path="$agents_plugins_dir/marketplace.json"
+portable_marketplace_dir="$agents_plugins_dir/dotfiles-local"
+portable_plugins_dir="$portable_marketplace_dir/plugins"
+claude_marketplace_path="$portable_marketplace_dir/.claude-plugin/marketplace.json"
+cursor_marketplace_path="$portable_marketplace_dir/.cursor-plugin/marketplace.json"
+cursor_plugins_dir="$HOME/.cursor/plugins/local"
 force=0
 marketplace_name="dotfiles-local"
 marketplace_display_name="Dotfiles Local"
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/install-plugins [--update|--force]
+Использование: ./scripts/install-plugins [--update|--force]
 
-Builds local Codex plugin wrappers from ai/plugins/plugins.json into
-~/.codex/plugins and writes ~/.agents/plugins/marketplace.json.
+Получает полные деревья источников из ai/plugins/plugins.json, автоматически
+инвентаризирует их и строит проекции для Codex, Claude Code и Cursor.
 
-Options:
-  --update, --force  Rebuild local plugins from sources before syncing.
+Параметры:
+  --update, --force  Пересобрать внешние пакеты из источников.
 EOF
 }
 
 while (( $# > 0 )); do
   case "$1" in
-    --update|--refresh)
-      force=1
-      ;;
-    --force)
+    --update|--refresh|--force)
       force=1
       ;;
     --help|-h)
@@ -43,90 +45,307 @@ while (( $# > 0 )); do
       exit 0
       ;;
     *)
-      die "install-plugins: unknown argument: $1"
+      die "install-plugins: неизвестный параметр: $1"
       ;;
   esac
   shift
 done
 
-require_commands jq npx fd git
+require_commands jq npx fd git ugrep sd
 
-mkdir -p "$plugins_root_dir" "$plugins_root_dir/cache" "$plugins_dir" "$agents_plugins_dir"
+mkdir -p \
+  "$plugins_root_dir" \
+  "$plugins_root_dir/cache" \
+  "$plugins_dir" \
+  "$agents_plugins_dir" \
+  "$portable_plugins_dir" \
+  "$portable_marketplace_dir/.claude-plugin" \
+  "$portable_marketplace_dir/.cursor-plugin" \
+  "$cursor_plugins_dir"
 
 tmpdir=$(make_tmpdir dotfiles-plugins)
 trap 'rm -rf "$tmpdir"' EXIT
 
-build_plugin_manifest() {
-  local plugin_name=$1
-  local plugin_source=$2
-  local plugin_dir=$3
+plugin_skill_root() {
+  local plugin_root=$1
+  local candidate skill_file
 
-  jq -n \
-    --arg name "$plugin_name" \
-    --arg source "$plugin_source" \
-    --arg description "Local namespaced wrapper for skills from $plugin_source" \
-    '{
-      name: $name,
-      version: "0.1.0",
-      description: $description,
-      repository: $source,
-      skills: "./skills/",
-      interface: {
-        displayName: $name,
-        shortDescription: $description,
-        developerName: $name,
-        category: "Coding",
-        capabilities: ["Read", "Write"]
-      }
-    }' > "$plugin_dir/.codex-plugin/plugin.json"
+  for candidate in "$plugin_root/skills" "$plugin_root/.claude/skills"; do
+    [[ -d "$candidate" ]] || continue
+    skill_file=$(fd -HI -t f -g SKILL.md "$candidate" --exclude .git --exclude node_modules | head -n 1)
+    [[ -n "$skill_file" ]] || continue
+    print -r -- "./${candidate#$plugin_root/}/"
+    return 0
+  done
+
+  if [[ -f "$plugin_root/SKILL.md" ]]; then
+    print -r -- "./"
+    return 0
+  fi
+
+  return 1
 }
 
-link_plugin_root() {
+plugin_command_root() {
+  local plugin_root=$1
+
+  if [[ -d "$plugin_root/commands" ]]; then
+    print -r -- "./commands/"
+    return 0
+  fi
+
+  if [[ -d "$plugin_root/.claude/commands" ]]; then
+    print -r -- "./.claude/commands/"
+    return 0
+  fi
+
+  return 1
+}
+
+source_has_bundle_shape() {
+  local source_root=$1
+
+  [[ -f "$source_root/.codex-plugin/plugin.json" \
+    || -f "$source_root/.claude-plugin/plugin.json" \
+    || -f "$source_root/.cursor-plugin/plugin.json" \
+    || -f "$source_root/.mcp.json" \
+    || -d "$source_root/commands" \
+    || -d "$source_root/.claude/commands" \
+    || -d "$source_root/agents" \
+    || -d "$source_root/.claude/agents" \
+    || -d "$source_root/context" \
+    || -d "$source_root/knowledge-notes" \
+    || -d "$source_root/tokens" \
+    || -d "$source_root/components" \
+    || -d "$source_root/workflows" \
+    || -d "$source_root/scripts" ]]
+}
+
+plugin_metadata_json() {
   local plugin_name=$1
   local plugin_source=$2
-  local plugin_dir=$3
-  local plugin_cache_dir=$4
+  local plugin_root=$3
+  local metadata_file=""
+  local candidate version description author revision revision_suffix
 
-  [[ -d "$plugin_source" ]] || die "install-plugins: missing plugin root for $plugin_name: $plugin_source"
-  [[ -f "$plugin_source/.codex-plugin/plugin.json" ]] || die "install-plugins: missing Codex plugin manifest for $plugin_name: $plugin_source/.codex-plugin/plugin.json"
+  for candidate in \
+    "$plugin_root/.codex-plugin/plugin.json" \
+    "$plugin_root/.claude-plugin/plugin.json" \
+    "$plugin_root/.cursor-plugin/plugin.json" \
+    "$plugin_root/package.json"; do
+    [[ -f "$candidate" ]] || continue
+    metadata_file=$candidate
+    break
+  done
 
-  rm -rf "$plugin_dir"
-  ln -s "$plugin_source" "$plugin_dir"
+  version="0.1.0"
+  description="Адаптированный AI-пакет $plugin_name"
+  author=$plugin_name
+  if [[ -n "$metadata_file" ]]; then
+    version=$(jq -r '.version // "0.1.0"' "$metadata_file")
+    description=$(jq -r --arg fallback "$description" '.description // $fallback' "$metadata_file")
+    author=$(jq -r --arg fallback "$author" 'if (.author | type) == "object" then (.author.name // $fallback) elif (.author | type) == "string" then .author else $fallback end' "$metadata_file")
+  fi
 
-  mkdir -p "${plugin_cache_dir:h}"
-  rm -rf "$plugin_cache_dir"
-  mkdir -p "$plugin_cache_dir/.codex-plugin"
-  ln -s "$plugin_source/.codex-plugin/plugin.json" "$plugin_cache_dir/.codex-plugin/plugin.json"
+  [[ "$version" =~ '^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$' ]] || version="0.1.0"
+  revision=$(source_spec_revision "$plugin_source")
+  if [[ -n "$revision" ]]; then
+    revision_suffix=${revision[1,12]}
+    version="${version%%+*}+source.$revision_suffix"
+  fi
 
-  local entry_path entry_name
-  for entry_path in "$plugin_source"/*(N) "$plugin_source"/.*(N); do
-    entry_name=${entry_path:t}
-    case "$entry_name" in
-      .|..|.codex-plugin|.git|.worktrees|node_modules)
-        continue
-        ;;
-    esac
+  jq -cn \
+    --arg name "$plugin_name" \
+    --arg version "$version" \
+    --arg description "$description" \
+    --arg author "$author" \
+    --arg repository "$plugin_source" \
+    '{name: $name, version: $version, description: $description, author: $author, repository: $repository}'
+}
 
-    ln -s "$entry_path" "$plugin_cache_dir/$entry_name"
+build_codex_manifest() {
+  local plugin_root=$1
+  local metadata=$2
+  local skills_path="" default_prompt
+
+  [[ ! -f "$plugin_root/.codex-plugin/plugin.json" ]] || return 0
+  skills_path=$(plugin_skill_root "$plugin_root" 2>/dev/null || true)
+  default_prompt="Используй возможности пакета $(jq -r '.name' <<<"$metadata") для текущей задачи."
+  mkdir -p "$plugin_root/.codex-plugin"
+
+  jq -n \
+    --argjson metadata "$metadata" \
+    --arg skills "$skills_path" \
+    --arg default_prompt "$default_prompt" \
+    '{
+      name: $metadata.name,
+      version: $metadata.version,
+      description: $metadata.description,
+      author: {name: $metadata.author},
+      repository: $metadata.repository,
+      interface: {
+        displayName: $metadata.name,
+        shortDescription: $metadata.description,
+        longDescription: $metadata.description,
+        developerName: $metadata.author,
+        category: "Coding",
+        capabilities: ["Read", "Write"],
+        defaultPrompt: [$default_prompt]
+      }
+    } + (if $skills == "" then {} else {skills: $skills} end)' \
+    > "$plugin_root/.codex-plugin/plugin.json"
+}
+
+build_claude_manifest() {
+  local plugin_root=$1
+  local metadata=$2
+  local skills_path="" commands_path=""
+
+  [[ ! -f "$plugin_root/.claude-plugin/plugin.json" ]] || return 0
+  skills_path=$(plugin_skill_root "$plugin_root" 2>/dev/null || true)
+  commands_path=$(plugin_command_root "$plugin_root" 2>/dev/null || true)
+  mkdir -p "$plugin_root/.claude-plugin"
+
+  jq -n \
+    --argjson metadata "$metadata" \
+    --arg skills "$skills_path" \
+    --arg commands "$commands_path" \
+    '{
+      name: $metadata.name,
+      version: $metadata.version,
+      description: $metadata.description,
+      author: {name: $metadata.author}
+    }
+    + (if $skills == "" then {} else {skills: $skills} end)
+    + (if $commands == "" then {} else {commands: $commands} end)' \
+    > "$plugin_root/.claude-plugin/plugin.json"
+}
+
+build_cursor_manifest() {
+  local plugin_root=$1
+  local metadata=$2
+  local skills_path=""
+
+  [[ ! -f "$plugin_root/.cursor-plugin/plugin.json" ]] || return 0
+  skills_path=$(plugin_skill_root "$plugin_root" 2>/dev/null || true)
+  mkdir -p "$plugin_root/.cursor-plugin"
+
+  jq -n \
+    --argjson metadata "$metadata" \
+    --arg skills "$skills_path" \
+    '{
+      name: $metadata.name,
+      displayName: $metadata.name,
+      version: $metadata.version,
+      description: $metadata.description,
+      author: {name: $metadata.author}
+    } + (if $skills == "" then {} else {skills: $skills} end)' \
+    > "$plugin_root/.cursor-plugin/plugin.json"
+}
+
+stamp_manifest_versions() {
+  local plugin_root=$1
+  local metadata=$2
+  local version manifest_path manifest_tmp_path
+
+  version=$(jq -r '.version' <<<"$metadata")
+  for manifest_path in \
+    "$plugin_root/.codex-plugin/plugin.json" \
+    "$plugin_root/.claude-plugin/plugin.json" \
+    "$plugin_root/.cursor-plugin/plugin.json"; do
+    [[ -f "$manifest_path" ]] || continue
+    manifest_tmp_path="$manifest_path.tmp"
+    jq --arg version "$version" '.version = $version' "$manifest_path" > "$manifest_tmp_path"
+    mv "$manifest_tmp_path" "$manifest_path"
   done
 }
 
-clone_plugin_root() {
+claude_manifest_is_supported() {
+  local manifest_path=$1
+
+  jq -e 'has("agents") | not' "$manifest_path" >/dev/null
+}
+
+adapt_plugin_root() {
+  local plugin_name=$1
+  local plugin_source=$2
+  local plugin_root=$3
+  local metadata
+
+  if [[ ! -e "$plugin_root/skills" && ! -L "$plugin_root/skills" \
+    && -d "$plugin_root/.claude/skills" ]]; then
+    ln -s .claude/skills "$plugin_root/skills"
+  fi
+
+  if [[ ! -d "$plugin_root/commands" && -d "$plugin_root/.claude/commands" ]]; then
+    ln -s .claude/commands "$plugin_root/commands"
+  fi
+
+  local command_file
+  for command_file in "$plugin_root/commands"/*.(md|toml)(N); do
+    ugrep -Fq '${CLAUDE_PLUGIN_ROOT}' "$command_file" || continue
+    sd -s '${CLAUDE_PLUGIN_ROOT}' "$plugin_root" "$command_file"
+  done
+
+  metadata=$(plugin_metadata_json "$plugin_name" "$plugin_source" "$plugin_root")
+  build_codex_manifest "$plugin_root" "$metadata"
+  build_claude_manifest "$plugin_root" "$metadata"
+  build_cursor_manifest "$plugin_root" "$metadata"
+  stamp_manifest_versions "$plugin_root" "$metadata"
+}
+
+stage_all_skills_from_root() {
+  local stage_dir=$1
+  local source_root=$2
+  local fallback_name=$3
+  local destination="$stage_dir/.agents/skills"
+  local skill_file skill_dir skill_name
+  typeset -A seen
+  seen=()
+
+  mkdir -p "$destination"
+  for skill_file in "${(@f)$(fd -HI -t f -g SKILL.md "$source_root" --exclude .git --exclude node_modules)}"; do
+    [[ -n "$skill_file" ]] || continue
+    skill_dir=${skill_file:h}
+    if [[ "${skill_dir:A}" == "${source_root:A}" ]]; then
+      skill_name=$(skill_manifest_name "$skill_file" 2>/dev/null || print -r -- "$fallback_name")
+    else
+      skill_name=${skill_dir:t}
+    fi
+    [[ -z ${seen[$skill_name]-} ]] || die "install-plugins: конфликт имени навыка '$skill_name' внутри $source_root"
+    seen[$skill_name]=1
+    cp -R "$skill_dir" "$destination/$skill_name"
+  done
+}
+
+build_skill_wrapper() {
   local plugin_name=$1
   local plugin_source=$2
   local plugin_dir=$3
   local stage_dir=$4
-  local clone_dir="$stage_dir/clone"
+  shift 4
+  local -a excluded_skills
+  excluded_skills=("$@")
+  local skill_path skill_name metadata
+  typeset -A excluded_skill_names
+  excluded_skill_names=()
 
-  rm -rf "$clone_dir"
-  git clone --depth 1 "$plugin_source" "$clone_dir" >/dev/null 2>&1 || return 1
-  [[ -f "$clone_dir/.codex-plugin/plugin.json" ]] \
-    || die "install-plugins: cloned source is not a Codex plugin for $plugin_name: $plugin_source"
+  for skill_name in "${excluded_skills[@]}"; do
+    excluded_skill_names[$skill_name]=1
+  done
 
-  rm -rf "$clone_dir/.git"
   rm -rf "$plugin_dir"
-  mkdir -p "${plugin_dir:h}"
-  mv "$clone_dir" "$plugin_dir"
+  mkdir -p "$plugin_dir/skills"
+  for skill_path in "${(@f)$(acquisition_staged_skill_paths "$stage_dir")}"; do
+    [[ -n "$skill_path" ]] || continue
+    skill_name=${skill_path:t}
+    [[ -n ${excluded_skill_names[$skill_name]-} ]] && continue
+    replace_dir "$plugin_dir/skills/$skill_name" "$skill_path"
+  done
+
+  [[ -n "$(fd -HI -t f -g SKILL.md "$plugin_dir/skills" | head -n 1)" ]] \
+    || die "install-plugins: источник не подготовил навыки для $plugin_name"
+  adapt_plugin_root "$plugin_name" "$plugin_source" "$plugin_dir"
 }
 
 prune_legacy_root_plugins() {
@@ -143,125 +362,136 @@ plugin_entries=("${(@f)$(acquisition_plugin_specs "$plugins_path")}")
 typeset -Ua managed_names
 managed_names=()
 marketplace_plugins='[]'
+claude_plugins='[]'
+cursor_plugins='[]'
 plugin_index=0
 
 for entry in "${plugin_entries[@]}"; do
   plugin_name=$(jq -r '.name' <<<"$entry")
   plugin_source=$(jq -r '.source' <<<"$entry")
-  plugin_kind=$(jq -r '.kind // "skills"' <<<"$entry")
-  install_all=$(jq -r 'if .install_all then 1 else 0 end' <<<"$entry")
+  selection_explicit=$(jq -r '.selection_explicit' <<<"$entry")
   plugin_skills=("${(@f)$(acquisition_spec_skills "$entry")}")
   excluded_skills=("${(@f)$(acquisition_spec_excluded_skills "$entry")}")
-  if (( ${#plugin_skills[@]} == 1 )) && [[ -z ${plugin_skills[1]} ]]; then
-    plugin_skills=()
-  fi
-  if (( ${#excluded_skills[@]} == 1 )) && [[ -z ${excluded_skills[1]} ]]; then
-    excluded_skills=()
-  fi
+  [[ ${#plugin_skills[@]} != 1 || -n ${plugin_skills[1]} ]] || plugin_skills=()
+  [[ ${#excluded_skills[@]} != 1 || -n ${excluded_skills[1]} ]] || excluded_skills=()
+
   plugin_dir="$plugins_dir/$plugin_name"
-  plugin_cache_dir=""
-  plugin_cache_manifest=""
-  plugin_manifest_path=""
-  plugin_version=""
   stage_dir="$tmpdir/plugin-$plugin_index"
-  plugin_category="Coding"
+  source_stage="$stage_dir/source"
+  source_root=""
+  install_succeeded=0
+  spec_fingerprint=$(jq -cS '.' <<<"$entry")
   ((plugin_index += 1))
   mkdir -p "$stage_dir"
 
-  if [[ "$plugin_kind" == "plugin" ]]; then
-    if [[ -d "$plugin_source" ]]; then
-      # Local plugin root: link live so edits in the working copy propagate immediately.
-      [[ -f "$plugin_source/.codex-plugin/plugin.json" ]] || die "install-plugins: missing Codex plugin manifest for $plugin_name: $plugin_source/.codex-plugin/plugin.json"
-      plugin_category=$(jq -r '.interface.category // "Coding"' "$plugin_source/.codex-plugin/plugin.json")
-      plugin_version=$(jq -r '.version // "0.1.0"' "$plugin_source/.codex-plugin/plugin.json")
-      plugin_cache_dir="$plugins_root_dir/cache/dotfiles-local/$plugin_name/$plugin_version"
-      plugin_manifest_path="$plugin_source/.codex-plugin/plugin.json"
-      plugin_cache_manifest="$plugin_cache_dir/.codex-plugin/plugin.json"
-
-      needs_install=$force
-      if (( ! needs_install )); then
-        if [[ ! -L "$plugin_dir" || "${plugin_dir:A}" != "${plugin_source:A}" || ! -d "$plugin_cache_dir" || -L "$plugin_cache_dir" || ! -L "$plugin_cache_manifest" || "${plugin_cache_manifest:A}" != "${plugin_manifest_path:A}" ]]; then
-          needs_install=1
-        fi
-      fi
-
-      if (( needs_install )); then
-        print "install-plugins: linking: $plugin_source"
-        link_plugin_root "$plugin_name" "$plugin_source" "$plugin_dir" "$plugin_cache_dir"
-      else
-        print "install-plugins: already present: $plugin_name"
-      fi
-    else
-      # Remote plugin: clone into plugin_dir as a real directory, same shape as kind: skills.
-      # A manual symlink at plugin_dir is a local dev override and is left untouched.
-      if [[ -L "$plugin_dir" ]]; then
-        print "install-plugins: local override: $plugin_name"
-      else
-        needs_install=$force
-        (( needs_install )) || [[ -f "$plugin_dir/.codex-plugin/plugin.json" ]] || needs_install=1
-        if (( needs_install )); then
-          print "install-plugins: cloning: $plugin_source"
-          if ! clone_plugin_root "$plugin_name" "$plugin_source" "$plugin_dir" "$stage_dir"; then
-            [[ -f "$plugin_dir/.codex-plugin/plugin.json" ]] \
-              || { print -u2 "install-plugins: skipping $plugin_name (clone failed: $plugin_source)"; continue; }
-            print -u2 "install-plugins: keeping previous $plugin_name (clone failed: $plugin_source)"
-          fi
-        else
-          print "install-plugins: already present: $plugin_name"
-        fi
-      fi
-      plugin_category=$(jq -r '.interface.category // "Coding"' "$plugin_dir/.codex-plugin/plugin.json")
-    fi
+  if [[ -L "$plugin_dir" ]]; then
+    print "install-plugins: локальное переопределение: $plugin_name"
   else
+    source_uri=$(source_spec_uri "$plugin_source")
+    is_local=0
+    [[ -d "$source_uri" ]] && is_local=1
     needs_install=$force
     if (( ! needs_install )); then
-      if [[ ! -f "$plugin_dir/.codex-plugin/plugin.json" || ! -d "$plugin_dir/skills" ]]; then
-        needs_install=1
-      elif (( install_all )); then
-        skill_count=$(fd -td -d 1 . "$plugin_dir/skills" | wc -l | tr -d ' ')
-        [[ "$skill_count" == "0" ]] && needs_install=1
-        if (( ! needs_install )); then
-          for skill_name in "${excluded_skills[@]}"; do
-            [[ -d "$plugin_dir/skills/$skill_name" ]] && { needs_install=1; break; }
-          done
+      [[ -f "$plugin_dir/.codex-plugin/plugin.json" \
+        && -f "$plugin_dir/.claude-plugin/plugin.json" \
+        && -f "$plugin_dir/.cursor-plugin/plugin.json" \
+        && -f "$plugin_dir/.dotfiles-spec" \
+        && "$(<"$plugin_dir/.dotfiles-spec")" == "$spec_fingerprint" ]] \
+        || needs_install=1
+      (( is_local )) && needs_install=1
+      if (( ! needs_install )) && [[ "$selection_explicit" == true ]]; then
+        for skill_name in "${excluded_skills[@]}"; do
+          [[ ! -d "$plugin_dir/skills/$skill_name" ]] || {
+            needs_install=1
+            break
+          }
+        done
+        if (( ! needs_install && ${#plugin_skills[@]} )); then
+          acquisition_has_selected_skills "$plugin_dir/skills" "${plugin_skills[@]}" \
+            || needs_install=1
         fi
-      else
-        acquisition_has_selected_skills "$plugin_dir/skills" "${plugin_skills[@]}" || needs_install=1
       fi
     fi
 
     if (( needs_install )); then
-      print "install-plugins: fetching: $plugin_source"
-      acquisition_stage_skills "$stage_dir" "$plugin_source" "${plugin_skills[@]}"
+      if [[ "$selection_explicit" == true ]]; then
+        print "install-plugins: получение выбранных навыков: $plugin_source"
+        acquisition_stage_skills "$stage_dir" "$plugin_source" "${plugin_skills[@]}"
+        build_skill_wrapper "$plugin_name" "$plugin_source" "$plugin_dir" "$stage_dir" "${excluded_skills[@]}"
+        install_succeeded=1
+      else
+        if (( is_local )); then
+          source_root=$source_uri
+        else
+          print "install-plugins: получение полного пакета: $plugin_source"
+          source_error="$stage_dir/source.err"
+          if ! source_root=$(materialize_source "$source_stage" "$plugin_source" 2>"$source_error"); then
+            cat "$source_error" >&2
+            source_root=""
+            if [[ -f "$plugin_dir/.codex-plugin/plugin.json" ]]; then
+              print -u2 "install-plugins: сохранена предыдущая версия $plugin_name"
+            else
+              print -u2 "install-plugins: пропущен $plugin_name — источник недоступен"
+              continue
+            fi
+          fi
+        fi
 
-      rm -rf "$plugin_dir"
-      mkdir -p "$plugin_dir/.codex-plugin" "$plugin_dir/skills"
-
-      staged_paths=("${(@f)$(acquisition_staged_skill_paths "$stage_dir")}")
-      if (( ${#staged_paths[@]} == 1 )) && [[ -z ${staged_paths[1]} ]]; then
-        staged_paths=()
+        if [[ -n ${source_root-} ]]; then
+          if source_has_bundle_shape "$source_root"; then
+            print "install-plugins: адаптация полного пакета: $plugin_name"
+            rm -rf "$plugin_dir"
+            cp -R "$source_root" "$plugin_dir"
+            rm -rf "$plugin_dir/.git"
+            adapt_plugin_root "$plugin_name" "$plugin_source" "$plugin_dir"
+            install_succeeded=1
+          else
+            print "install-plugins: сборка оболочки навыков: $plugin_name"
+            stage_all_skills_from_root "$stage_dir" "$source_root" "$plugin_name"
+            build_skill_wrapper "$plugin_name" "$plugin_source" "$plugin_dir" "$stage_dir"
+            install_succeeded=1
+          fi
+        fi
       fi
-      (( ${#staged_paths[@]} )) || die "install-plugins: no skills staged for plugin: $plugin_name"
 
-      typeset -A excluded_skill_names
-      excluded_skill_names=()
-      for skill_name in "${excluded_skills[@]}"; do
-        excluded_skill_names[$skill_name]=1
-      done
-
-      for skill_path in "${staged_paths[@]}"; do
-        skill_name=${skill_path:t}
-        [[ -n ${excluded_skill_names[$skill_name]-} ]] && continue
-        replace_dir "$plugin_dir/skills/$skill_name" "$skill_path"
-      done
-
-      build_plugin_manifest "$plugin_name" "$plugin_source" "$plugin_dir"
+      if (( install_succeeded )) && [[ -d "$plugin_dir" && ! -L "$plugin_dir" ]]; then
+        print -r -- "$spec_fingerprint" > "$plugin_dir/.dotfiles-spec"
+      fi
     else
-      print "install-plugins: already present: $plugin_name"
+      print "install-plugins: уже установлено: $plugin_name"
     fi
   fi
 
+  [[ -f "$plugin_dir/.codex-plugin/plugin.json" ]] || {
+    print -u2 "install-plugins: пропущен $plugin_name — нет Codex manifest"
+    continue
+  }
+  has_claude_manifest=0
+  has_cursor_manifest=0
+  if [[ -f "$plugin_dir/.claude-plugin/plugin.json" ]]; then
+    if claude_manifest_is_supported "$plugin_dir/.claude-plugin/plugin.json"; then
+      has_claude_manifest=1
+    else
+      print -u2 "install-plugins: $plugin_name не опубликован в Claude — несовместимый legacy manifest"
+    fi
+  fi
+  [[ ! -f "$plugin_dir/.cursor-plugin/plugin.json" ]] \
+    || has_cursor_manifest=1
+  if (( ! has_claude_manifest )) && [[ ! -f "$plugin_dir/.claude-plugin/plugin.json" ]]; then
+    print -u2 "install-plugins: локальное переопределение $plugin_name не опубликовано в Claude — нет manifest"
+  fi
+  (( has_cursor_manifest )) \
+    || print -u2 "install-plugins: локальное переопределение $plugin_name не опубликовано в Cursor — нет manifest"
+
+  plugin_category=$(jq -r '.interface.category // "Coding"' "$plugin_dir/.codex-plugin/plugin.json")
+  plugin_description=$(jq -r '.description // "AI package"' "$plugin_dir/.codex-plugin/plugin.json")
+  if (( has_claude_manifest )); then
+    plugin_version=$(jq -r '.version // "0.1.0"' "$plugin_dir/.claude-plugin/plugin.json")
+  else
+    plugin_version=$(jq -r '.version // "0.1.0"' "$plugin_dir/.codex-plugin/plugin.json")
+  fi
   managed_names+=("$plugin_name")
+
   marketplace_plugins=$(jq \
     --arg name "$plugin_name" \
     --arg category "$plugin_category" \
@@ -277,10 +507,61 @@ for entry in "${plugin_entries[@]}"; do
       },
       category: $category
     }]' <<<"$marketplace_plugins")
+
+  if (( has_claude_manifest )); then
+    claude_plugins=$(jq \
+      --arg name "$plugin_name" \
+      --arg description "$plugin_description" \
+      --arg version "$plugin_version" \
+      '. + [{
+        name: $name,
+        source: ("./plugins/" + $name),
+        description: $description,
+        version: $version
+      }]' <<<"$claude_plugins")
+  fi
+
+  if (( has_cursor_manifest )); then
+    cursor_plugins=$(jq \
+      --arg name "$plugin_name" \
+      --arg description "$plugin_description" \
+      '. + [{
+        name: $name,
+        source: ("./plugins/" + $name),
+        description: $description
+      }]' <<<"$cursor_plugins")
+  fi
 done
 
 prune_dir_except "$plugins_dir" "${managed_names[@]}"
+prune_dir_except "$portable_plugins_dir" "${managed_names[@]}"
 prune_legacy_root_plugins "${managed_names[@]}"
+
+for plugin_name in "${managed_names[@]}"; do
+  plugin_dir="$plugins_dir/$plugin_name"
+  portable_plugin_path="$portable_plugins_dir/$plugin_name"
+  if [[ -L "$portable_plugin_path" ]]; then
+    if [[ "${portable_plugin_path:A}" != "${plugin_dir:A}" ]]; then
+      rm "$portable_plugin_path"
+      ln -s "$plugin_dir" "$portable_plugin_path"
+    fi
+  elif [[ ! -e "$portable_plugin_path" ]]; then
+    ln -s "$plugin_dir" "$portable_plugin_path"
+  fi
+
+  cursor_plugin_path="$cursor_plugins_dir/$plugin_name"
+  [[ -f "$plugin_dir/.cursor-plugin/plugin.json" ]] || continue
+  if [[ -L "$cursor_plugin_path" ]]; then
+    [[ "${cursor_plugin_path:A}" == "${plugin_dir:A}" ]] || {
+      rm "$cursor_plugin_path"
+      ln -s "$plugin_dir" "$cursor_plugin_path"
+    }
+  elif [[ ! -e "$cursor_plugin_path" ]]; then
+    ln -s "$plugin_dir" "$cursor_plugin_path"
+  else
+    print -u2 "install-plugins: сохранён конфликтующий Cursor path: $cursor_plugin_path"
+  fi
+done
 
 jq -n \
   --arg name "$marketplace_name" \
@@ -288,10 +569,35 @@ jq -n \
   --argjson plugins "$marketplace_plugins" \
   '{
     name: $name,
-    interface: {
-      displayName: $display_name
-    },
+    interface: {displayName: $display_name},
     plugins: $plugins
   }' > "$marketplace_path"
 
-print "install-plugins: synced ${#managed_names[@]} plugins"
+jq -n \
+  --arg name "$marketplace_name" \
+  --arg display_name "$marketplace_display_name" \
+  --argjson plugins "$claude_plugins" \
+  '{
+    name: $name,
+    owner: {name: $display_name},
+    metadata: {description: $display_name},
+    plugins: $plugins
+  }' > "$claude_marketplace_path"
+
+jq -n \
+  --arg name "$marketplace_name" \
+  --argjson plugins "$cursor_plugins" \
+  '{name: $name, plugins: $plugins}' \
+  > "$cursor_marketplace_path"
+
+print "install-plugins: синхронизировано пакетов: ${#managed_names[@]}"
+print "install-plugins: доступные команды:"
+command_count=0
+for plugin_name in "${managed_names[@]}"; do
+  for command_path in "$plugins_dir/$plugin_name/commands"/*.(md|toml)(N); do
+    command_name=${command_path:t:r}
+    print "  /$plugin_name:$command_name"
+    ((command_count += 1))
+  done
+done
+(( command_count )) || print "  —"
