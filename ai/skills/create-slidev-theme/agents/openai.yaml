@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Slidev Theme"
+  short_description: "Создаёт проверенные темы Slidev из описания или шаблона"
+  default_prompt: "Используй $create-slidev-theme, чтобы создать системную тему Slidev по описанию либо шаблону PPTX или Keynote."
