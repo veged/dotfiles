@@ -3,6 +3,10 @@
     "source": "anthropics/skills",
     "skills": "frontend-design"
   },
+  "dotfiles": {
+    "source": "./ai/plugins/dotfiles",
+    "kind": "plugin"
+  },
   "impeccable": "pbakaus/impeccable",
   "improve": "shadcn/improve",
   "mblode": "mblode/agent-skills",
