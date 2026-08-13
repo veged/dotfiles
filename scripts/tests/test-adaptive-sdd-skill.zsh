@@ -98,9 +98,11 @@ done
 
 registry="$repo_root/ai/skills/skills.json"
 jq -e '
-  (."mattpocock/skills" | index("!code-review") != null)
+  ([to_entries[] | select(.key | startswith("mattpocock/skills#")) | .value][0]
+    | index("!code-review") != null)
   and
-  (."obra/superpowers" | index("!executing-plans") != null)
+  ([to_entries[] | select(.key | startswith("obra/superpowers#")) | .value][0]
+    | index("!executing-plans") != null)
 ' "$registry" >/dev/null \
   || fail 'локальные навыки не исключают одноимённые внешние копии'
 

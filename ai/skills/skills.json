@@ -28,7 +28,9 @@
     "!test-driven-development",
     "!subagent-driven-development",
     "!brainstorming",
-    "!executing-plans"
+    "!executing-plans",
+    "!using-git-worktrees",
+    "!finishing-a-development-branch"
   ],
   "nicobailon/visual-explainer#528b71feb85dab5d92b82c3554880826f50a75da": "*",
   "openai/skills#49f948faa9258a0c61caceaf225e179651397431": [
