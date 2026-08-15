@@ -3,6 +3,9 @@
     "source": "anthropics/skills#b29e7cf65e5cb78a5ac33d582270551bc74a14eb",
     "skills": "frontend-design"
   },
+  "create-slidev-theme": {
+    "source": "ssh://ssh.sourcecraft.dev/veged/create-slidev-theme.git#1bc25b77c2da46a8466557b36fbf7332ac3ceb65"
+  },
   "design-system-ops": "murphytrueman/design-system-ops#a4b11ef230b47198e131df4579067f88384c828d",
   "dotfiles": "./ai/plugins/dotfiles",
   "impeccable": "pbakaus/impeccable#a075d89bdbe60b2b00220cb0527fb5091e84215e",
