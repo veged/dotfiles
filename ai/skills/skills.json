@@ -24,6 +24,7 @@
     "!prototype"
   ],
   "Leonxlnx/taste-skill#e988add20dab0fa97d7a76781c48961c8184288e": "*",
+  "Nutlope/hallmark#13ac0ec7e148655948100b6396439e481361d690": "hallmark",
   "obra/superpowers#44c9b2d6e889982ac18c27d05a19fefe335194e1": [
     "!test-driven-development",
     "!subagent-driven-development",
