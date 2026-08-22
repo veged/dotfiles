@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<delegatemap>
+  <delegate decode="svg:decode" stealth="True"
+    command="&apos;/bin/sh&apos; -c &apos;exec rsvg-convert --dpi-x &quot;$3&quot; --dpi-y &quot;$3&quot; &quot;$1&quot; -o &quot;$2&quot;&apos; _ &apos;%s&apos; &apos;%s&apos; &apos;%s&apos;"/>
+</delegatemap>

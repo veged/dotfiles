@@ -1,3 +1,5 @@
+[ -r "$HOME/.shellenv" ] && . "$HOME/.shellenv"
+
 # Кешированный eval: source из файла, пересоздаёт если нет кеша
 # Сброс: rm ~/.cache/shell-eval/*
 _cached_eval() {

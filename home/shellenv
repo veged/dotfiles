@@ -1,0 +1,2 @@
+# Общие переменные среды для пользовательских оболочек.
+export MAGICK_CONFIGURE_PATH="${MAGICK_CONFIGURE_PATH:-${XDG_CONFIG_HOME:-$HOME/.config}/ImageMagick}"

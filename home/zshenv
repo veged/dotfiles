@@ -1,0 +1,3 @@
+[[ -n "$CURSOR_AGENT" ]] && { export NO_COLOR=1; unset FORCE_COLOR; }
+
+[ -r "$HOME/.shellenv" ] && . "$HOME/.shellenv"
