@@ -51,7 +51,7 @@ while (( $# > 0 )); do
   shift
 done
 
-require_commands jq npx fd git ugrep sd
+require_commands jq npx fd git ugrep sd yq
 
 mkdir -p \
   "$plugins_root_dir" \
@@ -100,6 +100,42 @@ plugin_command_root() {
   fi
 
   return 1
+}
+
+project_toml_commands_as_codex_skills() {
+  local plugin_root=$1
+  local command_file command_name description prompt skill_dir skill_file
+
+  for command_file in "$plugin_root/commands"/*.toml(N); do
+    command_name=${command_file:t:r}
+    skill_dir="$plugin_root/skills/$command_name"
+    skill_file="$skill_dir/SKILL.md"
+    [[ ! -f "$skill_file" ]] || continue
+
+    description=$(yq -er '.description | select(type == "!!str" and length > 0)' "$command_file") \
+      || die "install-plugins: у команды $command_file нет непустого description"
+    prompt=$(yq -er '.prompt | select(type == "!!str" and length > 0)' "$command_file") \
+      || die "install-plugins: у команды $command_file нет непустого prompt"
+
+    mkdir -p "$skill_dir"
+    {
+      print -r -- '---'
+      print -r -- "name: $(jq -Rn --arg value "$command_name" '$value')"
+      print -r -- "description: $(jq -Rn --arg value "$description" '$value')"
+      print -r -- '---'
+      print
+      print -r -- "# $command_name"
+      print
+      print -r -- 'Исполни шаблон команды ниже.'
+      if ugrep -Fq '{{args}}' "$command_file"; then
+        print -r -- 'Считай `{{args}}` текстом, переданным после slash-команды.'
+      fi
+      print
+      print -r -- '## Шаблон команды'
+      print
+      print -r -- "$prompt"
+    } > "$skill_file"
+  done
 }
 
 source_has_bundle_shape() {
@@ -286,6 +322,8 @@ adapt_plugin_root() {
     ugrep -Fq '${CLAUDE_PLUGIN_ROOT}' "$command_file" || continue
     sd -s '${CLAUDE_PLUGIN_ROOT}' "$plugin_root" "$command_file"
   done
+
+  project_toml_commands_as_codex_skills "$plugin_root"
 
   metadata=$(plugin_metadata_json "$plugin_name" "$plugin_source" "$plugin_root")
   build_codex_manifest "$plugin_root" "$metadata"

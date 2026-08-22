@@ -104,6 +104,11 @@ cat > "$fixture_root/local-plugin-root/commands/deck.md" <<'MD'
 Read ${CLAUDE_PLUGIN_ROOT}/knowledge-notes/shared.md.
 MD
 
+cat > "$fixture_root/local-plugin-root/commands/principles.toml" <<'TOML'
+description = "Применить персональные инженерные принципы"
+prompt = '''Примени принципы к задаче: {{args}}'''
+TOML
+
 cat > "$fixture_root/local-plugin-root/knowledge-notes/shared.md" <<'MD'
 # Shared
 MD
@@ -280,7 +285,19 @@ assert_path_exists "$excluded_plugin_dir/skills/alpha/SKILL.md" "included skill 
 assert_not_exists "$excluded_plugin_dir/skills/beta" "excluded skill in exclusion plugin"
 [[ -d "$linked_plugin_dir" && ! -L "$linked_plugin_dir" ]] || fail "adapted plugin root must be a real directory"
 assert_path_exists "$linked_plugin_dir/commands/deck.md" "plugin-root command"
+assert_path_exists "$linked_plugin_dir/commands/principles.toml" "TOML-команда plugin root"
 assert_path_exists "$linked_plugin_dir/skills/presentation/SKILL.md" "plugin-root skill"
+assert_path_exists "$linked_plugin_dir/skills/principles/SKILL.md" \
+  "навык Codex из TOML-команды"
+ugrep -Fq 'description: "Применить персональные инженерные принципы"' \
+  "$linked_plugin_dir/skills/principles/SKILL.md" \
+  || fail "проекция TOML-команды потеряла description"
+ugrep -Fq 'Примени принципы к задаче: {{args}}' \
+  "$linked_plugin_dir/skills/principles/SKILL.md" \
+  || fail "проекция TOML-команды потеряла prompt"
+ugrep -Fq 'Считай `{{args}}` текстом, переданным после slash-команды.' \
+  "$linked_plugin_dir/skills/principles/SKILL.md" \
+  || fail "в проекции TOML-команды нет правила подстановки аргументов"
 assert_path_exists "$linked_plugin_dir/knowledge-notes/shared.md" "plugin-root shared knowledge"
 ugrep -Fq "$linked_plugin_dir/knowledge-notes/shared.md" "$linked_plugin_dir/commands/deck.md" \
   || fail "Claude plugin root variable was not adapted for the portable bundle"
