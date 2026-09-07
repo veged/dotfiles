@@ -13,6 +13,7 @@
   "mattpocock/skills#6acc160e4e0cd062dbbbd7a1b26ae92855edf07e:skills/productivity": "*",
   "terraphim/codex-skills#047d5b01e6abad817d6ec64fd060741158a96c29": "rust-development",
   "https://github.com/beaverbeard/slopotron.git#5edd02134a9c5ab0234d0e71fb0241fbf2273341": "slopotron",
+  "robonuggets/gauntlet-loop#9b1975a1b8f01981f3f1e6b667ad3aaf907178ea": "gauntlet-loop",
   "veged/caveman#f9a3eb1adbe2890217edffe48325619ae62a62e3:skills": "caveman",
   "anthropics/skills#b29e7cf65e5cb78a5ac33d582270551bc74a14eb": [
     "frontend-design",

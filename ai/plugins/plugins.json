@@ -10,6 +10,7 @@
   "dotfiles": "./ai/plugins/dotfiles",
   "impeccable": "pbakaus/impeccable#a075d89bdbe60b2b00220cb0527fb5091e84215e",
   "improve": "shadcn/improve#03369ee6d7cafbfcecc4346539b05b3dc0a603bb",
+  "lavish-axi": "kunchenguid/lavish-axi#a7ddbbaf585e101793938c6dacf8bb0c11e09003",
   "mblode": "mblode/agent-skills#73c8a4cefccdc3c86c2395f92223a41ce5c72903",
   "ppp": "./ai/plugins/ppp",
   "ponytail": "DietrichGebert/ponytail#16f29800fd2681bdf24f3eb4ccffe38be3baec6b",

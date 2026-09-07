@@ -86,6 +86,11 @@
       }
     }
   },
+  "practicum-mcp": {
+    "enabled": true,
+    "transport": "remote",
+    "url": "https://practicum-student-mcp-testing.common-stands.praktikum.yandex.ru/mcp"
+  },
   "tracker": {
     "enabled": true,
     "transport": "local",
