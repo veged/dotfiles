@@ -1,5 +1,8 @@
 {
   "private": true,
+  "scripts": {
+    "test": "node --test remark-unwrap-text.test.mjs"
+  },
   "dependencies": {
     "remark-cli": "12.0.1",
     "remark-frontmatter": "^5.0.0",

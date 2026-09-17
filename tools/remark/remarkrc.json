@@ -20,6 +20,7 @@
       "remark-lint-table-cell-padding",
       "padded"
     ],
-    "remark-lint-final-newline"
+    "remark-lint-final-newline",
+    "./remark-unwrap-text.mjs"
   ]
 }
