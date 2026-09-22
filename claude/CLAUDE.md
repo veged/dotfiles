@@ -1,6 +1,7 @@
 # Глобальные инструкции
 
 @~/.agents/instructions/agents.md
+@~/.agents/instructions/artifact-preservation.md
 @~/.agents/instructions/cli.md
 @~/.agents/instructions/engineering.md
 @~/.agents/instructions/issues-tracking.md
