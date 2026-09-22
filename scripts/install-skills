@@ -55,9 +55,9 @@ done
   && die "install-skills: параметры --local-only и --update несовместимы"
 
 if (( local_only )); then
-  require_commands diff
+  require_commands diff python3 yq jq ugrep
 else
-  require_commands jq npx fd diff git ugrep
+  require_commands jq npx fd diff git ugrep python3 yq
 fi
 
 mkdir -p "$AGENT_SKILLS_CANONICAL_DIR"
@@ -111,6 +111,7 @@ done
 
 if (( local_only )); then
   agent_skills_reconcile_layer
+  "$repo_root/scripts/sync-skill-discovery"
   print "install-skills: синхронизировано локальных навыков: ${#managed_names[@]}"
   exit 0
 fi
@@ -219,5 +220,6 @@ agent_skills_append_preserved_bundles managed_names
 prune_dir_except "$AGENT_SKILLS_CANONICAL_DIR" "${managed_names[@]}"
 
 agent_skills_reconcile_layer
+"$repo_root/scripts/sync-skill-discovery"
 
 print "install-skills: синхронизировано навыков: ${#managed_names[@]}"

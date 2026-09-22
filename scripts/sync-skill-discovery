@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+"""Сохранить явный вызов подробных навыков без их начальной загрузки."""
+import argparse
+import json
+import re
+import shutil
+import subprocess
+from pathlib import Path
+
+
+def roots(home, manifest):
+    for name in manifest.get('user_skills', []):
+        for directory in ('.agents', '.codex'):
+            yield home / directory / 'skills' / name
+    for package, names in manifest.get('plugins', {}).items():
+        package_roots = [home / '.codex/plugins/dotfiles-local' / package]
+        cache = home / '.codex/plugins/cache/dotfiles-local' / package
+        if cache.is_dir():
+            package_roots.extend(p for p in cache.iterdir() if p.is_dir())
+        for root in package_roots:
+            for name in names:
+                yield root / 'skills' / name
+
+
+def read_yaml(path):
+    if not path.exists():
+        return {}
+    if not shutil.which('yq'):
+        raise RuntimeError('Для сохранения существующих метаданных нужен yq')
+    result = subprocess.run(['yq', '-o=json', '.', str(path)], check=True, capture_output=True, text=True)
+    value = json.loads(result.stdout)
+    if not isinstance(value, dict):
+        raise ValueError(f'Ожидался объект YAML: {path}')
+    return value
+
+
+def apply(root, check):
+    path = root / 'agents/openai.yaml'
+    metadata = read_yaml(path)
+    policy = metadata.get('policy') or {}
+    if not isinstance(policy, dict):
+        raise ValueError(f'Ожидался объект policy: {path}')
+    if policy.get('allow_implicit_invocation') is False:
+        return False
+    if check:
+        return True
+    if path.exists():
+        result = subprocess.run(
+            ['yq', '.policy.allow_implicit_invocation = false', str(path)],
+            check=True, capture_output=True, text=True,
+        )
+        updated = result.stdout
+    else:
+        updated = 'policy:\n  allow_implicit_invocation: false\n'
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(updated)
+    expected = dict(metadata)
+    expected['policy'] = {**policy, 'allow_implicit_invocation': False}
+    if read_yaml(path) != expected:
+        raise RuntimeError(f'Проверка сохранения полей не пройдена: {path}')
+    return True
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--home', type=Path, default=Path.home())
+    parser.add_argument('--manifest', type=Path, default=Path(__file__).resolve().parent.parent / 'ai/skills/discovery.json')
+    parser.add_argument('--check', action='store_true')
+    args = parser.parse_args()
+    if not shutil.which('yq'):
+        raise RuntimeError('Для проверки метаданных нужен yq')
+    manifest = json.loads(args.manifest.read_text())
+    names = manifest.get('user_skills', []) + list(manifest.get('plugins', {}))
+    names += [name for values in manifest.get('plugins', {}).values() for name in values]
+    if any(not re.fullmatch(r'[a-z0-9][a-z0-9-]*', name) for name in names):
+        raise ValueError('Недопустимое имя в discovery.json')
+    seen = set()
+    changed = 0
+    for root in roots(args.home, manifest):
+        if not (root / 'SKILL.md').is_file():
+            continue
+        root = root.resolve()
+        if root in seen:
+            continue
+        seen.add(root)
+        changed += apply(root, args.check)
+    verb = 'требуют синхронизации' if args.check else 'обновлены'
+    print(f'sync-skill-discovery: проверено {len(seen)}, {verb}: {changed}')
+    if args.check and changed:
+        raise SystemExit(1)
+
+
+if __name__ == '__main__':
+    main()

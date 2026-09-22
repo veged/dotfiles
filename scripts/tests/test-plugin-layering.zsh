@@ -35,6 +35,9 @@ mkdir -p \
   "$bin_dir"
 
 cp "$repo_root/scripts/install-plugins" "$fixture_root/scripts/install-plugins"
+cp "$repo_root/scripts/sync-skill-discovery" "$fixture_root/scripts/sync-skill-discovery"
+mkdir -p "$fixture_root/ai/skills"
+print '{"plugins": {}, "user_skills": []}' > "$fixture_root/ai/skills/discovery.json"
 cp "$repo_root/scripts/lib/install-common.zsh" "$fixture_root/scripts/lib/install-common.zsh"
 cp "$repo_root/scripts/lib/skill-acquisition.zsh" "$fixture_root/scripts/lib/skill-acquisition.zsh"
 

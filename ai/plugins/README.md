@@ -82,4 +82,8 @@ claude plugin install <name>@dotfiles-local --scope user
 ```
 
 После установки нужен новый thread. Команды вызываются в namespaced форме,
-например `/design-system-ops:full-diagnostic`.
+например `/mblode:planning`.
+
+## Повторы команд в Codex
+
+Codex может создавать синтетические `source-command-*` из Markdown-команд. Четыре повтора `create-theme`, `audience`, `slide` и `structure` отключены по полным именам в `codex/.config.template.toml`, их функции доступны через основные навыки. Исходные команды сохранены. Очистка только кэша не решает проблему: клиент создаёт эти файлы повторно.

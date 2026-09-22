@@ -1,3 +1,4 @@
+skills.max_context_tokens = 3500
 project_doc_max_bytes = 65536
 personality = "pragmatic"
 model = "gpt-5.4"
@@ -85,3 +86,21 @@ trust_level = "trusted"
 last_updated = "2026-04-17T17:40:16Z"
 source_type = "local"
 source = "$HOME/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+# Синтетические повторы команд, доступных через основные навыки.
+
+[[skills.config]]
+name = "create-slidev-theme:source-command-create-theme"
+enabled = false
+
+[[skills.config]]
+name = "presentation-craft:source-command-audience"
+enabled = false
+
+[[skills.config]]
+name = "presentation-craft:source-command-slide"
+enabled = false
+
+[[skills.config]]
+name = "presentation-craft:source-command-structure"
+enabled = false

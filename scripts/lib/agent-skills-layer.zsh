@@ -98,6 +98,40 @@ agent_skills_ensure_projected_symlink() {
   ln -s "$canonical_path" "$exposed_path"
 }
 
+# Старые установщики ссылались прямо на локальный источник, иногда под именем
+# каталога вместо name из SKILL.md. Мигрируем только зарегистрированные источники
+# с полностью совпадающими файлами, сохраняя самостоятельные переопределения.
+agent_skills_migrate_legacy_source_symlinks() {
+  local registry_path="$repo_root/ai/skills/skills.json"
+  local source_path declared_name canonical_path projection_dir exposed_path
+  local source_spec exposed_name home_dir=${AGENT_SKILLS_CANONICAL_DIR:h:h}
+  local -a exposed_names
+
+  [[ -f "$registry_path" ]] || return 0
+  for source_spec in "${(@f)$(jq -r 'keys[] | select(startswith("~/") or startswith("/"))' "$registry_path")}"; do
+    [[ -n "$source_spec" ]] || continue
+    source_path=$source_spec
+    [[ "$source_path" != '~/'* ]] || source_path="$home_dir/${source_path#'~/'}"
+    [[ -f "$source_path/SKILL.md" ]] || continue
+    declared_name=$(skill_manifest_name "$source_path/SKILL.md" 2>/dev/null || true)
+    [[ -n "$declared_name" ]] || continue
+    canonical_path="$AGENT_SKILLS_CANONICAL_DIR/$declared_name"
+    [[ -d "$canonical_path" && "${canonical_path:A}" != "${source_path:A}" ]] || continue
+    diff -qr "$source_path" "$canonical_path" >/dev/null 2>&1 || continue
+
+    exposed_names=("$declared_name")
+    [[ "${source_path:t}" == "$declared_name" ]] || exposed_names+=("${source_path:t}")
+    for projection_dir in "${AGENT_SKILLS_PROJECTION_DIRS[@]}"; do
+      for exposed_name in "${exposed_names[@]}"; do
+        exposed_path="$projection_dir/$exposed_name"
+        [[ -L "$exposed_path" && "${exposed_path:A}" == "${source_path:A}" ]] || continue
+        rm -f "$exposed_path"
+        agent_skills_log "мигрирована устаревшая ссылка: $exposed_path"
+      done
+    done
+  done
+}
+
 agent_skills_append_preserved_bundles() {
   local managed_names_ref=$1
   local name
@@ -121,6 +155,8 @@ agent_skills_reconcile_layer() {
   for name in "${AGENT_SKILLS_SHARED_BUNDLE_NAMES[@]}"; do
     agent_skills_migrate_shared_bundle_to_canonical "$name"
   done
+
+  agent_skills_migrate_legacy_source_symlinks
 
   for projection_dir in "${AGENT_SKILLS_PROJECTION_DIRS[@]}"; do
     agent_skills_prune_projected_symlinks "$projection_dir"

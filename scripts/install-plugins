@@ -51,7 +51,7 @@ while (( $# > 0 )); do
   shift
 done
 
-require_commands jq npx fd git ugrep sd yq
+require_commands jq npx fd git ugrep sd yq python3
 
 mkdir -p \
   "$plugins_root_dir" \
@@ -627,6 +627,8 @@ jq -n \
   --argjson plugins "$cursor_plugins" \
   '{name: $name, plugins: $plugins}' \
   > "$cursor_marketplace_path"
+
+"$repo_root/scripts/sync-skill-discovery"
 
 print "install-plugins: синхронизировано пакетов: ${#managed_names[@]}"
 print "install-plugins: доступные команды:"

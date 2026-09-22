@@ -30,7 +30,7 @@ while (( $# > 0 )); do
   esac
 done
 
-require_commands diff
+require_commands diff jq ugrep
 
 agent_skills_reconcile_layer
 
