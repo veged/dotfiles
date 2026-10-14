@@ -6,4 +6,6 @@
 - `st.yandex-team.ru`, Yandex Tracker или TQL — навык `tracker` и `mcp__tracker__*`.
 - `github.com` или GitHub — `gh` или GitHub MCP.
 
+Форматы ссылок на сущности SourceCraft собраны отдельно в `ai/instructions/sourcecraft-links.md`.
+
 Если нативный инструмент недоступен, сообщи об этом. Не обходи это через другой трекер, веб-интерфейс или CLI.
