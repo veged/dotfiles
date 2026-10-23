@@ -1,6 +1,6 @@
 {
   "btt": {
-    "enabled": true,
+    "enabled": false,
     "transport": "remote",
     "url": "http://127.0.0.1:64832/mcp",
     "auth": {
@@ -87,12 +87,12 @@
     }
   },
   "practicum-mcp": {
-    "enabled": true,
+    "enabled": false,
     "transport": "remote",
     "url": "https://practicum-student-mcp-testing.common-stands.praktikum.yandex.ru/mcp"
   },
   "tracker": {
-    "enabled": true,
+    "enabled": false,
     "transport": "local",
     "command": "ya",
     "args": [

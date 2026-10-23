@@ -12,20 +12,14 @@
   "mattpocock/skills#6acc160e4e0cd062dbbbd7a1b26ae92855edf07e:skills/misc": "*",
   "mattpocock/skills#6acc160e4e0cd062dbbbd7a1b26ae92855edf07e:skills/productivity": "*",
   "terraphim/codex-skills#047d5b01e6abad817d6ec64fd060741158a96c29": "rust-development",
-  "https://github.com/beaverbeard/slopotron.git#5edd02134a9c5ab0234d0e71fb0241fbf2273341": "slopotron",
   "robonuggets/gauntlet-loop#9b1975a1b8f01981f3f1e6b667ad3aaf907178ea": "gauntlet-loop",
   "veged/caveman#f9a3eb1adbe2890217edffe48325619ae62a62e3:skills": "caveman",
-  "anthropics/skills#b29e7cf65e5cb78a5ac33d582270551bc74a14eb": [
-    "frontend-design",
-    "web-artifacts-builder"
-  ],
-  "albertzhangz10/design-system-skill#dc0ad3fb8240353da114427bee256c5e9ae93333": "*",
+  "anthropics/skills#b29e7cf65e5cb78a5ac33d582270551bc74a14eb": "frontend-design",
   "pbakaus/impeccable#a075d89bdbe60b2b00220cb0527fb5091e84215e": "impeccable",
-  "emilkowalski/skill#de33dbed000212b54400a33767d1e4d03654db2a": [
-    "!prototype"
+  "Leonxlnx/taste-skill#e988add20dab0fa97d7a76781c48961c8184288e": [
+    "taste-skill",
+    "redesign-skill"
   ],
-  "Leonxlnx/taste-skill#e988add20dab0fa97d7a76781c48961c8184288e": "*",
-  "Nutlope/hallmark#13ac0ec7e148655948100b6396439e481361d690": "hallmark",
   "obra/superpowers#44c9b2d6e889982ac18c27d05a19fefe335194e1": [
     "!test-driven-development",
     "!subagent-driven-development",
@@ -39,7 +33,6 @@
     "imagegen",
     "openai-docs",
     "pdf",
-    "playwright",
     "skill-creator",
     "skill-installer"
   ],

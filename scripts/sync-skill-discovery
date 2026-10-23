@@ -7,19 +7,28 @@ import shutil
 import subprocess
 from pathlib import Path
 
+CLAUDE_FLAG = 'disable-model-invocation: true'
+
 
 def roots(home, manifest):
+    """Пары (корень навыка, claude): для Claude политика живёт во frontmatter SKILL.md, для Codex — в agents/openai.yaml."""
     for name in manifest.get('user_skills', []):
         for directory in ('.agents', '.codex'):
-            yield home / directory / 'skills' / name
+            yield home / directory / 'skills' / name, False
     for package, names in manifest.get('plugins', {}).items():
-        package_roots = [home / '.codex/plugins/dotfiles-local' / package]
-        cache = home / '.codex/plugins/cache/dotfiles-local' / package
-        if cache.is_dir():
-            package_roots.extend(p for p in cache.iterdir() if p.is_dir())
-        for root in package_roots:
+        package_roots = [
+            (home / '.codex/plugins/dotfiles-local' / package, False),
+            (home / '.agents/plugins/dotfiles-local/plugins' / package, True),
+        ]
+        for cache, claude in (
+            (home / '.codex/plugins/cache/dotfiles-local' / package, False),
+            (home / '.claude/plugins/cache/dotfiles-local' / package, True),
+        ):
+            if cache.is_dir():
+                package_roots.extend((p, claude) for p in cache.iterdir() if p.is_dir())
+        for root, claude in package_roots:
             for name in names:
-                yield root / 'skills' / name
+                yield root / 'skills' / name, claude
 
 
 def read_yaml(path):
@@ -61,6 +70,24 @@ def apply(root, check):
     return True
 
 
+def apply_claude(root, check):
+    path = root / 'SKILL.md'
+    text = path.read_text()
+    if not text.startswith('---\n'):
+        raise ValueError(f'Ожидался frontmatter: {path}')
+    head, separator, body = text[4:].partition('\n---\n')
+    if not separator:
+        raise ValueError(f'Не найден конец frontmatter: {path}')
+    lines = head.split('\n')
+    if CLAUDE_FLAG in lines:
+        return False
+    if check:
+        return True
+    lines = [line for line in lines if not line.startswith('disable-model-invocation:')] + [CLAUDE_FLAG]
+    path.write_text('---\n' + '\n'.join(lines) + separator + body)
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--home', type=Path, default=Path.home())
@@ -76,14 +103,14 @@ def main():
         raise ValueError('Недопустимое имя в discovery.json')
     seen = set()
     changed = 0
-    for root in roots(args.home, manifest):
+    for root, claude in roots(args.home, manifest):
         if not (root / 'SKILL.md').is_file():
             continue
-        root = root.resolve()
-        if root in seen:
+        key = (root.resolve(), claude)
+        if key in seen:
             continue
-        seen.add(root)
-        changed += apply(root, args.check)
+        seen.add(key)
+        changed += apply_claude(root, args.check) if claude else apply(root, args.check)
     verb = 'требуют синхронизации' if args.check else 'обновлены'
     print(f'sync-skill-discovery: проверено {len(seen)}, {verb}: {changed}')
     if args.check and changed:
