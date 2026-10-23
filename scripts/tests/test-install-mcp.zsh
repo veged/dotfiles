@@ -74,6 +74,9 @@ cp "$repo_root/codex/.config.template.toml" "$duplicate_marker_fixture_root/code
 jq '
   .sourcecraft.clients.cursor.type = "sse"
   | .sourcecraft.clients.claude.allow_tools += ["mcp__fff__grep"]
+  | .btt.enabled = true
+  | .tracker.enabled = true
+  | .["practicum-mcp"].enabled = true
 ' "$fixture_root/ai/mcp.json" > "$fixture_root/ai/mcp.json.tmp"
 mv "$fixture_root/ai/mcp.json.tmp" "$fixture_root/ai/mcp.json"
 
