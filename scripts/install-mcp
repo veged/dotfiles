@@ -188,6 +188,145 @@ check_local_tools() {
   (( missing == 0 )) || return 1
 }
 
+codex_headers() {
+  awk '/^[ \t]*\[/ { sub(/^[ \t]+/, ""); sub(/[ \t]+$/, ""); print }' "$1"
+}
+
+codex_root_keys() {
+  awk '
+    /^[ \t]*\[/ { exit }
+    /^[ \t]*([A-Za-z0-9_.-]+|"[^"]*")[ \t]*=/ {
+      key = $0
+      sub(/[ \t]*=.*$/, "", key)
+      gsub(/^[ \t]+|"/, "", key)
+      print key
+    }
+  ' "$1"
+}
+
+# Переносит из живого config.toml Codex корневые ключи и таблицы, которых рендер не определяет: их пишет само приложение
+# (node_repl, связки @openai-*, доверие проектов, desktop). Управляемыми считаются таблицы из шаблона, mcp_servers.<имя из реестра>
+# и plugins."…@dotfiles-local".
+# shortcut: таблица, убранная из шаблона, остаётся в живом файле как приложенческая, удалить её нужно вручную; добавить журнал управляемых таблиц, если такие удаления станут регулярными.
+codex_merge_app_content() {
+  local rendered_path=$1 live_path=$2 manifest_path=$3
+  local work_dir='' root_fragment='' tables_fragment=''
+
+  if [[ -f "$live_path" ]]; then
+    # Списки передаются файлами: awk в macOS не принимает -v со значениями из нескольких строк.
+    work_dir=$(mktemp -d "${TMPDIR:-/tmp}/codex-app-content.XXXXXX")
+    root_fragment="$work_dir/root"
+    tables_fragment="$work_dir/tables"
+    codex_root_keys "$rendered_path" > "$work_dir/root-keys"
+    codex_headers "$rendered_path" > "$work_dir/headers"
+    jq -r 'keys[]' "$manifest_path" > "$work_dir/servers"
+    awk \
+      -v root_keys_path="$work_dir/root-keys" \
+      -v headers_path="$work_dir/headers" \
+      -v servers_path="$work_dir/servers" \
+      -v root_out="$root_fragment" \
+      -v tables_out="$tables_fragment" '
+      function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s); return s }
+      function header_name(h,   s) { s = trim(h); sub(/^\[\[?/, "", s); sub(/\]\]?$/, "", s); return trim(s) }
+      function claimed(h,   name, rest, server) {
+        if (h in headers) return 1
+        name = header_name(h)
+        if (name ~ /^mcp_servers\./) {
+          rest = substr(name, 13)
+          server = rest
+          if (rest ~ /^"/) { sub(/^"/, "", server); sub(/".*$/, "", server) } else { sub(/[.].*$/, "", server) }
+          return (server in managed_servers)
+        }
+        if (name ~ /^plugins\."[^"]*@dotfiles-local"/) return 1
+        return 0
+      }
+      function flush_block() {
+        if (keep && block != "") { sub(/\n+$/, "", block); print block "\n" > tables_out }
+        block = ""
+        keep = 0
+      }
+      function load(path, set,   line) {
+        while ((getline line < path) > 0) if (line != "") set[line] = 1
+        close(path)
+      }
+      BEGIN {
+        load(root_keys_path, root_keys)
+        load(headers_path, headers)
+        load(servers_path, managed_servers)
+        in_root = 1
+      }
+      /^[ \t]*\[/ {
+        if (in_root) in_root = 0; else flush_block()
+        keep = !claimed(trim($0))
+        block = $0 "\n"
+        next
+      }
+      in_root {
+        if ($0 ~ /^[ \t]*(#|$)/) { carry_root = 0; next }
+        if ($0 ~ /^[ \t]*([A-Za-z0-9_.-]+|"[^"]*")[ \t]*=/) {
+          key = $0
+          sub(/[ \t]*=.*$/, "", key)
+          gsub(/^[ \t]+|"/, "", key)
+          carry_root = !(key in root_keys)
+        }
+        if (carry_root) print $0 > root_out
+        next
+      }
+      { block = block $0 "\n" }
+      END { if (!in_root) flush_block() }
+    ' "$live_path"
+  fi
+
+  awk -v root_path="$root_fragment" -v tables_path="$tables_fragment" '
+    function has_content(path,   line, found) {
+      if (path == "") return 0
+      found = ((getline line < path) > 0)
+      close(path)
+      return found
+    }
+    function emit(path,   line) {
+      while ((getline line < path) > 0) print line
+      close(path)
+    }
+    BEGIN { has_root = has_content(root_path); has_tables = has_content(tables_path) }
+    /^[ \t]*\[/ && !inserted {
+      if (has_root) { emit(root_path); print "" }
+      inserted = 1
+    }
+    { print }
+    END {
+      if (!inserted && has_root) { print ""; emit(root_path) }
+      if (has_tables) {
+        print ""
+        print "# Таблицы приложения Codex: не управляются dotfiles, перенесены из прежнего файла."
+        print ""
+        emit(tables_path)
+      }
+    }
+  ' "$rendered_path"
+
+  [[ -z "$work_dir" ]] || rm -rf "$work_dir"
+}
+
+# Содержимое TOML без комментариев и пустых строк, каждая строка помечена своей таблицей: сравнение не зависит от порядка,
+# в котором приложение Codex переписывает файл.
+codex_normalized() {
+  awk '
+    function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s); return s }
+    /^[ \t]*(#|$)/ { next }
+    /^[ \t]*\[/ { table = trim($0); print table "\t"; next }
+    { print table "\t" trim($0) }
+  ' "$1" | LC_ALL=C sort
+}
+
+check_generated_toml() {
+  local expected_path=$1
+  local live_path=$2
+
+  [[ -f "$live_path" ]] || die "install-mcp: missing generated file: $live_path"
+  diff -u <(codex_normalized "$expected_path") <(codex_normalized "$live_path")
+}
+
 check_generated_file() {
   local expected_path=$1
   local live_path=$2
@@ -219,11 +358,15 @@ check_generated_files() {
       cp "$claude_user_path" "$tmp_home/.claude.json"
     fi
 
+    if [[ -f "$codex_config_path" ]]; then
+      cp "$codex_config_path" "$tmp_home/.codex/config.toml"
+    fi
+
     DOTFILES_RENDER_HOME="$HOME" HOME="$tmp_home" zsh "$repo_root/scripts/install-mcp" --sync-only >/dev/null
 
     check_generated_file "$tmp_home/.cursor/mcp.json" "$cursor_manifest_path"
     check_generated_file "$tmp_home/.claude/settings.json" "$claude_settings_path"
-    check_generated_file "$tmp_home/.codex/config.toml" "$codex_config_path"
+    check_generated_toml "$tmp_home/.codex/config.toml" "$codex_config_path"
     check_generated_file "$tmp_home/.config/opencode/opencode.jsonc" "$opencode_config_path"
     check_generated_file "$tmp_home/.claude.json" "$claude_user_path"
   )
@@ -373,6 +516,7 @@ if [[ "$codex_plugins_marker_count" -ne 1 ]]; then
 fi
 
 codex_fragment_path=$(mktemp "${TMPDIR:-/tmp}/codex-mcp.XXXXXX")
+codex_rendered_path=$(mktemp "${TMPDIR:-/tmp}/codex-rendered.XXXXXX")
 codex_plugins_fragment_path=$(mktemp "${TMPDIR:-/tmp}/codex-plugins.XXXXXX")
 
 jq -r '
@@ -466,9 +610,12 @@ awk \
     gsub(/\$HOME/, home)
     print
   }
-' "$codex_template_path" > "$codex_config_path"
+' "$codex_template_path" > "$codex_rendered_path"
 
-rm -f "$codex_fragment_path" "$codex_plugins_fragment_path"
+codex_merge_app_content "$codex_rendered_path" "$codex_config_path" "$normalized_manifest_path" > "$codex_rendered_path.merged"
+mv "$codex_rendered_path.merged" "$codex_config_path"
+
+rm -f "$codex_fragment_path" "$codex_plugins_fragment_path" "$codex_rendered_path"
 
 opencode_fragment_path=$(mktemp "${TMPDIR:-/tmp}/opencode-mcp.XXXXXX")
 opencode_base_path=$(mktemp "${TMPDIR:-/tmp}/opencode-base.XXXXXX")

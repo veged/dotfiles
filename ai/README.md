@@ -40,6 +40,7 @@ Instruction id — это filename без `.md`; projected files использ�
 * `~/.cursor/rules/dotfiles.mdc` — генерируемая проекция общего слоя для Cursor
 * live MCP-конфиги (`~/.claude/settings.json`, `~/.codex/config.toml`, `~/.cursor/mcp.json`, `~/.config/opencode/opencode.jsonc`) — generated outputs. Персональные значения приходят из env или системного хранилища через `./scripts/personal`; `ELIZA_TOKEN` обновляется из OAuth client credentials в shell-профиле
 * `~/.claude.json` — рабочее состояние Claude Code, в репозитории не канонизируется
+* `~/.codex/config.toml` частично принадлежит приложению Codex: корневые ключи и таблицы, которых нет в шаблоне, реестре MCP и локальных плагинах (`node_repl`, связки `@openai-*`, доверие проектов, `desktop`), `install-mcp` переносит при синхронизации как есть, а `--check` сравнивает этот файл без учёта порядка и комментариев. Таблицу, убранную из шаблона, нужно удалить из живого файла вручную
 
 ## Скрипты
 

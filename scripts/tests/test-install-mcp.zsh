@@ -340,6 +340,48 @@ HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp"
 
 HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --check
 
+# Содержимое приложения Codex: корневые ключи и таблицы вне шаблона и реестра переживают синхронизацию, устаревшие управляемые таблицы — нет.
+app_root_line='service_tier = "flex"'
+app_tables=$'[mcp_servers.node_repl]\ncommand = "node"\n\n[mcp_servers.node_repl.env]\nNODE_OPTIONS = "--max-old-space-size=512"\n\n[plugins."browser@openai-bundled"]\nenabled = true\n\n[projects."/tmp/app-project"]\ntrust_level = "trusted"'
+stale_tables=$'[mcp_servers.context7]\ncommand = "stale"\n\n[plugins."gone@dotfiles-local"]\nenabled = true'
+{
+  print -r -- "$app_root_line"
+  cat "$codex_config_path"
+  print
+  print -r -- "$stale_tables"
+  print
+  print -r -- "$app_tables"
+} > "$codex_config_path.tmp"
+mv "$codex_config_path.tmp" "$codex_config_path"
+HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --sync-only
+[[ "$(awk '/^[ \t]*\[/ { exit } /^service_tier = "flex"$/ { found = 1 } END { print found + 0 }' "$codex_config_path")" == "1" ]] \
+  || fail "codex app root key must survive --sync-only in the root section"
+for header in '[mcp_servers.node_repl]' '[mcp_servers.node_repl.env]' '[plugins."browser@openai-bundled"]' '[projects."/tmp/app-project"]'; do
+  [[ "$(ugrep -Fxc -- "$header" "$codex_config_path")" == "1" ]] || fail "codex app table lost or duplicated by --sync-only: $header"
+done
+ugrep -Fxq 'NODE_OPTIONS = "--max-old-space-size=512"' "$codex_config_path" || fail "codex app table body lost by --sync-only"
+ugrep -Fxq 'trust_level = "trusted"' "$codex_config_path" || fail "codex app project trust lost by --sync-only"
+if ugrep -Fq '[mcp_servers.context7]' "$codex_config_path"; then
+  fail "stale table of a disabled registry server must be dropped by --sync-only"
+fi
+if ugrep -Fq '[plugins."gone@dotfiles-local"]' "$codex_config_path"; then
+  fail "stale local plugin table must be dropped by --sync-only"
+fi
+cp "$codex_config_path" "$codex_config_path.once"
+HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --sync-only
+cmp -s "$codex_config_path" "$codex_config_path.once" || fail "codex --sync-only must be idempotent with app content"
+rm -f "$codex_config_path.once"
+HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --check || fail "--check must accept app content carried into codex config"
+awk '
+  /^\[plugins\."browser@openai-bundled"\]$/ { skip = 1; next }
+  skip && /^\[/ { skip = 0 }
+  skip { next }
+  /^\[mcp_servers\.btt\]$/ { print "[plugins.\"browser@openai-bundled\"]"; print "enabled = true"; print "" }
+  { print }
+' "$codex_config_path" > "$codex_config_path.tmp"
+mv "$codex_config_path.tmp" "$codex_config_path"
+HOME="$home_dir" zsh "$fixture_root/scripts/install-mcp" --check || fail "--check must ignore table order rewritten by the Codex app"
+
 jq '.mcpServers.fff.command = "/tmp/drifted-fff"' "$cursor_manifest_path" > "$cursor_manifest_path.tmp"
 mv "$cursor_manifest_path.tmp" "$cursor_manifest_path"
 
