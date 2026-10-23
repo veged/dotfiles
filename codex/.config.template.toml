@@ -3,6 +3,8 @@ project_doc_max_bytes = 65536
 personality = "pragmatic"
 model = "gpt-5.4"
 model_reasoning_effort = "xhigh"
+# Запись в рабочие каталоги. Расширение доступа проверяет агент.
+sandbox_mode = "workspace-write"
 approval_policy = "on-request"
 approvals_reviewer = "auto_review"
 
@@ -26,7 +28,17 @@ enabled = true
 
 # __DOTFILES_PLUGINS__
 
+# Не запускать неиспользуемый сервер Figma из плагина навыков.
+[plugins."ux-ui-agent-skills@dotfiles-local".mcp_servers.figma]
+enabled = false
+
 # __MCP_SERVERS__
+
+# Выбор шаблонов включается явно в нужном проекте.
+[mcp_servers.openai_artifact_template_picker]
+command = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node"
+args = ["/Applications/ChatGPT.app/Contents/Resources/artifact-template-picker/server.mjs"]
+enabled = false
 
 [apps.connector_76869538009648d5b282a4bb21c3d157.tools.github_add_comment_to_issue]
 approval_mode = "approve"

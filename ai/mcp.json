@@ -100,7 +100,12 @@
       "mcp",
       "connect",
       "wss://mcp.yandex.net/ws?servers=tracker_mcp"
-    ]
+    ],
+    "clients": {
+      "codex": {
+        "enabled": false
+      }
+    }
   },
   "wiki": {
     "enabled": true,
@@ -111,7 +116,12 @@
       "mcp",
       "connect",
       "wss://mcp.yandex.net/ws?servers=wiki"
-    ]
+    ],
+    "clients": {
+      "codex": {
+        "enabled": false
+      }
+    }
   },
   "context7": {
     "enabled": false,

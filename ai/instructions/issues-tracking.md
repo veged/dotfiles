@@ -3,9 +3,12 @@
 Выбирай систему по явному URL или названию продукта, а не словам «задача», «тикет», `issue`, «эпик», «трекер»:
 
 - `sourcecraft.dev` или SourceCraft — только `mcp__sourcecraft__*` для задач, PR, комментариев, меток и связей.
-- `st.yandex-team.ru`, Yandex Tracker или TQL — навык `tracker` и `mcp__tracker__*`.
+- `st.yandex-team.ru`, Yandex Tracker или TQL — навык `tracker` и его `scripts/tracker-cli.sh`.
+- `wiki.yandex-team.ru` или Yandex Wiki — навык `wiki` и его `scripts/wiki-cli.sh`.
 - `github.com` или GitHub — `gh` или GitHub MCP.
 
-Форматы ссылок на сущности SourceCraft собраны отдельно в `ai/instructions/sourcecraft-links.md`.
+Форматы веб-ссылок на сущности SourceCraft собраны отдельно в `ai/instructions/sourcecraft-links.md`.
 
-Если нативный инструмент недоступен, сообщи об этом. Не обходи это через другой трекер, веб-интерфейс или CLI.
+В Codex запускай команды Wiki и Tracker только для конкретного обращения. Не включай для них постоянные MCP-серверы и не оставляй команды в фоне. Если команда навыка не покрывает нужную операцию, используй разовый `ya tool mcp connect wiki` или `ya tool mcp connect tracker_mcp`: `--list` получает список инструментов и завершает процесс, `--tool <имя>` выполняет один вызов и завершает процесс. Сначала проверь схему нужного инструмента через `--list`.
+
+Для остальных систем при недоступности указанного нативного инструмента сообщи об этом. Не обходи ограничение через другой трекер, веб-интерфейс или CLI.

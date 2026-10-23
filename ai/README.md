@@ -20,14 +20,13 @@
 
 `ai/instructions/*.md` — source of truth для общих AI-инструкций.
 Instruction id — это filename без `.md`; projected files используют то же filename под `~/.agents/instructions/`.
-Claude, Codex и OpenCode instruction lists генерируются из markdown file set в deterministic filename order.
+Проекции Claude, Codex, Cursor и OpenCode генерируются из одного набора Markdown-файлов в детерминированном порядке имён. Cursor получает локальное глобальное правило `~/.cursor/rules/dotfiles.mdc` с `alwaysApply: true` и полным общим текстом. Ссылка на файл внутри правила не подставляет его содержимое в контекст автоматически, поэтому обязательные инструкции включены в генерируемое тело ([документация Cursor](https://cursor.com/help/customization/rules)).
 
 Если нужен явный текстовый триггер внутри instruction-слоя, выноси его в отдельный файл `ai/instructions/*-activation.md`, а не в доменный документ. Это уменьшает prompt-шум, даёт отдельный instruction id и упрощает независимые правки правил и активации.
 
 Если нужен настоящий Codex slash-command вида `/name`, не клади его в `ai/instructions/`. Делай локальный plugin root с `commands/*.toml` и регистрируй plugin в `ai/plugins/plugins.json`.
 
-После добавления, удаления, переименования или редактирования instruction files запускай `./scripts/install-mcp --sync-only`.
-Для проверки stale generated artifacts запускай `./scripts/install-mcp --check`.
+После добавления, удаления, переименования или редактирования файлов инструкций запускай `./scripts/install-mcp --instructions-only`, затем `./scripts/install-mcp --check-instructions`. Эти режимы не загружают персональные секреты и не пересобирают настройки моделей, навыков, плагинов и MCP. `--sync-only` и `--check` по-прежнему синхронизируют и проверяют весь набор конфигураций.
 
 ## Рабочие каталоги
 
@@ -38,6 +37,7 @@ Claude, Codex и OpenCode instruction lists генерируются из markdo
 * `~/.claude/skills`, `~/.codex/skills`, `~/.cursor/skills` — assistant-specific discovery-слои, symlink-и на `~/.agents/skills`
 * `~/.codex/plugins/dotfiles-local/*` — локальные bundle-ы плагинов Codex
 * `~/.claude/CLAUDE.md` — тонкая обёртка, импортирующая общий слой
+* `~/.cursor/rules/dotfiles.mdc` — генерируемая проекция общего слоя для Cursor
 * live MCP-конфиги (`~/.claude/settings.json`, `~/.codex/config.toml`, `~/.cursor/mcp.json`, `~/.config/opencode/opencode.jsonc`) — generated outputs. Персональные значения приходят из env или системного хранилища через `./scripts/personal`; `ELIZA_TOKEN` обновляется из OAuth client credentials в shell-профиле
 * `~/.claude.json` — рабочее состояние Claude Code, в репозитории не канонизируется
 

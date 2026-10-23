@@ -7,10 +7,6 @@ repo_root=${0:A:h:h}
 SCRIPT_NAME=install-mcp
 source "$repo_root/scripts/lib/install-common.zsh"
 source "$repo_root/scripts/lib/instruction-projection.zsh"
-if [[ -f "$repo_root/scripts/personal" ]]; then
-  source "$repo_root/scripts/personal"
-  personal_load_env
-fi
 
 manifest_path="$repo_root/ai/mcp.json"
 plugins_manifest_path="$repo_root/ai/plugins/plugins.json"
@@ -37,13 +33,30 @@ fi
 
 if (( $# == 1 )); then
   case "$1" in
-    --sync-only|--tools-only|--check)
+    --sync-only|--instructions-only|--check-instructions|--tools-only|--check)
       mode=$1
       ;;
     *)
       die "install-mcp: unknown argument: $1"
       ;;
   esac
+fi
+
+case "$mode" in
+  --instructions-only)
+    instruction_projection_sync "$repo_root"
+    print "install-mcp: инструкции синхронизированы, настройки клиентов не изменены"
+    exit 0
+    ;;
+  --check-instructions)
+    instruction_projection_check "$repo_root"
+    exit 0
+    ;;
+esac
+
+if [[ -f "$repo_root/scripts/personal" ]]; then
+  source "$repo_root/scripts/personal"
+  personal_load_env
 fi
 
 require_commands diff jq

@@ -9,4 +9,5 @@
 @~/.agents/instructions/language.md
 @~/.agents/instructions/markdown.md
 @~/.agents/instructions/search.md
+@~/.agents/instructions/sourcecraft-links.md
 @~/.agents/instructions/worktrees.md
