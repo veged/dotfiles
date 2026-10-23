@@ -1,7 +1,7 @@
 skills.max_context_tokens = 3500
 project_doc_max_bytes = 65536
 personality = "pragmatic"
-model = "gpt-5.4"
+model = "gpt-6-astra"
 model_reasoning_effort = "xhigh"
 approval_policy = "on-request"
 approvals_reviewer = "auto_review"
