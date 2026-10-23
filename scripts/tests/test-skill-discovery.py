@@ -23,6 +23,12 @@ class DiscoveryTest(unittest.TestCase):
                 (skill / 'references').mkdir(parents=True)
                 (skill / 'SKILL.md').write_text('Исходная инструкция\n')
                 (skill / 'references/input.md').write_text('Исходный ресурс\n')
+            portable = root / '.agents/plugins/dotfiles-local/plugins/kit/skills/audit'
+            claude_cache = root / '.claude/plugins/cache/dotfiles-local/kit/1.0/skills/audit'
+            frontmatter = '---\nname: audit\ndescription: Проверка\n---\nИсходная инструкция\n'
+            for skill in [portable, claude_cache]:
+                skill.mkdir(parents=True)
+                (skill / 'SKILL.md').write_text(frontmatter)
             projection = root / '.codex/skills/course'
             projection.parent.mkdir(parents=True)
             projection.symlink_to(canonical, target_is_directory=True)
@@ -34,7 +40,11 @@ class DiscoveryTest(unittest.TestCase):
             command = [str(SCRIPT), '--home', str(root), '--manifest', str(manifest)]
             self.assertEqual(subprocess.run([*command, '--check'], capture_output=True).returncode, 1)
             result = subprocess.run(command, check=True, capture_output=True, text=True)
-            self.assertIn('проверено 3', result.stdout)
+            self.assertIn('проверено 5', result.stdout)
+            hidden = '---\nname: audit\ndescription: Проверка\ndisable-model-invocation: true\n---\nИсходная инструкция\n'
+            for skill in [portable, claude_cache]:
+                self.assertEqual((skill / 'SKILL.md').read_text(), hidden)
+                self.assertFalse((skill / 'agents').exists())
             for skill in [canonical, stable, cache]:
                 data = subprocess.check_output(['yq', '-o=json', '.', str(skill / 'agents/openai.yaml')], text=True)
                 self.assertFalse(json.loads(data)['policy']['allow_implicit_invocation'])
@@ -50,8 +60,10 @@ class DiscoveryTest(unittest.TestCase):
             subprocess.run([*command, '--check'], check=True, capture_output=True)
             # Обновление пакета вернуло исходные метаданные: повторная синхронизация восстанавливает политику.
             metadata.write_text(original)
+            (portable / 'SKILL.md').write_text(frontmatter)
             subprocess.run(command, check=True, capture_output=True)
             self.assertEqual(metadata.read_bytes(), synced[metadata])
+            self.assertEqual((portable / 'SKILL.md').read_text(), hidden)
 
 
 if __name__ == '__main__':
