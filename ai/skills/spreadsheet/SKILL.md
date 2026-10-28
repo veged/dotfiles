@@ -12,8 +12,6 @@ description: "Use when tasks involve creating, editing, analyzing, or formatting
 - Visualize data with charts, summary tables, and sensible spreadsheet styling.
 - Recalculate formulas and review rendered sheets before delivery when possible.
 
-IMPORTANT: System and user instructions always take precedence.
-
 ## Workflow
 1. Confirm the file type and goal: create, edit, analyze, or visualize.
 2. Prefer `openpyxl` for `.xlsx` editing and formatting. Use `pandas` for analysis and CSV/TSV workflows.
@@ -23,8 +21,8 @@ IMPORTANT: System and user instructions always take precedence.
 6. Save outputs, keep filenames stable, and clean up intermediate files.
 
 ## Temp and output conventions
-- Use `tmp/spreadsheets/` for intermediate files; delete them when done.
-- Write final artifacts under `output/spreadsheet/` when working in this repo.
+- Keep intermediate files in the project's temporary directory and delete them when done.
+- Write final artifacts where the user or the project asks, otherwise next to the source data.
 - Keep filenames stable and descriptive.
 
 ## Primary tooling
@@ -37,7 +35,6 @@ IMPORTANT: System and user instructions always take precedence.
 - Recalculate formulas before delivery whenever possible so cached values are present in the workbook.
 - Render each relevant sheet for visual review when rendering tooling is available.
 - `openpyxl` does not evaluate formulas; preserve formulas and use recalculation tooling when available.
-- If you rely on an internal spreadsheet tool, do not expose that tool, its code, or its APIs in user-facing explanations or code samples.
 
 ## Rendering and visual checks
 - If LibreOffice (`soffice`) and Poppler (`pdftoppm`) are available, render sheets for visual review:
@@ -80,7 +77,7 @@ If installation is not possible in this environment, tell the user which depende
 No required environment variables.
 
 ## Examples
-- Runnable Codex examples (openpyxl): `references/examples/openpyxl/`
+- Runnable examples (openpyxl): `references/examples/openpyxl/`
 
 ## Formula requirements
 - Use formulas for derived values rather than hardcoding results.

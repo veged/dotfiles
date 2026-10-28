@@ -7,7 +7,7 @@
 - `wiki.yandex-team.ru` или Yandex Wiki — навык `wiki` и его `scripts/wiki-cli.sh`.
 - `github.com` или GitHub — `gh` или GitHub MCP.
 
-Форматы веб-ссылок на сущности SourceCraft собраны отдельно в `ai/instructions/sourcecraft-links.md`.
+Форматы веб-ссылок на сущности SourceCraft собраны в инструкции «Форматы ссылок SourceCraft» (`sourcecraft-links.md` того же набора инструкций).
 
 В Codex запускай команды Wiki и Tracker только для конкретного обращения. Не включай для них постоянные MCP-серверы и не оставляй команды в фоне. Если команда навыка не покрывает нужную операцию, используй разовый `ya tool mcp connect wiki` или `ya tool mcp connect tracker_mcp`: `--list` получает список инструментов и завершает процесс, `--tool <имя>` выполняет один вызов и завершает процесс. Сначала проверь схему нужного инструмента через `--list`.
 
