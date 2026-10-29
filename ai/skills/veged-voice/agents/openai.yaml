@@ -1,0 +1,6 @@
+interface:
+  display_name: "Авторский голос veged"
+  short_description: "Разговорные и литературные тексты в голосе veged"
+  default_prompt: "Используй $veged-voice, чтобы написать или отредактировать текст моим голосом в разговорной или литературной модальности."
+policy:
+  allow_implicit_invocation: false
